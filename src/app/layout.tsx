@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist_Mono, Outfit } from "next/font/google";
+import { Providers } from "@/app/providers";
+import { SkipLink } from "@/components/brand/skip-link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["SOFT", "WONK"],
 });
 
 const geistMono = Geist_Mono({
@@ -14,7 +22,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Ghana Restaurant Uppsala",
-  description: "Authentic Ghanaian food delivered in Uppsala. Phase 0 architecture foundation.",
+  description: "Authentic Ghanaian food delivered in Uppsala.",
   metadataBase: new URL(process.env.APP_BASE_URL ?? "http://localhost:3000"),
   openGraph: {
     title: "Ghana Restaurant Uppsala",
@@ -32,9 +40,12 @@ export default function RootLayout({
   return (
     <html
       lang="sv"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${outfit.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <SkipLink />
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
