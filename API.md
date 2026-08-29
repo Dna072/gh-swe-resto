@@ -2,7 +2,7 @@
 
 Trusted Next.js Route Handlers. Provider credentials never appear in responses.
 
-Phase 2 ships the public catalog, cart quote, and delivery-area check. Checkout and payments remain Phase 3+.
+Phase 3 adds guest checkout and a zone-based delivery quote. Payments remain Phase 5.
 
 ## Customer
 
@@ -14,9 +14,10 @@ Phase 2 ships the public catalog, cart quote, and delivery-area check. Checkout 
 | POST | `/api/delivery/check` | Postcode against seeded delivery zones |
 | POST | `/api/marketing/signup` | Email + required consent (in-memory) |
 | POST | `/api/analytics/track` | Storefront events |
-| POST | `/api/delivery/quote` | Zone + provider quote (Phase 3) |
-| POST | `/api/orders` | Idempotent order create |
-| GET | `/api/orders/:id` | Tracking (token or session) |
+| POST | `/api/delivery/quote` | Zone + mock-provider quote (fee from seed zones) |
+| POST | `/api/orders` | Idempotent guest order create (`Idempotency-Key`) |
+| GET | `/api/orders/:id` | Guest order (`?token=`) |
+| GET | `/api/orders/lookup` | Lookup by `GH` number + token |
 | POST | `/api/orders/:id/cancel` | Customer/admin cancel |
 | POST | `/api/orders/:id/reorder` | Rebuild a cart from a snapshot |
 | POST | `/api/payments/create` | Payment session |

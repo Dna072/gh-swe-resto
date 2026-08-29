@@ -21,8 +21,8 @@ const STEPS = [
     body: "Protein, shito heat, extras. The kitchen sees exactly what you chose.",
   },
   {
-    title: "We cook, then it moves",
-    body: "Checkout and Wolt/Foodora delivery come in the next phase.",
+    title: "Guest checkout",
+    body: "Address and delivery fee are confirmed on the server. Payment comes later.",
   },
 ];
 

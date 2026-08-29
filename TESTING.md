@@ -36,3 +36,5 @@ Rules tests need Java 21.
 Playwright mobile viewport (390px) for the guest journey and kitchen board. Load tests for menu, quote, create, kitchen, and tracking once checkout APIs exist.
 
 Phase 2 unit coverage includes server-resolved seed prices, cart quotes, and Uppsala delivery-zone checks.
+
+Phase 3 adds guest order create, pickup vs delivery fees, and zone quotes (centrum 49 kr, södra 59 kr).

@@ -13,12 +13,17 @@ import { applyOrderTransition } from "./state-machine";
 import type { Order, OrderStatus } from "./models";
 import type { OrderRepository } from "./repository";
 
+export type FulfillmentMethod = "DELIVERY" | "PICKUP";
+
 export interface CreateOrderRequest extends CartQuoteRequest {
   customer: CustomerSnapshot;
   deliveryAddress: AddressSnapshot;
   idempotencyKey: string;
   specialInstructions?: string;
   deliveryProvider?: string;
+  fulfillment?: FulfillmentMethod;
+  estimatedDeliveryTime?: string;
+  deliveryQuoteId?: string;
 }
 
 export class OrderService {
@@ -108,10 +113,12 @@ export class OrderService {
         currency: "SEK",
         paymentStatus: "PENDING",
         orderStatus: "PENDING_PAYMENT",
-        deliveryStatus: "QUOTED",
-        deliveryProvider: request.deliveryProvider,
+        deliveryStatus: request.fulfillment === "PICKUP" ? "NOT_REQUESTED" : "QUOTED",
+        deliveryProvider: request.fulfillment === "PICKUP" ? undefined : request.deliveryProvider,
+        deliveryId: request.deliveryQuoteId,
         deliveryAddressSnapshot: request.deliveryAddress,
         customerSnapshot: request.customer,
+        estimatedDeliveryTime: request.estimatedDeliveryTime,
         specialInstructions: request.specialInstructions,
         promotionCode: quote.promotionCode,
         idempotencyKey: request.idempotencyKey,
@@ -123,6 +130,10 @@ export class OrderService {
       tx.saveIdempotency(request.idempotencyKey, order.id);
       return { order, accessToken };
     });
+  }
+
+  async getByPublicNumber(restaurantId: string, publicOrderNumber: string): Promise<Order | null> {
+    return this.orders.getByPublicNumber(restaurantId, publicOrderNumber.trim().toUpperCase());
   }
 
   async getForCustomer(orderId: string, accessToken?: string, actor?: Actor): Promise<Order> {
