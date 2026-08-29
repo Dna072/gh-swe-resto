@@ -31,8 +31,16 @@ export function getCartSnapshot(restaurantId: string): PersistedCart {
   return cart;
 }
 
+const serverSnapshots = new Map<string, PersistedCart>();
+
 export function getServerCartSnapshot(restaurantId: string): PersistedCart {
-  return emptyCart(restaurantId);
+  const cached = serverSnapshots.get(restaurantId);
+  if (cached) {
+    return cached;
+  }
+  const empty = emptyCart(restaurantId);
+  serverSnapshots.set(restaurantId, empty);
+  return empty;
 }
 
 function emit(): void {
