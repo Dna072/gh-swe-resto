@@ -39,6 +39,8 @@ Customers have no staff claim. Missing claim is treated as `CUSTOMER`.
 
 Enforced by `AuthorizationService` on every admin API.
 
+Meal and hero photographs are uploaded only through admin APIs. The server checks magic bytes (JPEG/PNG/WebP), size (8 MB), and minimum dimensions. Object paths are generated (`restaurants/{restaurantId}/menu/{menuItemId}/{assetId}-…`) — user filenames are never used. Production binaries go to Cloud Storage; Firestore stores metadata only. `ADMIN_DEV_TOKEN` is rejected when `APP_ENV=production`.
+
 ## Firestore rules
 
 Customers can read their own customer doc and orders where `customerId == uid`.

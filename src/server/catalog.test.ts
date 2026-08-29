@@ -24,6 +24,8 @@ describe("Phase 2 seeded catalog", () => {
     const jollof = catalog.items.find((item) => item.slug === "jollof-rice");
     expect(jollof?.modifierGroups.some((group) => group.id === "protein" && group.required)).toBe(true);
     expect(jollof?.displayPriceOre).toBeGreaterThan(0);
+    expect(jollof?.hasPhotograph).toBe(false);
+    expect(jollof?.imageUrl).toBeNull();
     const kenkey = catalog.items.find((item) => item.slug === "kenkey-fish");
     expect(kenkey?.availability).toBe("LOW_STOCK");
     expect(kenkey?.remainingPortions).toBe(2);

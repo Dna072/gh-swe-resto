@@ -34,6 +34,18 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | PATCH | `/api/admin/orders/:id` | Validated status transition |
 | POST | `/api/admin/orders/:id/print` | Enqueue print job |
 | POST | `/api/admin/orders/:id/refund` | Full or partial refund |
+| GET | `/api/admin/menu` | Meals, categories, modifier groups |
+| POST | `/api/admin/menu` | Create/update meal (metadata) |
+| GET | `/api/admin/menu/:id` | One meal including image metadata |
+| PUT | `/api/admin/menu/:id` | Update meal metadata |
+| PATCH | `/api/admin/menu/:id` | Archive or restore |
+| POST | `/api/admin/menu/:id/images` | Upload a real meal photograph |
+| PUT | `/api/admin/menu/:id/images/:imageId` | Replace a photograph |
+| PATCH | `/api/admin/menu/:id/images/:imageId` | Primary, remove (soft), or focal point |
+| GET / PUT | `/api/admin/homepage` | Lightweight homepage content |
+| POST | `/api/admin/homepage/hero-image` | Hero photograph (optional `mobile=true`) |
+
+Local development may send `Authorization: Bearer $ADMIN_DEV_TOKEN`. Production requires a Firebase staff token with `menu:write` or `settings:write`. Image binaries go to Cloud Storage (or `public/uploads` in development). Firestore/in-memory records store metadata only.
 
 ## Errors
 

@@ -2,6 +2,7 @@ import "server-only";
 
 import { availabilityStatus, type MenuItem, type ModifierGroup } from "@/domains/menu/models";
 import { formatSek } from "@/lib/money";
+import { imageAlt, imageUrl, objectPosition, primaryImage } from "@/lib/media/display";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
 import { seedPricingCalendar } from "@/infrastructure/seed/ghana-menu";
 import { pricingService } from "@/server/composition";
@@ -37,6 +38,7 @@ export function toPublicMenuItem(
   at = new Date(),
 ): PublicMenuItem {
   const displayPriceOre = pricingService.resolveItemPrice(item, at, seedPricingCalendar);
+  const photo = primaryImage(item.images);
   return {
     id: item.id,
     slug: item.slug,
@@ -45,8 +47,10 @@ export function toPublicMenuItem(
     description: item.description,
     categoryId: item.categoryId,
     categoryName,
-    imageUrl: item.images[0]?.storagePath ?? null,
-    imageAlt: item.images[0]?.alt ?? item.name,
+    imageUrl: imageUrl(photo, "card"),
+    imageAlt: imageAlt(photo, item.name),
+    imagePosition: objectPosition(photo),
+    hasPhotograph: Boolean(photo),
     displayPriceOre,
     displayPriceLabel: formatSek(displayPriceOre),
     availability: availabilityStatus(item),

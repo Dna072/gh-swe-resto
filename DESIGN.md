@@ -42,3 +42,15 @@ Primary controls use `size="touch"` (44px). Bottom navigation is 56px tall plus 
 shadcn/ui primitives live in `src/components/ui`. Brand wrappers live in `src/components/brand`.
 
 Preview: `/design-system` (noindex).
+
+## Photography
+
+Food photography is a core restaurant asset. Production images are the restaurant’s own meals, uploaded by staff. Do **not** generate or ship AI food photographs.
+
+Until a real photograph exists, use `FoodPhoto` / `PhotoComingSoon` — a parchment + kente placeholder with the meal name. Missing imagery must look intentional, never like a broken image.
+
+Homepage hero, featured meals, and meal cards read image metadata from the backend (`url`, `altText`, focal point). Nothing is hard-coded in components.
+
+## Homepage
+
+Editorial restaurant layout: full-viewport hero, signature plates, today’s menu, kitchen story, categories, delivery check, reviews, order CTA. Ghanaian identity is charcoal, gold, earth, and a single flag stripe — not a red/yellow/green theme.

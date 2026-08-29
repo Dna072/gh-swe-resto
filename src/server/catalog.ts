@@ -1,7 +1,8 @@
 import "server-only";
 
+import type { HomepageContent } from "@/domains/content/models";
 import type { PublicCatalog, PublicCategory, PublicMenuItem } from "@/lib/menu/public";
-import { menuService, restaurantIdFromEnv, seedMeta } from "@/server/composition";
+import { menuAdminService, menuService, restaurantIdFromEnv, seedMeta } from "@/server/composition";
 import { toPublicMenuItem } from "@/server/menu-public";
 
 export async function loadPublicCatalog(): Promise<PublicCatalog> {
@@ -27,6 +28,10 @@ export async function loadPublicCatalog(): Promise<PublicCatalog> {
     categories: publicCategories,
     items,
   };
+}
+
+export async function loadHomepage(): Promise<HomepageContent> {
+  return menuAdminService.getHomepage(restaurantIdFromEnv());
 }
 
 export async function loadPublicItem(slug: string): Promise<PublicMenuItem> {

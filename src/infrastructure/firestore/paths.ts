@@ -25,6 +25,7 @@ export const restaurantSub = {
   counters: "counters",
   aggregates: "aggregates",
   plans: "plans",
+  content: "content",
 } as const;
 
 export function restaurantPath(restaurantId: string): string {
@@ -45,4 +46,8 @@ export function promotionPath(restaurantId: string, promotionId: string): string
 
 export function promotionUsagePath(promotionId: string, customerKey: string): string {
   return `${collections.restaurants}/_usages/promotionUsages/${promotionId}__${customerKey}`;
+}
+
+export function homepageContentPath(restaurantId: string): string {
+  return `${restaurantPath(restaurantId)}/${restaurantSub.content}/homepage`;
 }

@@ -30,9 +30,34 @@ export interface MenuCategory extends Timestamped {
   archivedAt?: string;
 }
 
+export type ImageVariantKind = "original" | "thumbnail" | "card" | "menu" | "hero";
+export type MediaStatus = "ACTIVE" | "PENDING_DELETE";
+
+export interface ImageVariantRef {
+  kind: ImageVariantKind;
+  storagePath: string;
+  url: string;
+  width: number;
+  height: number;
+}
+
 export interface MenuItemImage {
   storagePath: string;
   alt: string;
+  id?: string;
+  url?: string;
+  altText?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  isPrimary?: boolean;
+  sortOrder?: number;
+  focalPointX?: number;
+  focalPointY?: number;
+  status?: MediaStatus;
+  variants?: ImageVariantRef[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface KitchenPortion {

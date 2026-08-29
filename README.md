@@ -4,7 +4,9 @@ Production-grade online ordering and operations platform for a Ghanaian restaura
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phase 3 guest checkout and delivery quotes. Payment is still Phase 5.
+**Current status:** Phase 3 guest checkout, delivery quotes, and admin-managed homepage/menu photography. Payment is still Phase 5.
+
+Meal photographs must be real kitchen photos uploaded by an admin. The storefront never ships AI-generated food. Until a photograph is uploaded, customers see a branded “Photo coming soon” treatment.
 
 ## Stack
 
@@ -72,4 +74,4 @@ npm run build
 9. Notifications
 10. Analytics and hardening
 
-The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`) until admin CMS lands.
+The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`). Admins can edit meals, homepage copy, and photographs at `/admin` (local `ADMIN_DEV_TOKEN`). Full operations CMS remains Phase 8.

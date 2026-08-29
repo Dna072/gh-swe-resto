@@ -45,7 +45,9 @@ export default async function MenuPage() {
                     priceOre={item.displayPriceOre}
                     imageAlt={item.imageAlt}
                     imageUrl={item.imageUrl}
+                    imagePosition={item.imagePosition}
                     href={`/menu/${item.slug}`}
+                    dietaryLabels={item.dietaryTags.map((tag) => tag.replaceAll("_", " ").toLowerCase())}
                     featured={item.popular}
                     soldOut={soldOut(item)}
                     lowStockLabel={lowStockLabel(item)}

@@ -37,6 +37,7 @@ restaurants/{restaurantId}
   counters/orders                   { value: number }
   aggregates/{yyyy-mm-dd}
   plans/{planId}
+  content/homepage                  hero, featured ids, story, delivery, promo
 restaurants/_usages/promotionUsages/{promotionId}__{customerKey}
 customers/{customerId}              member id == Firebase uid
   addresses/{addressId}
@@ -65,6 +66,12 @@ Public identity, timezone `Europe/Stockholm`, weekend day list, kitchen capacity
 ### Menu item
 
 Matches the product model: weekday/weekend prices, availability window, allergens, dietary tags, modifier group ids, kitchen portion grams, inventory SKU.
+
+`images[]` stores **metadata only** (storage path, public URL, alt text, dimensions, primary flag, sort order, focal point, variant refs). Photograph bytes live in Cloud Storage under `restaurants/{restaurantId}/menu/{menuItemId}/{assetId}-{variant}.ext`. Retired images are marked `PENDING_DELETE` and are not hard-deleted immediately.
+
+### Homepage content
+
+`restaurants/{restaurantId}/content/homepage` is a developer-defined document (hero copy + optional image refs, featured meal ids, story, delivery, promotional). It is not a page builder. Phase 3 serves it from the in-memory seed until Firestore is wired.
 
 ### Order (immutable commercial snapshot)
 

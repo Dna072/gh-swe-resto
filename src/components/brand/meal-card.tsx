@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FoodPhoto } from "@/components/brand/food-photo";
 import { Price } from "@/components/brand/price";
 import { revealVariants } from "@/lib/motion";
 import type { Ore } from "@/lib/money";
@@ -16,6 +16,7 @@ export interface MealCardProps {
   priceOre: Ore;
   imageAlt: string;
   imageUrl?: string | null;
+  imagePosition?: string;
   href?: string;
   featured?: boolean;
   soldOut?: boolean;
@@ -23,6 +24,8 @@ export interface MealCardProps {
   addLabel?: string;
   onAdd?: () => void;
   className?: string;
+  editorial?: boolean;
+  dietaryLabels?: string[];
 }
 
 export function MealCard({
@@ -31,6 +34,7 @@ export function MealCard({
   priceOre,
   imageAlt,
   imageUrl,
+  imagePosition,
   href,
   featured = false,
   soldOut = false,
@@ -38,20 +42,28 @@ export function MealCard({
   addLabel = "Add",
   onAdd,
   className,
+  editorial = false,
+  dietaryLabels,
 }: MealCardProps) {
   const reduced = useReducedMotion() ?? false;
   const media = (
-    <div className="relative aspect-[4/3] bg-secondary">
-      {imageUrl ? (
-        <Image src={imageUrl} alt={imageAlt} fill sizes="(max-width: 768px) 100vw, 360px" className="object-cover" />
-      ) : (
-        <div
-          aria-hidden="true"
-          className="flex size-full items-end bg-kente p-4 text-sm text-muted-foreground"
-        >
-          {imageAlt}
-        </div>
+    <div
+      className={cn(
+        "relative overflow-hidden",
+        editorial ? "aspect-[4/5] sm:aspect-[5/4] md:min-h-[22rem] md:flex-1" : "aspect-[4/3]",
       )}
+    >
+      <FoodPhoto
+        src={imageUrl}
+        alt={imageAlt}
+        name={name}
+        sizes="(max-width: 768px) 100vw, 420px"
+        objectPosition={imagePosition}
+        className={cn(
+          "size-full transition-transform duration-700",
+          !reduced && "group-hover:scale-[1.03]",
+        )}
+      />
       {featured ? (
         <Badge variant="gold" className="absolute top-3 left-3">
           Popular
@@ -75,7 +87,8 @@ export function MealCard({
       initial={reduced ? "visible" : "hidden"}
       animate="visible"
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10",
+        "group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10",
+        editorial && "md:flex-row",
         className,
       )}
     >
@@ -98,6 +111,11 @@ export function MealCard({
             <h3 className="font-heading text-xl leading-tight">{name}</h3>
           )}
           <p className="text-sm text-muted-foreground">{description}</p>
+          {dietaryLabels && dietaryLabels.length > 0 ? (
+            <p className="text-xs uppercase tracking-[0.14em] text-earth">
+              {dietaryLabels.join(" · ")}
+            </p>
+          ) : null}
         </div>
         <div className="mt-auto flex items-center justify-between gap-3">
           <Price ore={priceOre} />

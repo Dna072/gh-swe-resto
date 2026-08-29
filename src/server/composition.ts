@@ -3,6 +3,9 @@ import "server-only";
 import { AnalyticsService } from "@/domains/analytics/service";
 import { CartService } from "@/domains/cart/service";
 import { DeliveryService } from "@/domains/delivery/service";
+import { defaultHomepageContent } from "@/domains/content/defaults";
+import { MediaService } from "@/domains/media/service";
+import { MenuAdminService } from "@/domains/menu/admin.service";
 import { MenuService } from "@/domains/menu/service";
 import { OrderService } from "@/domains/orders/service";
 import { PricingService } from "@/domains/pricing/service";
@@ -20,6 +23,9 @@ import {
   seedRestaurant,
   seededCatalog,
 } from "@/infrastructure/seed/ghana-menu";
+import { LocalObjectStorage } from "@/infrastructure/storage/local-storage";
+import { GcsBinaryStorage } from "@/infrastructure/storage/gcs-binary-storage";
+import type { BinaryObjectStorage } from "@/infrastructure/storage/object-storage";
 import { getEnv } from "@/lib/env";
 
 /**
@@ -34,7 +40,16 @@ const state = createMemoryState({
   items: catalog.items,
   modifierGroups: catalog.modifierGroups,
   inventory: catalog.inventory,
+  homepage: defaultHomepageContent(restaurantId),
 });
+
+function createObjectStorage(): BinaryObjectStorage {
+  const env = getEnv();
+  if (env.APP_ENV === "production" && env.GCS_ASSETS_BUCKET) {
+    return new GcsBinaryStorage(env.GCS_ASSETS_BUCKET);
+  }
+  return new LocalObjectStorage();
+}
 
 export const menuRepository = new InMemoryMenuRepository(state);
 const promotionRepository = new InMemoryPromotionRepository(state);
@@ -42,7 +57,10 @@ const orderRepository = new InMemoryOrderRepository(state);
 const transactions = new InMemoryTransactionRunner(state);
 const mockDelivery = new MockDeliveryProvider(() => catalog.deliveryZones);
 
+export const objectStorage = createObjectStorage();
+export const mediaService = new MediaService(objectStorage);
 export const menuService = new MenuService(menuRepository);
+export const menuAdminService = new MenuAdminService(menuRepository, mediaService);
 export const pricingService = new PricingService();
 export const promotionService = new PromotionService();
 export const cartService = new CartService(
