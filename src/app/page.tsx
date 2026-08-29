@@ -13,6 +13,8 @@ import { imageUrl, objectPosition } from "@/lib/media/display";
 import { lowStockLabel, soldOut } from "@/lib/menu/display";
 import { loadHomepage, loadPublicCatalog } from "@/server/catalog";
 
+export const dynamic = "force-dynamic";
+
 const STEPS = [
   {
     title: "Check your postcode",

@@ -21,8 +21,15 @@ export async function requireAdmin(request: Request, permission: Permission): Pr
     return actor;
   }
 
-  const session = await verifySessionToken(token);
-  const actor: Actor = { uid: session.uid, role: session.role, email: session.email };
-  authorizationService.requirePermission(actor, permission);
-  return actor;
+  try {
+    const session = await verifySessionToken(token);
+    const actor: Actor = { uid: session.uid, role: session.role, email: session.email };
+    authorizationService.requirePermission(actor, permission);
+    return actor;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("UNAUTHORIZED", "Admin sign-in is required.");
+  }
 }

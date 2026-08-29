@@ -6,6 +6,8 @@ import { TrackView } from "@/components/storefront/track-view";
 import { lowStockLabel, soldOut } from "@/lib/menu/display";
 import { loadPublicCatalog } from "@/server/catalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Today's menu",
   description: "Ghanaian plates, sides and drinks for delivery in Uppsala.",

@@ -12,6 +12,8 @@ import { oreToSek } from "@/lib/money";
 import { lowStockLabel, soldOut } from "@/lib/menu/display";
 import { loadPublicItem } from "@/server/catalog";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = { params: Promise<{ slug: string }> };
 
 function pageUrl(slug: string): string {
