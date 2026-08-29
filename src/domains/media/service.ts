@@ -105,10 +105,10 @@ export class MediaService {
     }
 
     const now = nowIso();
-    const card = variants.find((entry) => entry.kind === "card") ?? original;
+    const card = variants.find((entry) => entry.kind === "card") ?? variants[0]!;
     return {
       id: assetId,
-      storagePath: card.path,
+      storagePath: card.storagePath,
       url: card.url,
       alt: input.altText,
       altText: input.altText,
