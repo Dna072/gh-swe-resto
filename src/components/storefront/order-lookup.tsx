@@ -6,15 +6,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
-import { rememberGuestOrder, readGuestOrders, EMPTY_GUEST_ORDERS } from "@/lib/orders/guest-orders";
-
-function subscribe(): () => void {
-  return () => undefined;
-}
+import {
+  rememberGuestOrder,
+  readGuestOrders,
+  subscribeGuestOrders,
+  EMPTY_GUEST_ORDERS,
+} from "@/lib/orders/guest-orders";
 
 export function OrderLookup() {
   const router = useRouter();
-  const recent = useSyncExternalStore(subscribe, readGuestOrders, () => EMPTY_GUEST_ORDERS);
+  const recent = useSyncExternalStore(subscribeGuestOrders, readGuestOrders, () => EMPTY_GUEST_ORDERS);
   const [number, setNumber] = useState("");
   const [token, setToken] = useState("");
   const [pending, setPending] = useState(false);

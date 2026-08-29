@@ -5,9 +5,13 @@ export const oreSchema = z.number().int();
 export const addressSchema = z.object({
   line1: z.string().min(1).max(200),
   line2: z.string().max(200).optional(),
-  postalCode: z.string().min(3).max(12),
+  postalCode: z
+    .string()
+    .min(3)
+    .max(12)
+    .transform((value) => value.replace(/\s+/g, "")),
   city: z.string().min(1).max(80),
-  country: z.string().length(2).default("SE"),
+  country: z.string().length(2).optional().default("SE"),
   lat: z.number().optional(),
   lng: z.number().optional(),
   formatted: z.string().max(300).optional(),
