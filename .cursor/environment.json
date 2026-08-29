@@ -1,0 +1,22 @@
+{
+  "name": "Ghana Restaurant",
+  "install": "cp -n .env.example .env.local 2>/dev/null || true; npm ci && npx --yes firebase setup:emulators:firestore",
+  "terminals": [
+    {
+      "name": "emulators",
+      "command": "npm run emulators",
+      "description": "Firebase Auth (9099), Firestore (8080), and Storage (9199) emulators for local development."
+    },
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "description": "Next.js dev server on http://localhost:3000 (design system preview at /design-system)."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
