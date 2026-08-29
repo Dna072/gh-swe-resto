@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+coverage
+emulator-data
+*.md
+!README.md
+tests
+firebase-debug.log
+firestore-debug.log
+.env
+.env.*
+!.env.example
