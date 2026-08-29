@@ -2,14 +2,19 @@
 
 Trusted Next.js Route Handlers. Provider credentials never appear in responses.
 
-Phase 0 ships `/api/health` only. The contracts below are the Phase 3–8 surface.
+Phase 2 ships the public catalog, cart quote, and delivery-area check. Checkout and payments remain Phase 3+.
 
 ## Customer
 
 | Method | Path | Purpose |
 | --- | --- | --- |
+| GET | `/api/menu` | Public catalog with server-resolved display prices |
+| GET | `/api/menu/:slug` | One meal plus modifier groups |
 | POST | `/api/cart/quote` | Server-priced cart |
-| POST | `/api/delivery/quote` | Zone + provider quote |
+| POST | `/api/delivery/check` | Postcode against seeded delivery zones |
+| POST | `/api/marketing/signup` | Email + required consent (in-memory) |
+| POST | `/api/analytics/track` | Storefront events |
+| POST | `/api/delivery/quote` | Zone + provider quote (Phase 3) |
 | POST | `/api/orders` | Idempotent order create |
 | GET | `/api/orders/:id` | Tracking (token or session) |
 | POST | `/api/orders/:id/cancel` | Customer/admin cancel |

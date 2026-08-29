@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { House, UtensilsCrossed, ShoppingBag, Receipt, UserRound } from "lucide-react";
+import { useCart } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -13,8 +14,10 @@ const items = [
   { href: "/account", label: "Account", icon: UserRound },
 ] as const;
 
-export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
+export function BottomNav({ cartCount }: { cartCount?: number }) {
   const pathname = usePathname();
+  const cart = useCart();
+  const count = cartCount ?? cart.itemCount;
 
   return (
     <nav
@@ -23,7 +26,10 @@ export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5">
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
             <li key={item.href}>
@@ -37,9 +43,9 @@ export function BottomNav({ cartCount = 0 }: { cartCount?: number }) {
               >
                 <Icon className="size-5" aria-hidden="true" />
                 {item.label}
-                {item.href === "/cart" && cartCount > 0 ? (
+                {item.href === "/cart" && count > 0 ? (
                   <span className="absolute top-1 right-4 flex size-4 items-center justify-center rounded-full bg-earth text-[9px] text-earth-foreground">
-                    {cartCount}
+                    {count}
                   </span>
                 ) : null}
               </Link>

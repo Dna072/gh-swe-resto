@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist_Mono, Outfit } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { SkipLink } from "@/components/brand/skip-link";
+import { getEnv } from "@/lib/env";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -44,7 +45,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-sans">
         <SkipLink />
-        <Providers>{children}</Providers>
+        <Providers restaurantId={getEnv().DEFAULT_RESTAURANT_ID}>{children}</Providers>
       </body>
     </html>
   );

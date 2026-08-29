@@ -4,7 +4,7 @@ Production-grade online ordering and operations platform for a Ghanaian restaura
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phase 1 design system. Preview at `/design-system`. The customer homepage and ordering UI are not built yet.
+**Current status:** Phase 2 customer menu and cart. Homepage, `/menu`, meal customisation, and a server-quoted cart. Checkout is Phase 3.
 
 ## Stack
 
@@ -60,9 +60,9 @@ npm run build
 
 ## Phase plan
 
-0. Architecture, Firestore, security, providers, CI — **this release**
+0. Architecture, Firestore, security, providers, CI
 1. Design system
-2. Customer menu and cart UI
+2. Customer menu and cart UI — **this release**
 3. Delivery and checkout
 4. Orders, kitchen, printing
 5. Payments
@@ -72,4 +72,4 @@ npm run build
 9. Notifications
 10. Analytics and hardening
 
-Do not start Phase 1 until this foundation is reviewed.
+The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`) until admin CMS lands.
