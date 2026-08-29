@@ -36,9 +36,8 @@ export function MealCard({
   return (
     <motion.article
       variants={revealVariants(reduced)}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.3 }}
+      initial={reduced ? "visible" : "hidden"}
+      animate="visible"
       className={cn(
         "flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10",
         className,

@@ -186,6 +186,7 @@ export function DesignSystemGallery() {
         <Section id="forms" title="Forms">
           <form
             className="grid max-w-md gap-4"
+            noValidate
             onSubmit={form.handleSubmit((values) => {
               toast.success(`Thanks ${values.name}`);
               form.reset();
