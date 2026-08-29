@@ -4,7 +4,7 @@ Production-grade online ordering and operations platform for a Ghanaian restaura
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phase 0 architecture foundation. The customer homepage and ordering UI are not built yet.
+**Current status:** Phase 1 design system. Preview at `/design-system`. The customer homepage and ordering UI are not built yet.
 
 ## Stack
 
@@ -47,6 +47,7 @@ npm run build
 
 ## Documentation
 
+- [DESIGN.md](DESIGN.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [DATABASE.md](DATABASE.md)
 - [SECURITY.md](SECURITY.md)

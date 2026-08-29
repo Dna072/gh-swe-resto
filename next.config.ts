@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
@@ -10,6 +11,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const development = process.env.NODE_ENV !== "production";
     return [
       {
         source: "/:path*",
@@ -25,10 +27,14 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://apis.google.com",
+              development
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://apis.google.com"
+                : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://apis.google.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://storage.googleapis.com",
-              "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com wss://*.firebaseio.com",
+              development
+                ? "connect-src 'self' ws: wss: http: https:"
+                : "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com wss://*.firebaseio.com",
               "frame-src https://js.stripe.com https://hooks.stripe.com",
               "font-src 'self' data:",
               "object-src 'none'",
