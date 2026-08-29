@@ -1,6 +1,6 @@
 # Design system
 
-Phase 1 visual identity for Ghana Restaurant. The customer homepage is not part of this phase.
+Phase 1 visual identity for Ghana Restaurant. Phase 2 uses these tokens on the customer homepage, menu, meal detail, and cart.
 
 ## Intent
 

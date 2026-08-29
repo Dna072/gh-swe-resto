@@ -5,7 +5,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     service: "ghana-restaurant",
-    phase: 0,
+    phase: 2,
     schemaVersion: SCHEMA_VERSION,
   });
 }

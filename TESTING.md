@@ -4,7 +4,7 @@
 
 | Layer | Tool | What |
 | --- | --- | --- |
-| Unit | Vitest | Pricing, promotions, inventory, state machine, RBAC, payments, delivery selection |
+| Unit | Vitest | Pricing, promotions, inventory, state machine, RBAC, payments, delivery selection, seeded catalog |
 | Integration | Vitest + in-memory repos | Guest checkout, snapshots, concurrent last-portion |
 | Rules | `@firebase/rules-unit-testing` + emulator | Customer/guest/admin/kitchen/finance isolation |
 | E2E | Playwright | Phase 3+ customer and kitchen journeys |
@@ -33,4 +33,6 @@ Rules tests need Java 21.
 
 ## Later
 
-Playwright mobile viewport (390px) for the guest journey and kitchen board. Load tests for menu, quote, create, kitchen, and tracking once HTTP APIs exist.
+Playwright mobile viewport (390px) for the guest journey and kitchen board. Load tests for menu, quote, create, kitchen, and tracking once checkout APIs exist.
+
+Phase 2 unit coverage includes server-resolved seed prices, cart quotes, and Uppsala delivery-zone checks.
