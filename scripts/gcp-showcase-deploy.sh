@@ -168,6 +168,14 @@ if ! gcloud builds submit \
 fi
 
 echo "Deploying Cloud Run service ${SERVICE}…"
+RUN_ENV="NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET}"
+MAPS_KEY="${GOOGLE_MAPS_SERVER_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
+if [[ -n "${MAPS_KEY}" ]]; then
+  RUN_ENV="${RUN_ENV},GOOGLE_MAPS_SERVER_KEY=${MAPS_KEY}"
+fi
+if [[ -n "${NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY:-}" ]]; then
+  RUN_ENV="${RUN_ENV},NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY}"
+fi
 gcloud run deploy "${SERVICE}" \
   --project "${PROJECT_ID}" \
   --image "${IMAGE}" \
@@ -181,7 +189,7 @@ gcloud run deploy "${SERVICE}" \
   --timeout 60 \
   --port 8080 \
   --allow-unauthenticated \
-  --set-env-vars "NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET}"
+  --set-env-vars "${RUN_ENV}"
 
 URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
 gcloud run services update "${SERVICE}" \

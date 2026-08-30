@@ -15,6 +15,7 @@ import { formatSek } from "@/lib/money";
 import type { MessageKey, Translator } from "@/lib/i18n/messages";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
 import type { PublicOrder } from "@/lib/orders/public";
+import { formatSlot } from "@/lib/orders/slot-format";
 
 export function OrderConfirmation({
   orderId,
@@ -165,6 +166,12 @@ export function OrderConfirmation({
           <dt>{t("order.fulfillment")}</dt>
           <dd>{order.fulfillment === "PICKUP" ? t("order.pickup") : t("order.delivery")}</dd>
         </div>
+        {order.scheduledFor ? (
+          <div className="flex justify-between gap-3">
+            <dt>{t("order.scheduledFor")}</dt>
+            <dd>{formatSlot(order.scheduledFor, locale)}</dd>
+          </div>
+        ) : null}
       </dl>
       {order.tracking.length > 0 ? (
         <ol className="grid gap-2">

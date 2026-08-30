@@ -36,7 +36,7 @@ describe("translator", () => {
 
   it("describes an online restaurant without table booking", () => {
     const t = createTranslator("en");
-    expect(t("home.hero.subtitle")).toMatch(/delivery or pickup/i);
+    expect(t("home.hero.subtitle")).toMatch(/delivery in Uppsala/i);
     expect(t("home.hero.subtitle")).not.toMatch(/book the table/i);
     expect(t("cart.eyebrow")).toBe("Your order");
     expect(t("checkout.eyebrow")).toBe("Checkout");

@@ -97,6 +97,7 @@ export interface Order extends Timestamped {
   customerSnapshot: CustomerSnapshot;
   estimatedPreparationTime?: string;
   estimatedDeliveryTime?: string;
+  scheduledFor?: string;
   specialInstructions?: string;
   promotionCode?: string;
   idempotencyKey: string;

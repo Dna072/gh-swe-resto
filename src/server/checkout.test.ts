@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { quoteDelivery } from "@/server/checkout";
+import { quoteDelivery, resolveAdvanceDeliverySlot } from "@/server/checkout";
 import { orderService, recallGuestToken, rememberGuestToken, restaurantSettings } from "@/server/composition";
 import { toPublicOrder } from "@/server/public-order";
 
@@ -78,6 +78,12 @@ describe("Phase 3 checkout", () => {
     expect(recallGuestToken(created.order.id, "phase3-delivery-1")).toBe(created.accessToken);
     const loaded = await orderService.getForCustomer(created.order.id, created.accessToken);
     expect(loaded.id).toBe(created.order.id);
+  });
+
+  it("resolves a 24-hour advance slot inside kitchen hours", async () => {
+    const now = new Date("2026-08-30T10:00:00.000Z");
+    expect(resolveAdvanceDeliverySlot("2026-08-31T10:00:00.000Z", now)).toBe("2026-08-31T10:00:00.000Z");
+    expect(() => resolveAdvanceDeliverySlot("2026-08-30T14:00:00.000Z", now)).toThrow(/24 hours/i);
   });
 
   it("creates a pickup order with no delivery fee", async () => {

@@ -25,6 +25,7 @@ export function toStaffOrder(order: Order): StaffOrder {
     addressLabel: [address.line1, address.postalCode, address.city].filter(Boolean).join(", "),
     specialInstructions: order.specialInstructions,
     estimatedDeliveryTime: order.estimatedDeliveryTime,
+    scheduledFor: order.scheduledFor,
     createdAt: order.createdAt,
     actions: kitchenActions(order),
   };

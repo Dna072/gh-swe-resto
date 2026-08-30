@@ -17,6 +17,7 @@ The storefront, checkout, kitchen board, and admin run as **one Cloud Run servic
 | `npx firebase-tools login` if rules deploy fails | Maybe | Deploys `firestore.rules`, indexes, and `storage.rules` |
 | A token the team will paste on `/admin` | Optional | Defaults to `showcase-admin-token` |
 | Stripe / Wolt | **No** | Still mocked. We will wire them when you have sandbox keys |
+| Google Maps API key | Optional | Address search and Uppsala geocoding. Without it, checkout still accepts street + postcode and checks Uppsala on the server |
 
 The agent cannot create a GCP project, enable billing, or accept Firebase terms on your account. After you have a project id, run the script (or share the id and we can retry if this environment has `gcloud` auth).
 
@@ -104,6 +105,7 @@ Mount from Secret Manager when you leave the mock providers:
 - `STRIPE_WEBHOOK_SECRET`
 - `WOLT_DRIVE_API_KEY`
 - SMTP credentials
+- `GOOGLE_MAPS_SERVER_KEY` (Places Autocomplete, Geocoding, Distance Matrix — restrict the key to those APIs)
 
 Public Firebase web config may be `NEXT_PUBLIC_*`. Do not put admin credentials in `NEXT_PUBLIC_*`.
 

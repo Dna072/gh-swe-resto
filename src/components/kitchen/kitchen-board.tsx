@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Price } from "@/components/brand/price";
 import { adminFetch } from "@/lib/admin/client";
 import type { KitchenAction, StaffOrder } from "@/lib/orders/staff";
+import { formatSlot } from "@/lib/orders/slot-format";
 import { toast } from "sonner";
 
 const COLUMNS: Array<{ id: string; title: string; statuses: StaffOrder["orderStatus"][] }> = [
@@ -117,6 +118,11 @@ export function KitchenBoard() {
                     <p className="text-sm text-muted-foreground">
                       {order.fulfillment === "PICKUP" ? "Pickup" : "Delivery"} · {order.addressLabel}
                     </p>
+                    {order.scheduledFor ? (
+                      <p className="mt-1 text-sm font-medium text-earth">
+                        Scheduled {formatSlot(order.scheduledFor, "sv")}
+                      </p>
+                    ) : null}
                     <ul className="mt-3 space-y-1 text-sm">
                       {order.items.map((item) => (
                         <li key={`${order.id}-${item.menuItemId}-${item.name}`}>
@@ -193,6 +199,7 @@ function formatTicket(payload: Record<string, unknown>): string {
     String(payload.customerName ?? ""),
     String(payload.phone ?? ""),
     String(payload.address ?? ""),
+    payload.scheduledFor ? `When: ${formatSlot(String(payload.scheduledFor), "sv")}` : "",
     "",
     ...lines,
     "",

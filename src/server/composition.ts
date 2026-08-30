@@ -18,7 +18,9 @@ import { PromotionService } from "@/domains/promotions/service";
 import type { PromotionRepository } from "@/domains/promotions/repository";
 import type { TransactionRunner } from "@/domains/shared/transaction";
 import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
+import type { MapsPort } from "@/domains/delivery/maps-port";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
+import { createGoogleMapsPort } from "@/infrastructure/maps/google-maps";
 import { getAdminFirestore } from "@/infrastructure/firebase/admin";
 import { FirestoreMenuRepository } from "@/infrastructure/firestore/menu-repository";
 import { FirestoreOrderRepository } from "@/infrastructure/firestore/order-repository";
@@ -215,6 +217,10 @@ export function deliveryZones() {
   return catalog.deliveryZones;
 }
 
+export function mapsPort(): MapsPort | null {
+  return createGoogleMapsPort();
+}
+
 export function restaurantSettings() {
   return {
     id: restaurantId,
@@ -222,6 +228,7 @@ export function restaurantSettings() {
     city: seedRestaurant.city,
     pickup: seedRestaurant.pickup,
     timeZone: seedRestaurant.timeZone,
+    openingHours: seedRestaurant.openingHours,
     orderingPaused: seedRestaurant.orderingPaused,
   };
 }

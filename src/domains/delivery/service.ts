@@ -14,15 +14,26 @@ export class DeliveryService {
     private readonly rules: DeliverySelectionRule,
   ) {}
 
-  validateZone(address: AddressSnapshot, zones: DeliveryZone[]): DeliveryZone {
+  validateZone(
+    address: AddressSnapshot,
+    zones: DeliveryZone[],
+    options?: { allowCityWide?: boolean },
+  ): DeliveryZone {
     const postal = address.postalCode.replace(/\s+/g, "");
     const zone = zones.find(
       (candidate) => candidate.active && candidate.postalCodes.some((code) => code.replace(/\s+/g, "") === postal),
     );
-    if (!zone) {
-      throw new AppError("DELIVERY_UNAVAILABLE", "We do not deliver to this address yet.");
+    if (zone) {
+      return zone;
     }
-    return zone;
+    if (options?.allowCityWide) {
+      const fallback = zones.find((candidate) => candidate.id === "uppsala-south" && candidate.active)
+        ?? zones.find((candidate) => candidate.active);
+      if (fallback) {
+        return fallback;
+      }
+    }
+    throw new AppError("DELIVERY_UNAVAILABLE", "We do not deliver to this address yet.");
   }
 
   async quote(request: DeliveryQuoteRequest, zone: DeliveryZone): Promise<DeliveryQuote> {

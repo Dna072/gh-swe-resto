@@ -19,6 +19,7 @@ export type PublicOrder = {
   customerName: string;
   specialInstructions?: string;
   estimatedDeliveryTime?: string;
+  scheduledFor?: string;
   createdAt: string;
   paymentDeferred: boolean;
   payable: boolean;

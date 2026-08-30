@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/errors";
 import { createOrderSchema } from "@/lib/validation/checkout";
-import { quoteDelivery } from "@/server/checkout";
+import { quoteDelivery, resolveAdvanceDeliverySlot } from "@/server/checkout";
 import {
   orderService,
   recallGuestToken,
   rememberGuestToken,
   restaurantIdFromEnv,
-  restaurantSettings,
 } from "@/server/composition";
 import { errorResponse } from "@/server/http";
 import { toPublicOrder } from "@/server/public-order";
@@ -23,24 +22,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: "VALIDATION", message: "Unknown restaurant." }, { status: 400 });
     }
 
-    const pickup = restaurantSettings().pickup;
-    let deliveryFeeOre = 0;
-    let deliveryAddress = pickup;
-    let deliveryProvider: string | undefined;
-    let deliveryQuoteId: string | undefined;
-    let estimatedDeliveryTime: string | undefined;
-
-    if (body.fulfillment === "DELIVERY") {
-      if (!body.deliveryAddress) {
-        throw new AppError("VALIDATION", "A delivery address is required.");
-      }
-      const quote = await quoteDelivery(body.deliveryAddress, 0);
-      deliveryFeeOre = quote.feeOre;
-      deliveryAddress = body.deliveryAddress;
-      deliveryProvider = quote.provider;
-      deliveryQuoteId = quote.quoteId;
-      estimatedDeliveryTime = quote.deliveryEstimate;
+    if (body.fulfillment === "PICKUP") {
+      throw new AppError("VALIDATION", "Orders are delivery only.");
     }
+    if (!body.deliveryAddress) {
+      throw new AppError("VALIDATION", "A delivery address is required.");
+    }
+    if (!body.scheduledFor) {
+      throw new AppError("SLOT_UNAVAILABLE", "Choose a delivery date and time.");
+    }
+
+    const scheduledFor = resolveAdvanceDeliverySlot(body.scheduledFor);
+    const quote = await quoteDelivery(body.deliveryAddress, 0);
+    const deliveryAddress = quote.address ?? body.deliveryAddress;
 
     const created = await orderService.create({
       restaurantId: body.restaurantId,
@@ -52,15 +46,16 @@ export async function POST(request: Request) {
         guestSessionId: body.guestSessionId,
       },
       deliveryAddress,
-      deliveryFeeOre,
+      deliveryFeeOre: quote.feeOre,
       promotionCode: body.promotionCode,
       guestSessionId: body.guestSessionId,
       idempotencyKey,
       specialInstructions: body.specialInstructions,
-      fulfillment: body.fulfillment,
-      deliveryProvider,
-      deliveryQuoteId,
-      estimatedDeliveryTime,
+      fulfillment: "DELIVERY",
+      deliveryProvider: quote.provider,
+      deliveryQuoteId: quote.quoteId,
+      estimatedDeliveryTime: scheduledFor,
+      scheduledFor,
     });
 
     rememberGuestToken(created.order.id, idempotencyKey, created.accessToken);

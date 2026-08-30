@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { adminFetch } from "@/lib/admin/client";
 import type { StaffOrder } from "@/lib/orders/staff";
+import { formatSlot } from "@/lib/orders/slot-format";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<StaffOrder[]>([]);
@@ -52,6 +53,7 @@ export default function AdminOrdersPage() {
               <p className="font-heading text-xl">{order.customerName}</p>
               <p className="text-sm text-muted-foreground">
                 {order.totalLabel} · {order.orderStatus.replaceAll("_", " ").toLowerCase()}
+                {order.scheduledFor ? ` · ${formatSlot(order.scheduledFor, "sv")}` : ""}
               </p>
             </div>
             <Button size="touch" variant="outline" asChild>

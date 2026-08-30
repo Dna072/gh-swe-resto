@@ -27,6 +27,23 @@ describe("DeliveryService", () => {
     ).toThrow(/do not deliver/i);
   });
 
+  it("can fall back to a city-wide zone when Maps already confirmed Uppsala", () => {
+    const south: DeliveryZone = {
+      ...zone,
+      id: "uppsala-south",
+      name: "Södra Uppsala",
+      postalCodes: ["75643"],
+      baseFeeOre: 5900,
+    };
+    const service = new DeliveryService([new MockDeliveryProvider()], {
+      preferCheapest: true,
+      preferredProviders: ["wolt_drive"],
+    });
+    expect(
+      service.validateZone({ ...address, postalCode: "74330" }, [zone, south], { allowCityWide: true }).id,
+    ).toBe("uppsala-south");
+  });
+
   it("selects the cheapest valid quote", async () => {
     const service = new DeliveryService([new MockDeliveryProvider()], {
       preferCheapest: true,
