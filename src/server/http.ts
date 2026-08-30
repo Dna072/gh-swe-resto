@@ -21,7 +21,14 @@ const STATUS_BY_CODE: Record<string, number> = {
 
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof ZodError) {
-    return NextResponse.json({ code: "VALIDATION", message: "Invalid request." }, { status: 400 });
+    const first = error.issues[0];
+    return NextResponse.json(
+      {
+        code: "VALIDATION",
+        message: first ? `${first.path.join(".") || "request"}: ${first.message}` : "Invalid request.",
+      },
+      { status: 400 },
+    );
   }
   if (error instanceof AppError) {
     return NextResponse.json(

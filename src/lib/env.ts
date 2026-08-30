@@ -21,6 +21,7 @@ const envSchema = z.object({
   WOLT_DRIVE_MERCHANT_ID: z.string().optional(),
   WOLT_DRIVE_API_KEY: z.string().optional(),
   EMAIL_PROVIDER: z.enum(["mock", "smtp"]).default("mock"),
+  ADMIN_DEV_TOKEN: z.string().optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

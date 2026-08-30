@@ -29,6 +29,8 @@ export type PublicMenuItem = {
   categoryName: string;
   imageUrl: string | null;
   imageAlt: string;
+  imagePosition?: string;
+  hasPhotograph: boolean;
   displayPriceOre: Ore;
   displayPriceLabel: string;
   availability: AvailabilityStatus;

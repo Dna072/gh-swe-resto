@@ -1,3 +1,4 @@
+import type { HomepageContent } from "@/domains/content/models";
 import type { Customer, CustomerAddress } from "@/domains/customers/models";
 import type { InventoryItem } from "@/domains/inventory/models";
 import type { MenuCategory, MenuItem, ModifierGroup } from "@/domains/menu/models";
@@ -23,6 +24,7 @@ export interface MemoryState {
   sequences: Map<string, number>;
   webhookEvents: Set<string>;
   notificationKeys: Set<string>;
+  homepage?: HomepageContent;
 }
 
 export function createMemoryState(seed: Partial<MemoryState> = {}): MemoryState {

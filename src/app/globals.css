@@ -192,3 +192,14 @@
     text-wrap: balance;
   }
 }
+
+@keyframes hero-in {
+  from {
+    transform: scale(1.06);
+    opacity: 0.88;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

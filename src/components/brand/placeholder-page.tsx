@@ -9,8 +9,8 @@ export function PlaceholderPage({ title }: { title: string }) {
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-earth">Coming later</p>
         <h1 className="mt-3 font-heading text-4xl">{title}</h1>
         <p className="mt-3 text-muted-foreground">
-          This route is reserved. Phase 2 is the public menu and cart. Orders and accounts follow
-          with checkout.
+          This route is reserved. Menu, cart, and guest checkout are live. Accounts and kitchen
+          tools come later.
         </p>
         <Button size="touch" className="mt-6" asChild>
           <Link href="/menu">View today’s menu</Link>

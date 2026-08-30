@@ -1,9 +1,10 @@
-import type { MenuRepository } from "@/domains/menu/repository";
+import type { HomepageContent } from "@/domains/content/models";
+import type { MenuWriteRepository } from "@/domains/menu/write-repository";
 import type { MenuCategory, MenuItem, ModifierGroup } from "@/domains/menu/models";
 import { normalizePageLimit, type Page } from "@/lib/pagination";
 import type { MemoryState } from "./state";
 
-export class InMemoryMenuRepository implements MenuRepository {
+export class InMemoryMenuRepository implements MenuWriteRepository {
   constructor(private readonly state: MemoryState) {}
 
   async getCategory(restaurantId: string, categoryId: string): Promise<MenuCategory | null> {
@@ -60,5 +61,26 @@ export class InMemoryMenuRepository implements MenuRepository {
     return this.state.modifierGroups.filter(
       (item) => item.restaurantId === restaurantId && groupIds.includes(item.id),
     );
+  }
+
+  async saveItem(item: MenuItem): Promise<MenuItem> {
+    const index = this.state.items.findIndex(
+      (candidate) => candidate.restaurantId === item.restaurantId && candidate.id === item.id,
+    );
+    if (index >= 0) {
+      this.state.items[index] = item;
+    } else {
+      this.state.items.push(item);
+    }
+    return item;
+  }
+
+  async getHomepage(restaurantId: string): Promise<HomepageContent | null> {
+    return this.state.homepage?.restaurantId === restaurantId ? this.state.homepage : null;
+  }
+
+  async saveHomepage(content: HomepageContent): Promise<HomepageContent> {
+    this.state.homepage = content;
+    return content;
   }
 }

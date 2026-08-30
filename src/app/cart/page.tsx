@@ -15,7 +15,7 @@ export default function CartPage() {
         <SectionHeading
           eyebrow="Cart"
           title="Your order"
-          description="Line totals come from a server quote. Checkout opens in Phase 3."
+          description="Line totals come from a server quote. Delivery is added at checkout."
         />
         <div className="mt-8">
           <CartView />

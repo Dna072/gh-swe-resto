@@ -47,6 +47,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Local photograph uploads (Cloud Storage in production)
+/public/uploads/*
+!/public/uploads/.gitignore
+
 # emulator
 .firebase/
 emulator-data/

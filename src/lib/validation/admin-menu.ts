@@ -1,0 +1,25 @@
+import { z } from "zod";
+
+export const menuDraftSchema = z.object({
+  id: z.string().optional(),
+  slug: z.string().min(1).max(80),
+  name: z.string().min(1).max(120),
+  description: z.string().min(1).max(2000),
+  shortDescription: z.string().min(1).max(200),
+  categoryId: z.string().min(1),
+  basePriceOre: z.number().int().nonnegative(),
+  weekdayPriceOre: z.number().int().nonnegative().optional(),
+  weekendPriceOre: z.number().int().nonnegative().optional(),
+  isAvailable: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
+  inventoryTracked: z.boolean().optional(),
+  inventorySku: z.string().optional(),
+  availableQuantity: z.number().int().nonnegative().optional(),
+  lowStockThreshold: z.number().int().nonnegative().optional(),
+  preparationTimeMinutes: z.number().int().min(1).max(180),
+  allergens: z.array(z.string()).optional(),
+  dietaryTags: z.array(z.string()).optional(),
+  modifierGroupIds: z.array(z.string()).optional(),
+  displayOrder: z.number().int().optional(),
+});
