@@ -22,6 +22,7 @@ const envSchema = z.object({
   WOLT_DRIVE_API_KEY: z.string().optional(),
   EMAIL_PROVIDER: z.enum(["mock", "smtp"]).default("mock"),
   ADMIN_DEV_TOKEN: z.string().optional(),
+  DATA_STORE: z.enum(["memory", "firestore"]).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

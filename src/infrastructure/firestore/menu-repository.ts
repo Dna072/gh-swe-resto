@@ -1,11 +1,12 @@
 import type { Firestore } from "firebase-admin/firestore";
+import type { HomepageContent } from "@/domains/content/models";
 import type { MenuCategory, MenuItem, ModifierGroup } from "@/domains/menu/models";
-import type { MenuRepository } from "@/domains/menu/repository";
+import type { MenuWriteRepository } from "@/domains/menu/write-repository";
 import { normalizePageLimit, type Page } from "@/lib/pagination";
-import { restaurantPath, restaurantSub } from "./paths";
+import { homepageContentPath, menuItemPath, restaurantPath, restaurantSub } from "./paths";
 import { typedConverter } from "./converters";
 
-export class FirestoreMenuRepository implements MenuRepository {
+export class FirestoreMenuRepository implements MenuWriteRepository {
   constructor(private readonly db: Firestore) {}
 
   private restaurant(restaurantId: string) {
@@ -61,31 +62,75 @@ export class FirestoreMenuRepository implements MenuRepository {
       .orderBy("displayOrder")
       .limit(limit + 1);
     if (request.categoryId) {
-      query = this.restaurant(restaurantId)
+      try {
+        query = this.restaurant(restaurantId)
+          .collection(restaurantSub.menuItems)
+          .withConverter(typedConverter<MenuItem>())
+          .where("categoryId", "==", request.categoryId)
+          .orderBy("displayOrder")
+          .limit(limit + 1);
+      } catch {
+        query = this.restaurant(restaurantId)
+          .collection(restaurantSub.menuItems)
+          .withConverter(typedConverter<MenuItem>())
+          .orderBy("displayOrder")
+          .limit(50);
+      }
+    }
+    let snap;
+    try {
+      snap = await query.get();
+    } catch {
+      snap = await this.restaurant(restaurantId)
         .collection(restaurantSub.menuItems)
         .withConverter(typedConverter<MenuItem>())
-        .where("categoryId", "==", request.categoryId)
-        .orderBy("displayOrder")
-        .limit(limit + 1);
+        .limit(50)
+        .get();
     }
-    const snap = await query.get();
-    const items = snap.docs.slice(0, limit).map((doc) => doc.data());
+    const filtered = snap.docs
+      .map((doc) => doc.data())
+      .filter((item) => (request.categoryId ? item.categoryId === request.categoryId : true))
+      .filter((item) => (request.includeArchived ? true : !item.archivedAt));
+    const items = filtered.slice(0, limit);
     return {
       items,
       limit,
-      nextCursor: snap.docs.length > limit ? snap.docs[limit - 1]?.id : undefined,
+      nextCursor: filtered.length > limit ? items[items.length - 1]?.id : undefined,
     };
   }
 
   async listFeatured(restaurantId: string, limit = 8): Promise<MenuItem[]> {
-    const snap = await this.restaurant(restaurantId)
-      .collection(restaurantSub.menuItems)
-      .withConverter(typedConverter<MenuItem>())
-      .where("isFeatured", "==", true)
-      .orderBy("displayOrder")
-      .limit(Math.min(limit, 12))
+    try {
+      const snap = await this.restaurant(restaurantId)
+        .collection(restaurantSub.menuItems)
+        .withConverter(typedConverter<MenuItem>())
+        .where("isFeatured", "==", true)
+        .orderBy("displayOrder")
+        .limit(Math.min(limit, 12))
+        .get();
+      return snap.docs.map((doc) => doc.data());
+    } catch {
+      const page = await this.listItems(restaurantId, { limit: 50 });
+      return page.items.filter((item) => item.isFeatured && !item.archivedAt).slice(0, limit);
+    }
+  }
+
+  async saveItem(item: MenuItem): Promise<MenuItem> {
+    await this.db.doc(menuItemPath(item.restaurantId, item.id)).set(item, { merge: true });
+    return item;
+  }
+
+  async getHomepage(restaurantId: string): Promise<HomepageContent | null> {
+    const snap = await this.db
+      .doc(homepageContentPath(restaurantId))
+      .withConverter(typedConverter<HomepageContent>())
       .get();
-    return snap.docs.map((doc) => doc.data());
+    return snap.exists ? (snap.data() ?? null) : null;
+  }
+
+  async saveHomepage(content: HomepageContent): Promise<HomepageContent> {
+    await this.db.doc(homepageContentPath(content.restaurantId)).set(content, { merge: true });
+    return content;
   }
 
   async getModifierGroup(restaurantId: string, groupId: string): Promise<ModifierGroup | null> {

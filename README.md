@@ -39,7 +39,7 @@ Never point local development at a production Firebase project.
 
 ## GCP showcase
 
-The same app runs on Cloud Run for a team demo (in-memory catalog, mock payments). You need a GCP project with billing enabled, then:
+The same app runs on Cloud Run for a team demo. Firestore holds the menu and orders; Cloud Storage holds photographs. Payments and delivery stay mocked until Stripe and Wolt keys exist. You need a GCP project with billing enabled, then:
 
 ```bash
 gcloud auth login

@@ -39,6 +39,7 @@ jobs:
           TARGET: ${{ inputs.environment }}
           ADMIN_DEV_TOKEN: ${{ secrets.ADMIN_DEV_TOKEN }}
           REPOSITORY: ${{ vars.ARTIFACT_REPO }}
+          GCS_ASSETS_BUCKET: ${{ vars.GCS_ASSETS_BUCKET }}
         run: |
           set -euo pipefail
           REGION="${REGION:-europe-north1}"
@@ -46,7 +47,7 @@ jobs:
           SERVICE="ghana-restaurant-${TARGET}"
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:${GITHUB_SHA}"
           APP_ENV="staging"
-          MAX_INSTANCES=1
+          MAX_INSTANCES=2
           if [[ "${TARGET}" == "production" ]]; then
             APP_ENV="production"
             MAX_INSTANCES=5
@@ -58,7 +59,10 @@ jobs:
               --description="Ghana Restaurant container images"
           fi
           gcloud builds submit --config cloudbuild.yaml --substitutions="_IMAGE=${IMAGE}"
-          ENV_VARS="NODE_ENV=production,APP_ENV=${APP_ENV},PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,DEFAULT_RESTAURANT_ID=uppsala-main"
+          ENV_VARS="NODE_ENV=production,APP_ENV=${APP_ENV},DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
+          if [[ -n "${GCS_ASSETS_BUCKET:-}" ]]; then
+            ENV_VARS="${ENV_VARS},GCS_ASSETS_BUCKET=${GCS_ASSETS_BUCKET}"
+          fi
           if [[ -n "${ADMIN_DEV_TOKEN}" && "${APP_ENV}" != "production" ]]; then
             ENV_VARS="${ENV_VARS},ADMIN_DEV_TOKEN=${ADMIN_DEV_TOKEN}"
           fi

@@ -2,24 +2,23 @@
 
 Next.js standalone image → Artifact Registry → Cloud Run in `europe-north1`.
 
-The storefront, checkout, kitchen board, and admin run as **one Cloud Run service**. The catalog is still the in-memory demo seed (no Firestore required) until later phases swap those ports.
+The storefront, checkout, kitchen board, and admin run as **one Cloud Run service**. Menu and orders persist in **Cloud Firestore**. Meal photographs persist in **Cloud Storage**. Stripe and Wolt stay mocked until you add those keys.
 
 ## Team showcase (fastest path)
-
-This is the path for a development-team demo. Mock payments, mock delivery, no Firebase project.
 
 ### What we need from you
 
 | Item | Required? | Why |
 | --- | --- | --- |
-| A GCP project id with **billing enabled** | **Yes** | Cloud Run, Cloud Build, and Artifact Registry bill to this project |
-| Permission to enable APIs and deploy Cloud Run | **Yes** | Owner, or Editor plus Service Usage Admin |
+| A GCP project id with **billing enabled** | **Yes** | Cloud Run, Firestore, Cloud Storage, and Cloud Build bill here |
+| Permission to enable APIs and deploy | **Yes** | Owner, or Editor plus Service Usage Admin |
 | `gcloud` installed and `gcloud auth login` | **Yes** | The script uses your user credentials |
-| A token the team will paste on `/admin` | Optional | Defaults to `showcase-admin-token`. Change it if the URL will be public |
-| GitHub Workload Identity secrets | No | Only if you want **Actions → Deploy Cloud Run** instead of the script |
-| Firebase / Stripe / Wolt | No | Not used for the showcase image |
+| One visit to [Firebase console](https://console.firebase.google.com/) if the script cannot auto-link Firebase | Maybe | Google sometimes requires you to accept Firebase terms on a new project |
+| `npx firebase-tools login` if rules deploy fails | Maybe | Deploys `firestore.rules`, indexes, and `storage.rules` |
+| A token the team will paste on `/admin` | Optional | Defaults to `showcase-admin-token` |
+| Stripe / Wolt | **No** | Still mocked. We will wire them when you have sandbox keys |
 
-The agent cannot create a GCP project or enable billing on your account. After you have a project id, run the script (or share the id and we can retry from here if this environment has `gcloud` auth).
+The agent cannot create a GCP project, enable billing, or accept Firebase terms on your account. After you have a project id, run the script (or share the id and we can retry if this environment has `gcloud` auth).
 
 ### Deploy
 
@@ -49,12 +48,13 @@ After it finishes you get:
 | Setting | Value | Reason |
 | --- | --- | --- |
 | `APP_ENV` | `staging` | Allows an admin token; production rejects `ADMIN_DEV_TOKEN` |
-| Payments / delivery / email | mock | No vendor keys |
-| Max instances | 1 | One in-memory catalog so the team sees the same orders |
+| `DATA_STORE` | `firestore` | Menu, orders, and homepage persist across instances |
+| Payments / delivery / email | mock | Stripe and Wolt later |
+| Max instances | 2 | Shared Firestore; still cost-capped |
 | Min instances | 0 | Scale to zero overnight |
 | CPU / memory | 1 / 512Mi | Cost-safe default |
 
-Uploads and orders live in that instance’s memory (`/tmp`). They disappear when the service scales to zero. That is expected for a demo.
+The script creates a Firestore Native database, a photo bucket (`{project}-resto-assets`), deploys rules when Firebase CLI can, and seeds the demo menu via `POST /api/admin/seed`.
 
 ## Cloud Run settings (later environments)
 

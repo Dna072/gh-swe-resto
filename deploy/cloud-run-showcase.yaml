@@ -36,6 +36,8 @@ spec:
               value: mock
             - name: EMAIL_PROVIDER
               value: mock
+            - name: DATA_STORE
+              value: firestore
           startupProbe:
             httpGet:
               path: /api/health

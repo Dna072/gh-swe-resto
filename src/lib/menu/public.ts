@@ -52,8 +52,8 @@ export type PublicCategory = {
 
 export type PublicCatalog = {
   restaurantId: string;
-  seed: true;
-  seedSource: "demo-seed";
+  seed: boolean;
+  seedSource: "demo-seed" | "firestore";
   categories: PublicCategory[];
   items: PublicMenuItem[];
 };
