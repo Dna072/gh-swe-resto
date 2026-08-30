@@ -18,6 +18,7 @@ import { Price } from "@/components/brand/price";
 import { Spinner } from "@/components/brand/loading-state";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 import { localizeMenuName } from "@/lib/i18n/catalog";
 import { analyticsSessionId, track } from "@/lib/analytics/client";
 import type { CartQuote } from "@/domains/cart/models";
@@ -136,9 +137,13 @@ export function CheckoutForm({
         signal: controller.signal,
       })
         .then(async (response) => {
-          const body = (await response.json()) as DeliveryQuote & { message?: string };
+          const body = (await response.json()) as DeliveryQuote & { message?: string; code?: string };
           if (!response.ok) {
-            setDeliveryResult({ key: requestKey, quote: null, error: body.message ?? t("delivery.no") });
+            setDeliveryResult({
+              key: requestKey,
+              quote: null,
+              error: customerErrorMessage(body.code, t, "delivery.no"),
+            });
             return;
           }
           setDeliveryResult({ key: requestKey, quote: { ...body, key: requestKey }, error: null });
@@ -191,9 +196,13 @@ export function CheckoutForm({
       signal: controller.signal,
     })
       .then(async (response) => {
-        const body = (await response.json()) as CartQuote & { message?: string };
+        const body = (await response.json()) as CartQuote & { message?: string; code?: string };
         if (!response.ok) {
-          setCartResult({ key: requestKey, quote: null, error: body.message ?? t("cart.priceError") });
+          setCartResult({
+            key: requestKey,
+            quote: null,
+            error: customerErrorMessage(body.code, t, "cart.priceError"),
+          });
           return;
         }
         setCartResult({ key: requestKey, quote: body, error: null });
@@ -270,9 +279,10 @@ export function CheckoutForm({
         order?: { id: string; publicOrderNumber: string };
         accessToken?: string;
         message?: string;
+        code?: string;
       };
       if (!response.ok || !body.order || !body.accessToken) {
-        toast.error(body.message ?? t("checkout.placeError"));
+        toast.error(customerErrorMessage(body.code, t, "checkout.placeError"));
         return;
       }
       rememberGuestOrder({

@@ -42,4 +42,12 @@ describe("translator", () => {
     expect(t("checkout.eyebrow")).toBe("Checkout");
     expect(t("order.eyebrow")).toBe("Your order");
   });
+
+  it("keeps English and Swedish dictionaries aligned", () => {
+    const en = createTranslator("en");
+    const sv = createTranslator("sv");
+    expect(en("brand.restaurant")).toBe("Restaurant");
+    expect(sv("brand.restaurant")).toBe("Restaurang");
+    expect(en("errors.notFound")).not.toBe(sv("errors.notFound"));
+  });
 });

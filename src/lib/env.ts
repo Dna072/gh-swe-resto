@@ -28,12 +28,18 @@ export type AppEnv = z.infer<typeof envSchema>;
 
 let cached: AppEnv | undefined;
 
+const LOCAL_ADMIN_DEV_TOKEN = "dev-admin-token";
+
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
   const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
     throw new Error(`Invalid environment configuration: ${parsed.error.message}`);
   }
-  return parsed.data;
+  const data = parsed.data;
+  if (!data.ADMIN_DEV_TOKEN && data.APP_ENV !== "production") {
+    return { ...data, ADMIN_DEV_TOKEN: LOCAL_ADMIN_DEV_TOKEN };
+  }
+  return data;
 }
 
 export function getEnv(): AppEnv {

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuantityStepper } from "@/components/brand/quantity-stepper";
-import { useT } from "@/components/i18n/locale-provider";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { localizePublicItem } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartModifierSelection } from "@/lib/cart/types";
 import { soldOut } from "@/lib/menu/display";
@@ -48,22 +49,23 @@ function toModifiers(
 }
 
 export function MealCustomizer({ item }: { item: PublicMenuItem }) {
-  const t = useT();
+  const { locale, t } = useLocale();
+  const localized = useMemo(() => localizePublicItem(item, locale, t), [item, locale, t]);
   const router = useRouter();
   const cart = useCart();
-  const unavailable = soldOut(item);
+  const unavailable = soldOut(localized);
   const [quantity, setQuantity] = useState(1);
-  const [selected, setSelected] = useState(() => defaultSelections(item.modifierGroups));
+  const [selected, setSelected] = useState(() => defaultSelections(localized.modifierGroups));
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState("");
 
   const modifiers = useMemo(
-    () => toModifiers(item.modifierGroups, selected, optionQty),
-    [item.modifierGroups, optionQty, selected],
+    () => toModifiers(localized.modifierGroups, selected, optionQty),
+    [localized.modifierGroups, optionQty, selected],
   );
 
   const previewOre = useMemo(() => {
-    const extras = item.modifierGroups.reduce((sum, group) => {
+    const extras = localized.modifierGroups.reduce((sum, group) => {
       return (
         sum +
         (selected[group.id] ?? []).reduce((groupSum, optionId) => {
@@ -75,8 +77,8 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
         }, 0)
       );
     }, 0);
-    return multiplyOre(addOre(item.displayPriceOre, extras), quantity);
-  }, [item.displayPriceOre, item.modifierGroups, optionQty, quantity, selected]);
+    return multiplyOre(addOre(localized.displayPriceOre, extras), quantity);
+  }, [localized.displayPriceOre, localized.modifierGroups, optionQty, quantity, selected]);
 
   function toggleMulti(group: PublicModifierGroup, optionId: string, on: boolean) {
     setSelected((current) => {
@@ -95,7 +97,7 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
     if (unavailable) {
       return;
     }
-    for (const group of item.modifierGroups) {
+    for (const group of localized.modifierGroups) {
       const count = selected[group.id]?.length ?? 0;
       if (count < group.minSelections || count > group.maxSelections) {
         toast.error(t("menu.chooseOptions", { name: group.name }));
@@ -103,21 +105,21 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
       }
     }
     cart.addLine({
-      menuItemId: item.id,
-      slug: item.slug,
-      name: item.name,
+      menuItemId: localized.id,
+      slug: localized.slug,
+      name: localized.name,
       quantity,
       modifiers,
       notes: notes.trim() || undefined,
     });
-    track("item_added", { menuItemId: item.id, slug: item.slug, quantity });
-    toast.success(t("menu.added", { name: item.name }));
+    track("item_added", { menuItemId: localized.id, slug: localized.slug, quantity });
+    toast.success(t("menu.added", { name: localized.name }));
     router.push("/cart");
   }
 
   return (
     <div className="space-y-8">
-      {item.modifierGroups.map((group) => {
+      {localized.modifierGroups.map((group) => {
         const single = group.maxSelections === 1;
         return (
           <fieldset key={group.id} className="space-y-3">

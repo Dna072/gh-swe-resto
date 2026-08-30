@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
 import { useT } from "@/components/i18n/locale-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 
 type CheckResult =
   | { ok: true; zoneName: string; feeLabel: string; etaMinutes: number }
@@ -31,9 +32,10 @@ export function DeliveryCheck() {
         feeLabel?: string;
         etaMinutes?: number;
         message?: string;
+        code?: string;
       };
       if (!response.ok) {
-        setResult({ ok: false, message: body.message ?? t("delivery.no") });
+        setResult({ ok: false, message: customerErrorMessage(body.code, t, "delivery.no") });
         return;
       }
       setResult({

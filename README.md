@@ -74,4 +74,4 @@ npm run build
 9. Notifications
 10. Analytics and hardening
 
-The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`). Admins can edit meals, homepage copy, and photographs at `/admin` (local `ADMIN_DEV_TOKEN`). Full operations CMS remains Phase 8.
+The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`). Admins can edit meals, homepage copy, and photographs at `/admin`. Local development applies `ADMIN_DEV_TOKEN` automatically (`dev-admin-token` unless you set another). Uploaded photographs persist in `data/local-catalog.json` and are served from `/api/media`. Full operations CMS remains Phase 8.
