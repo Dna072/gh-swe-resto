@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  typescript: {
+    tsconfigPath: "tsconfig.build.json",
+  },
   outputFileTracingExcludes: {
     "*": [
       "node_modules/firebase-tools/**",

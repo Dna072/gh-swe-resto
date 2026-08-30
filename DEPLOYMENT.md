@@ -47,7 +47,7 @@ Common causes this repo already guards against:
 
 - Next.js standalone tracing the whole `/app` tree because of a dynamic `existsSync` path
 - Docker Hub rate limits pulling `node:22-bookworm-slim` (the Dockerfile uses `mirror.gcr.io`)
-- `firebase-tools` installed into the image
+- `firebase-tools` / `vitest` installed into the image (`next build` uses `tsconfig.build.json` so it does not typecheck tests)
 - Default Cloud Build RAM / 10-minute timeout
 
 Pull the latest of this branch, then re-run the script.
