@@ -15,7 +15,8 @@
     "test:integration": "vitest run --dir tests/integration",
     "test:rules": "firebase emulators:exec --only firestore --project ghana-restaurant-test \"vitest run --config vitest.rules.config.ts\"",
     "test:all": "npm run test:unit && npm run test:rules",
-    "emulators": "firebase emulators:start --only firestore,auth,storage --project ghana-restaurant-dev"
+    "emulators": "firebase emulators:start --only firestore,auth,storage --project ghana-restaurant-dev",
+    "deploy:showcase": "bash scripts/gcp-showcase-deploy.sh"
   },
   "dependencies": {
     "@google-cloud/storage": "^8.0.1",
