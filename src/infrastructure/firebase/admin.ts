@@ -1,22 +1,21 @@
 import type { App } from "firebase-admin/app";
 import { firebaseProjectId, getEnv } from "@/lib/env";
+import { loadRuntimePackage } from "@/lib/node-load";
 import { isCloudRun } from "@/lib/runtime";
 
 let app: App | undefined;
 let firestoreConfigured = false;
 
 function adminApp() {
-  // Loaded only when Firestore/Auth is first used so a missing nested
-  // dependency cannot crash page imports (it used to 500 the whole site).
-  return require("firebase-admin/app") as typeof import("firebase-admin/app");
+  return loadRuntimePackage<typeof import("firebase-admin/app")>("firebase-admin/app");
 }
 
 function adminFirestore() {
-  return require("firebase-admin/firestore") as typeof import("firebase-admin/firestore");
+  return loadRuntimePackage<typeof import("firebase-admin/firestore")>("firebase-admin/firestore");
 }
 
 function adminAuth() {
-  return require("firebase-admin/auth") as typeof import("firebase-admin/auth");
+  return loadRuntimePackage<typeof import("firebase-admin/auth")>("firebase-admin/auth");
 }
 
 export function getFirebaseAdminApp(): App {
