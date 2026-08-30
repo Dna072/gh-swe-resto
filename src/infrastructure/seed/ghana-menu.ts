@@ -3,6 +3,7 @@
  * Used until Firestore is populated from admin.
  */
 import type { DeliveryZone } from "@/domains/delivery/models";
+import { DEFAULT_OPENING_HOURS } from "@/domains/fulfillment/hours";
 import type { MenuCategory, MenuItem, ModifierGroup, PricingCalendar } from "@/domains/menu/models";
 import type { InventoryItem } from "@/domains/inventory/models";
 import type { Weekday } from "@/lib/time";
@@ -33,6 +34,7 @@ export const seedRestaurant = {
     city: "Uppsala",
     country: "SE",
   },
+  openingHours: DEFAULT_OPENING_HOURS,
   orderingPaused: false,
   kitchenCapacityPer15Min: 10,
   seed: true,

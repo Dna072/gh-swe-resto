@@ -3,7 +3,7 @@ import { CustomerShell } from "@/components/brand/customer-shell";
 import { LocalizedPageBanner } from "@/components/brand/localized-page-banner";
 import { CheckoutForm } from "@/components/storefront/checkout-form";
 import { getTranslator } from "@/lib/i18n/server";
-import { restaurantIdFromEnv, restaurantSettings } from "@/server/composition";
+import { restaurantIdFromEnv } from "@/server/composition";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -14,7 +14,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CheckoutPage() {
-  const pickup = restaurantSettings().pickup;
   return (
     <CustomerShell>
       <main id="main">
@@ -24,7 +23,7 @@ export default async function CheckoutPage() {
           descriptionKey="checkout.description"
         />
         <div className="mx-auto w-full max-w-5xl px-4 py-12">
-          <CheckoutForm restaurantId={restaurantIdFromEnv()} pickup={pickup} />
+          <CheckoutForm restaurantId={restaurantIdFromEnv()} />
         </div>
       </main>
     </CustomerShell>

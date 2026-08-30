@@ -9,7 +9,7 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     hero: {
       eyebrow: "Welcome to",
       title: "Meridian Fusion\nin Uppsala",
-      subtitle: "Ghanaian plates, and more to come — cooked here. Order online for delivery or pickup from today’s menu.",
+      subtitle: "Ghanaian plates, and more to come — cooked here. Order online for delivery in Uppsala.",
       primaryCta: { label: "Order today", href: "#todays-menu" },
       secondaryCta: { label: "View the menu", href: "/menu" },
     },
@@ -21,7 +21,7 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     delivery: {
       eyebrow: "Delivery",
       title: "Do we reach your door?",
-      body: "Enter an Uppsala postcode. Zones live in restaurant data, not in this page.",
+      body: "Enter an Uppsala address or postcode. The server confirms whether we deliver there.",
     },
     promotional: {
       eyebrow: "The list",

@@ -15,6 +15,7 @@ export const createOrderSchema = z.object({
   lines: z.array(cartLineSchema).min(1).max(30),
   customer: contactSchema,
   deliveryAddress: addressSchema.optional(),
+  scheduledFor: z.string().min(10).max(40).optional(),
   specialInstructions: z.string().max(300).optional(),
   promotionCode: z.string().max(40).optional(),
   guestSessionId: z.string().max(80).optional(),

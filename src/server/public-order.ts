@@ -36,6 +36,7 @@ export function toPublicOrder(order: Order): PublicOrder {
     customerName: order.customerSnapshot.name,
     specialInstructions: order.specialInstructions,
     estimatedDeliveryTime: order.estimatedDeliveryTime,
+    scheduledFor: order.scheduledFor,
     createdAt: order.createdAt,
     paymentDeferred: false,
     payable: order.orderStatus === "PENDING_PAYMENT" && order.paymentStatus !== "PAID",

@@ -24,6 +24,7 @@ export interface CreateOrderRequest extends CartQuoteRequest {
   deliveryProvider?: string;
   fulfillment?: FulfillmentMethod;
   estimatedDeliveryTime?: string;
+  scheduledFor?: string;
   deliveryQuoteId?: string;
 }
 
@@ -130,7 +131,8 @@ export class OrderService {
         deliveryId: request.deliveryQuoteId,
         deliveryAddressSnapshot: request.deliveryAddress,
         customerSnapshot: request.customer,
-        estimatedDeliveryTime: request.estimatedDeliveryTime,
+        estimatedDeliveryTime: request.estimatedDeliveryTime ?? request.scheduledFor,
+        scheduledFor: request.scheduledFor,
         specialInstructions: request.specialInstructions,
         promotionCode: quote.promotionCode,
         idempotencyKey: request.idempotencyKey,

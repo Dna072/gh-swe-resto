@@ -32,6 +32,7 @@ export interface KitchenTicket {
   paymentStatus: string;
   deliveryProvider?: string;
   preparationTarget?: string;
+  scheduledFor?: string;
 }
 
 export function ticketFromOrder(order: Order, restaurantName: string): KitchenTicket {
@@ -65,6 +66,7 @@ export function ticketFromOrder(order: Order, restaurantName: string): KitchenTi
     totalOre: order.totalOre,
     paymentStatus: order.paymentStatus,
     deliveryProvider: order.deliveryProvider,
-    preparationTarget: order.estimatedPreparationTime,
+    preparationTarget: order.scheduledFor ?? order.estimatedPreparationTime,
+    scheduledFor: order.scheduledFor,
   };
 }

@@ -8,7 +8,7 @@ export const restaurantDisplay = {
   postalLine: "75322 Uppsala",
   address: "Kungsängsgatan 1, 75322 Uppsala",
   hours: [
-    { label: "Kitchen", days: "Monday to Sunday", time: "11.00 – 21.00" },
-    { label: "Delivery & pickup", days: "Monday to Sunday", time: "11.30 – 20.30" },
+    { label: "Kitchen", days: "Monday to Sunday", time: "11.00 – 19.00" },
+    { label: "Delivery", days: "Monday to Sunday", time: "11.00 – 19.00" },
   ],
 } as const;

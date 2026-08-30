@@ -22,6 +22,7 @@ export type StaffOrder = {
   addressLabel: string;
   specialInstructions?: string;
   estimatedDeliveryTime?: string;
+  scheduledFor?: string;
   createdAt: string;
   actions: KitchenAction[];
 };
