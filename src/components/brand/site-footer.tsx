@@ -29,7 +29,7 @@ export function SiteFooter() {
     <footer className="mt-auto bg-ink text-primary-foreground">
       <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 md:grid-cols-[1.3fr_0.8fr_0.9fr]">
         <div>
-          <p className="font-script text-4xl text-gold">Ghana</p>
+          <p className="font-script text-4xl text-gold">{restaurantDisplay.mark}</p>
           <p className="mt-1 text-[11px] uppercase tracking-[0.34em]">{t("brand.tagline")}</p>
           <AdinkraRule className="mt-5 text-gold" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/70">{t("footer.blurb")}</p>

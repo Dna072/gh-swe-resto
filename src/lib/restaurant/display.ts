@@ -1,6 +1,8 @@
 /** Public restaurant copy for chrome. Hours are display-only — not pricing rules. */
 export const restaurantDisplay = {
-  name: "Ghana Restaurant",
+  name: "Meridian Fusion Cuisine",
+  mark: "Meridian",
+  markLine: "Fusion Cuisine",
   city: "Uppsala",
   addressLine: "Kungsängsgatan 1",
   postalLine: "75322 Uppsala",

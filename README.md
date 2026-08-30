@@ -1,6 +1,6 @@
-# Ghana Restaurant
+# Meridian Fusion Cuisine
 
-Production-grade online ordering and operations platform for a Ghanaian restaurant launching in Uppsala, Sweden.
+Production-grade online ordering and operations platform for Meridian Fusion Cuisine in Uppsala, Sweden. The kitchen starts with Ghanaian plates and will add more meals over time.
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 

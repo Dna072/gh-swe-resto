@@ -1,8 +1,8 @@
 import type { Locale } from "./locales";
 
 export const en = {
-  "meta.siteTitle": "Ghana Restaurant Uppsala",
-  "meta.siteDescription": "Authentic Ghanaian food delivered in Uppsala.",
+  "meta.siteTitle": "Meridian Fusion Cuisine Uppsala",
+  "meta.siteDescription": "Ghanaian plates and more — cooked in Uppsala. Order online for delivery or pickup.",
   "a11y.skip": "Skip to content",
   "a11y.primaryNav": "Primary",
   "a11y.customerNav": "Customer",
@@ -13,7 +13,7 @@ export const en = {
   "a11y.cart": "Cart, {count} items",
   "a11y.language": "Language",
   "brand.restaurant": "Restaurant",
-  "brand.tagline": "Restaurant · Uppsala",
+  "brand.tagline": "Fusion Cuisine · Uppsala",
   "nav.menu": "Menu",
   "nav.story": "Our story",
   "nav.delivery": "Delivery",
@@ -64,9 +64,9 @@ export const en = {
   "hours.heading": "Hours",
   "hours.subheading": "Kitchen & delivery",
   "home.hero.eyebrow": "Welcome to",
-  "home.hero.title": "Ghanaian cooking\nin Uppsala",
+  "home.hero.title": "Meridian Fusion\nin Uppsala",
   "home.hero.subtitle":
-    "Jollof, waakye, banku, fufu — cooked here. Order online for delivery or pickup from today’s menu.",
+    "Ghanaian plates, and more to come — cooked here. Order online for delivery or pickup from today’s menu.",
   "home.hero.primary": "Order today",
   "home.hero.secondary": "View the menu",
   "home.hero.scroll": "Scroll",
@@ -85,11 +85,11 @@ export const en = {
   "home.story.eyebrow": "Discover",
   "home.story.title": "Our story",
   "home.story.body":
-    "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. We open first on our own site in Uppsala. Wolt and Foodora are delivery rails later — not the brand.",
-  "home.story.asideEyebrow": "Ghana in Uppsala",
+    "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. Ghanaian plates first, with more meals to come. We open on our own site in Uppsala.",
+  "home.story.asideEyebrow": "Meridian in Uppsala",
   "home.story.asideTitle": "Home food, cooked here",
   "home.story.asideBody":
-    "Jollof that tastes of the pot, banku with proper pepper, waakye on a Saturday. The brand is Ghanaian; the kitchen is in Uppsala.",
+    "Jollof that tastes of the pot, banku with proper pepper, waakye on a Saturday. Ghanaian plates first — other meals will join the menu.",
   "home.categories.eyebrow": "Discover",
   "home.categories.title": "Browse the menu",
   "home.steps.eyebrow": "Simple",
@@ -119,7 +119,7 @@ export const en = {
   "home.promo.title": "Get the weekend menu",
   "home.promo.body": "Occasional emails only. Consent is required.",
   "footer.blurb":
-    "Ghanaian plates cooked in Uppsala. Delivery zones and prices are confirmed on the server — never guessed in the browser.",
+    "Meridian Fusion Cuisine in Uppsala. Ghanaian plates and more. Delivery zones and prices are confirmed on the server — never guessed in the browser.",
   "footer.demo": "Demo catalog. Pickup address and legal entity will be confirmed before launch.",
   "delivery.postcode": "Postcode",
   "delivery.hint": "We check Uppsala delivery zones on the server.",
@@ -138,11 +138,11 @@ export const en = {
   "signup.failed": "Could not save your email.",
   "signup.success": "You are on the list.",
   "menuPage.eyebrow": "Our menu",
-  "menuPage.title": "Today's Ghanaian plates",
+  "menuPage.title": "Today's plates",
   "menuPage.description":
     "Choose a meal to set protein, heat and extras. Display prices are resolved on the server.",
   "menuPage.metaTitle": "Today's menu",
-  "menuPage.metaDescription": "Ghanaian plates, sides and drinks for delivery in Uppsala.",
+  "menuPage.metaDescription": "Ghanaian plates, sides and drinks — and more to come — for delivery in Uppsala.",
   "category.plates": "Today's plates",
   "category.platesDescription": "Weekday plates from 129 SEK. Weekend pricing is calculated on the server.",
   "category.sides": "Sides",
@@ -308,8 +308,8 @@ export const en = {
 export type MessageKey = keyof typeof en;
 
 export const sv: Record<MessageKey, string> = {
-  "meta.siteTitle": "Ghana Restaurant Uppsala",
-  "meta.siteDescription": "Äkta ghanansk mat hemlevererad i Uppsala.",
+  "meta.siteTitle": "Meridian Fusion Cuisine Uppsala",
+  "meta.siteDescription": "Ghananska rätter och mer — lagat i Uppsala. Beställ online för leverans eller avhämtning.",
   "a11y.skip": "Hoppa till innehållet",
   "a11y.primaryNav": "Huvudmeny",
   "a11y.customerNav": "Kund",
@@ -320,7 +320,7 @@ export const sv: Record<MessageKey, string> = {
   "a11y.cart": "Varukorg, {count} varor",
   "a11y.language": "Språk",
   "brand.restaurant": "Restaurang",
-  "brand.tagline": "Restaurang · Uppsala",
+  "brand.tagline": "Fusion Cuisine · Uppsala",
   "nav.menu": "Meny",
   "nav.story": "Vår historia",
   "nav.delivery": "Leverans",
@@ -371,9 +371,9 @@ export const sv: Record<MessageKey, string> = {
   "hours.heading": "Öppettider",
   "hours.subheading": "Kök och leverans",
   "home.hero.eyebrow": "Välkommen till",
-  "home.hero.title": "Ghanansk matlagning\ni Uppsala",
+  "home.hero.title": "Meridian Fusion\ni Uppsala",
   "home.hero.subtitle":
-    "Jollof, waakye, banku, fufu — lagat här. Beställ online för leverans eller avhämtning från dagens meny.",
+    "Ghananska rätter, och mer som kommer — lagat här. Beställ online för leverans eller avhämtning från dagens meny.",
   "home.hero.primary": "Beställ idag",
   "home.hero.secondary": "Se menyn",
   "home.hero.scroll": "Scrolla",
@@ -392,11 +392,11 @@ export const sv: Record<MessageKey, string> = {
   "home.story.eyebrow": "Upptäck",
   "home.story.title": "Vår historia",
   "home.story.body":
-    "Det här är hemmamat: tomatis som smakar från grytan, banku med ordentlig peppar, fufu som inte ber om ursäkt. Vi öppnar först på vår egen sajt i Uppsala. Wolt och Foodora är leveransspår senare — inte varumärket.",
-  "home.story.asideEyebrow": "Ghana i Uppsala",
+    "Det här är hemmamat: tomatis som smakar från grytan, banku med ordentlig peppar, fufu som inte ber om ursäkt. Ghananska rätter först, och fler rätter kommer. Vi öppnar på vår egen sajt i Uppsala.",
+  "home.story.asideEyebrow": "Meridian i Uppsala",
   "home.story.asideTitle": "Hemmamat, lagad här",
   "home.story.asideBody":
-    "Jollof som smakar från grytan, banku med ordentlig peppar, waakye på en lördag. Varumärket är ghananskt; köket ligger i Uppsala.",
+    "Jollof som smakar från grytan, banku med ordentlig peppar, waakye på en lördag. Ghananska rätter först — andra rätter kommer att komplettera menyn.",
   "home.categories.eyebrow": "Upptäck",
   "home.categories.title": "Utforska menyn",
   "home.steps.eyebrow": "Enkelt",
@@ -426,7 +426,7 @@ export const sv: Record<MessageKey, string> = {
   "home.promo.title": "Få helgmenyn",
   "home.promo.body": "Bara enstaka mejl. Samtycke krävs.",
   "footer.blurb":
-    "Ghananska rätter lagade i Uppsala. Leveranszoner och priser bekräftas på servern — aldrig gissade i webbläsaren.",
+    "Meridian Fusion Cuisine i Uppsala. Ghananska rätter och mer. Leveranszoner och priser bekräftas på servern — aldrig gissade i webbläsaren.",
   "footer.demo": "Demokatalog. Avhämtningsadress och juridisk enhet bekräftas före lansering.",
   "delivery.postcode": "Postnummer",
   "delivery.hint": "Vi kontrollerar Uppsalas leveranszoner på servern.",
@@ -445,11 +445,11 @@ export const sv: Record<MessageKey, string> = {
   "signup.failed": "Kunde inte spara din e-post.",
   "signup.success": "Du är med på listan.",
   "menuPage.eyebrow": "Vår meny",
-  "menuPage.title": "Dagens ghananska rätter",
+  "menuPage.title": "Dagens rätter",
   "menuPage.description":
     "Välj en rätt för protein, styrka och tillägg. Visningspriserna räknas på servern.",
   "menuPage.metaTitle": "Dagens meny",
-  "menuPage.metaDescription": "Ghananska rätter, tillbehör och dryck för leverans i Uppsala.",
+  "menuPage.metaDescription": "Ghananska rätter, tillbehör och dryck — och mer som kommer — för leverans i Uppsala.",
   "category.plates": "Dagens rätter",
   "category.platesDescription": "Vardagsrätter från 129 kr. Helgpris räknas på servern.",
   "category.sides": "Tillbehör",

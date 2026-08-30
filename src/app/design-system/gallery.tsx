@@ -77,7 +77,7 @@ export function DesignSystemGallery() {
       <main id="main" className="mx-auto flex max-w-5xl flex-col gap-16 px-4 py-10">
         <SectionHeading
           eyebrow="Phase 1"
-          title="Ghana Restaurant design system"
+          title="Meridian Fusion Cuisine design system"
           description="Premium, contemporary, mobile-first. Deep charcoal, warm earth, and gold — not a flag costume."
         />
 
@@ -103,7 +103,7 @@ export function DesignSystemGallery() {
         <Section id="type" title="Typography">
           <div className="space-y-3">
             <p className="font-script text-5xl text-gold">Welcome to</p>
-            <p className="font-heading text-4xl">Real Ghanaian food.</p>
+            <p className="font-heading text-4xl">Meridian Fusion Cuisine.</p>
             <p className="text-lg text-muted-foreground">
               Great Vibes for script eyebrows. Fraunces for headlines. Outfit for interface copy.
               Order numbers stay tabular.

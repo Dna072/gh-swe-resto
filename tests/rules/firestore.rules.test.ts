@@ -16,7 +16,7 @@ const restaurantId = "uppsala-main";
 async function seed() {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
-    await setDoc(doc(db, "restaurants", restaurantId), { name: "Ghana Restaurant", city: "Uppsala" });
+    await setDoc(doc(db, "restaurants", restaurantId), { name: "Meridian Fusion Cuisine", city: "Uppsala" });
     await setDoc(doc(db, "restaurants", restaurantId, "menuItems", "jollof"), {
       name: "Jollof Rice",
       archivedAt: null,

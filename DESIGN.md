@@ -1,6 +1,6 @@
 # Design system
 
-Phase 1 visual identity for Ghana Restaurant. Phase 2 uses these tokens on the customer homepage, menu, meal detail, and cart.
+Phase 1 visual identity for Meridian Fusion Cuisine. Phase 2 uses these tokens on the customer homepage, menu, meal detail, and cart.
 
 ## Intent
 

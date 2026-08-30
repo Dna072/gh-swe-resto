@@ -68,8 +68,8 @@ export function SiteHeader({
       <FlagAccent className={cn("rounded-none", transparent && "opacity-50")} />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:h-[4.5rem]">
         <Link href="/" className="flex flex-col leading-none">
-          <span className="font-script text-[2rem] text-gold">Ghana</span>
-          <span className="mt-0.5 text-[10px] uppercase tracking-[0.38em]">{t("brand.restaurant")}</span>
+          <span className="font-script text-[2rem] text-gold">{restaurantDisplay.mark}</span>
+          <span className="mt-0.5 text-[10px] uppercase tracking-[0.28em]">{restaurantDisplay.markLine}</span>
         </Link>
         <nav aria-label={t("a11y.primaryNav")} className="hidden items-center gap-8 text-[12px] uppercase tracking-[0.22em] md:flex">
           {links.map((link) => (
