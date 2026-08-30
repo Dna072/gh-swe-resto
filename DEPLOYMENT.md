@@ -27,6 +27,8 @@ gcloud auth login
 GCP_PROJECT_ID=your-project-id ./scripts/gcp-showcase-deploy.sh
 ```
 
+If the script prints `Run: gcloud auth login` and stops after `Updated property [core/project]`, that is the script’s own check — deploy has not started. Cloud Shell often has an active credential while `gcloud config get-value account` is `(unset)`, or the browser session has expired. Run `gcloud auth list`; if nothing is `ACTIVE`, run `gcloud auth login` and retry.
+
 Optional:
 
 ```bash
