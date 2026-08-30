@@ -187,18 +187,19 @@ export class OrderService {
   }
 
   /**
-   * Kitchen may still accept an unpaid reservation as cash-at-counter.
+   * Kitchen may start cooking only after the guest has paid online.
+   * There is no cash-at-counter path.
    */
   async sendToKitchen(actor: Actor, orderId: string): Promise<Order> {
     authorizationService.requirePermission(actor, "orders:transition");
-    let order = await this.requireOrder(orderId);
-    if (order.orderStatus === "PENDING_PAYMENT") {
-      order = await this.orders.update(applyOrderTransition(order, "PAID"));
+    const order = await this.requireOrder(orderId);
+    if (order.orderStatus !== "PAID") {
+      throw new AppError(
+        "INVALID_TRANSITION",
+        "Only prepaid online orders can be sent to the kitchen.",
+      );
     }
-    if (order.orderStatus === "PAID") {
-      return this.orders.update(applyOrderTransition(order, "CONFIRMED"));
-    }
-    throw new AppError("INVALID_TRANSITION", "This order is already in the kitchen.");
+    return this.orders.update(applyOrderTransition(order, "CONFIRMED"));
   }
 
   async cancel(orderId: string, accessToken?: string, actor?: Actor): Promise<Order> {

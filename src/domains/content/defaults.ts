@@ -9,7 +9,7 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     hero: {
       eyebrow: "Welcome to",
       title: "Ghanaian cooking\nin Uppsala",
-      subtitle: "Jollof, waakye, banku, fufu — cooked here. Book the table by ordering from today’s menu.",
+      subtitle: "Jollof, waakye, banku, fufu — cooked here. Order online for delivery or pickup from today’s menu.",
       primaryCta: { label: "Order today", href: "#todays-menu" },
       secondaryCta: { label: "View the menu", href: "/menu" },
     },

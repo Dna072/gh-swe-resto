@@ -181,7 +181,7 @@ describe("OrderService", () => {
     expect(state.inventory.find((item) => item.sku === "tilapia")?.availableQuantity).toBe(1);
   });
 
-  it("lets kitchen staff accept a reserved order and persist CONFIRMED", async () => {
+  it("lets kitchen staff accept a prepaid online order and persist CONFIRMED", async () => {
     const { service, orders } = createHarness();
     const created = await service.create({
       restaurantId: RESTAURANT_ID,
@@ -200,6 +200,7 @@ describe("OrderService", () => {
       idempotencyKey: "kitchen-accept",
       guestSessionId: "guest-1",
     });
+    await service.markPaid(created.order.id, created.accessToken);
     const kitchen = { uid: "cook-1", role: "KITCHEN" as const };
     const confirmed = await service.sendToKitchen(kitchen, created.order.id);
     expect(confirmed.orderStatus).toBe("CONFIRMED");
@@ -208,5 +209,30 @@ describe("OrderService", () => {
     expect(stored?.orderStatus).toBe("CONFIRMED");
     const preparing = await service.transition(kitchen, created.order.id, "PREPARING");
     expect(preparing.preparingAt).toBeTruthy();
+  });
+
+  it("rejects sending an unpaid order to the kitchen", async () => {
+    const { service } = createHarness();
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "kitchen-unpaid",
+      guestSessionId: "guest-1",
+    });
+    const kitchen = { uid: "cook-1", role: "KITCHEN" as const };
+    await expect(service.sendToKitchen(kitchen, created.order.id)).rejects.toMatchObject({
+      code: "INVALID_TRANSITION",
+    });
   });
 });

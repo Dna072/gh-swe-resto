@@ -24,10 +24,20 @@ const base = {
 };
 
 describe("kitchen actions", () => {
-  it("offers send-to-kitchen for reserved guest orders", () => {
+  it("does not offer send-to-kitchen for unpaid guest orders", () => {
     const order = {
       ...base,
       orderStatus: "PENDING_PAYMENT",
+      deliveryStatus: "QUOTED",
+    } as Order;
+    expect(kitchenActions(order).map((action) => action.to)).toEqual(["CANCELLED"]);
+  });
+
+  it("offers send-to-kitchen for prepaid online orders", () => {
+    const order = {
+      ...base,
+      orderStatus: "PAID",
+      paymentStatus: "PAID",
       deliveryStatus: "QUOTED",
     } as Order;
     expect(kitchenActions(order).map((action) => action.to)).toContain("SEND_TO_KITCHEN");

@@ -74,7 +74,11 @@ export function KitchenBoard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Refreshes every five seconds. Paid orders and unpaid cash reservations both appear here.</p>
+        <p className="text-sm text-muted-foreground">
+          Refreshes every five seconds. Only prepaid online orders can be sent to
+          the kitchen. Unpaid tickets wait here until the guest pays — there is no
+          cash-at-counter path.
+        </p>
         <Button size="touch" variant="outline" onClick={load}>
           Refresh
         </Button>
