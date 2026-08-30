@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
@@ -12,7 +13,6 @@ import {
   subscribeAdminToken,
 } from "@/lib/admin/client";
 import { signInStaff, staffPasswordLoginAvailable } from "@/lib/firebase/client";
-import { toast } from "sonner";
 
 function useStoredAdminToken(): boolean {
   return useSyncExternalStore(subscribeAdminToken, hasAdminToken, () => false);
@@ -23,7 +23,7 @@ export function AdminSession() {
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [saved, setSaved] = useState(() => Boolean(getAdminToken()));
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const passwordLogin = staffPasswordLoginAvailable();
   const saved = stored && !editing;
@@ -40,7 +40,6 @@ export function AdminSession() {
           return;
         }
         setAdminToken(body.token);
-        setSaved(true);
       })
       .catch(() => {
         /* Local bootstrap is optional; staff can still paste a token. */
