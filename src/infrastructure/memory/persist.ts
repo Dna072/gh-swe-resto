@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import type { HomepageContent } from "@/domains/content/models";
 import type { MenuItem } from "@/domains/menu/models";
@@ -9,9 +9,8 @@ export type PersistedCatalog = {
   homepage?: HomepageContent;
 };
 
+/** Always `cwd/data/local-catalog.json` — static segments for Next.js tracing. */
 export function catalogPersistPath(): string {
-  // Static segments only. A dynamic env path makes Next.js standalone trace
-  // the entire working directory into the Cloud Run image.
   return path.join(process.cwd(), "data", "local-catalog.json");
 }
 
@@ -19,12 +18,14 @@ export function shouldPersistLocalCatalog(): boolean {
   return process.env.NODE_ENV !== "test" && process.env.VITEST !== "true";
 }
 
-export function loadPersistedCatalog(filePath = catalogPersistPath()): PersistedCatalog | null {
-  if (!existsSync(filePath)) {
-    return null;
-  }
+function readCatalogFromDisk(filePath: string): PersistedCatalog | null {
   try {
-    const parsed = JSON.parse(readFileSync(filePath, "utf8")) as PersistedCatalog;
+    if (!fs.existsSync(/*turbopackIgnore: true*/ filePath)) {
+      return null;
+    }
+    const parsed = JSON.parse(
+      fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf8"),
+    ) as PersistedCatalog;
     if (!parsed || !Array.isArray(parsed.items)) {
       return null;
     }
@@ -32,6 +33,10 @@ export function loadPersistedCatalog(filePath = catalogPersistPath()): Persisted
   } catch {
     return null;
   }
+}
+
+export function loadPersistedCatalog(filePath?: string): PersistedCatalog | null {
+  return readCatalogFromDisk(filePath ?? catalogPersistPath());
 }
 
 export function applyPersistedCatalog(state: MemoryState, persisted: PersistedCatalog): void {
@@ -60,15 +65,15 @@ export function refreshPersistedCatalog(
   if (!options?.force && !shouldPersistLocalCatalog()) {
     return;
   }
-  const filePath = options?.filePath ?? catalogPersistPath();
-  if (!existsSync(filePath)) {
+  const filePath = options?.filePath ?? path.join(process.cwd(), "data", "local-catalog.json");
+  if (!fs.existsSync(/*turbopackIgnore: true*/ filePath)) {
     return;
   }
-  const mtime = statSync(filePath).mtimeMs;
+  const mtime = fs.statSync(/*turbopackIgnore: true*/ filePath).mtimeMs;
   if (mtime === lastLoadedMtime) {
     return;
   }
-  const persisted = loadPersistedCatalog(filePath);
+  const persisted = readCatalogFromDisk(filePath);
   if (!persisted) {
     return;
   }
@@ -76,13 +81,13 @@ export function refreshPersistedCatalog(
   lastLoadedMtime = mtime;
 }
 
-export function persistCatalog(state: MemoryState, filePath = catalogPersistPath()): void {
-  const dest = path.dirname(filePath);
-  mkdirSync(dest, { recursive: true });
+export function persistCatalog(state: MemoryState, filePath?: string): void {
+  const dest = filePath ?? path.join(process.cwd(), "data", "local-catalog.json");
+  fs.mkdirSync(/*turbopackIgnore: true*/ path.dirname(dest), { recursive: true });
   const payload: PersistedCatalog = {
     items: state.items,
     homepage: state.homepage,
   };
-  writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`);
-  lastLoadedMtime = statSync(filePath).mtimeMs;
+  fs.writeFileSync(/*turbopackIgnore: true*/ dest, `${JSON.stringify(payload, null, 2)}\n`);
+  lastLoadedMtime = fs.statSync(/*turbopackIgnore: true*/ dest).mtimeMs;
 }

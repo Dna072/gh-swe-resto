@@ -1,36 +1,26 @@
-FROM node:22-bookworm-slim AS deps
+# Pull Node via Google's Docker Hub mirror. Cloud Build often hits Hub rate limits
+# on `node:22-bookworm-slim`, which fails as a generic "docker step 0" error.
+FROM mirror.gcr.io/library/node:22-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-# firebase-tools and test runners are only for local/CI. Installing them
-# inside Cloud Build often OOMs or times out the default builder.
-RUN node -e "\
-  const fs = require('fs');\
-  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));\
-  for (const name of [\
-    'firebase-tools',\
-    '@firebase/rules-unit-testing',\
-    'vitest',\
-    '@testing-library/dom',\
-    '@testing-library/react',\
-    '@testing-library/user-event',\
-    'jsdom'\
-  ]) {\
-    delete pkg.devDependencies[name];\
-  }\
-  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));\
-" && npm install --no-audit --no-fund
+COPY scripts/prepare-docker-packagejson.mjs ./scripts/prepare-docker-packagejson.mjs
+# Emulator/test packages are not needed to compile the app.
+RUN node scripts/prepare-docker-packagejson.mjs \
+  && rm -f package-lock.json \
+  && npm install --no-audit --no-fund
 
-FROM node:22-bookworm-slim AS builder
+FROM mirror.gcr.io/library/node:22-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV APP_BASE_URL=http://localhost:3000
-ENV NODE_OPTIONS=--max-old-space-size=4096
-RUN npm run build
+ENV NODE_OPTIONS=--max-old-space-size=6144
+RUN npm run build \
+  && test -f .next/standalone/server.js
 
-FROM node:22-bookworm-slim AS runner
+FROM mirror.gcr.io/library/node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

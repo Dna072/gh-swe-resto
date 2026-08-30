@@ -3,7 +3,6 @@ import path from "node:path";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
 export function localUploadsRoot(): string {
-  // Static segments only so Next.js file tracing stays inside public/uploads.
   return path.join(process.cwd(), "public", "uploads");
 }
 
@@ -21,8 +20,8 @@ export class LocalObjectStorage implements BinaryObjectStorage {
 
   async put(object: StoredObjectWrite): Promise<StoredObjectResult> {
     const dest = path.join(this.root, object.path);
-    await mkdir(path.dirname(dest), { recursive: true });
-    await writeFile(dest, object.bytes);
+    await mkdir(/*turbopackIgnore: true*/ path.dirname(dest), { recursive: true });
+    await writeFile(/*turbopackIgnore: true*/ dest, object.bytes);
     return {
       path: object.path,
       url: this.publicUrl(object.path),
@@ -32,7 +31,7 @@ export class LocalObjectStorage implements BinaryObjectStorage {
 
   async delete(objectPath: string): Promise<void> {
     try {
-      await unlink(path.join(this.root, objectPath));
+      await unlink(/*turbopackIgnore: true*/ path.join(this.root, objectPath));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
         throw error;

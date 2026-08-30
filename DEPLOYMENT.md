@@ -37,12 +37,20 @@ export SERVICE_NAME=ghana-restaurant-showcase
 
 The script enables APIs, creates the `apps` Artifact Registry repo if needed, builds the image, and deploys Cloud Run.
 
-If Cloud Build reports `build step 0 "gcr.io/cloud-builders/docker" failed`, Firebase rules already deployed — only the container image failed. Open the Cloud Build log URL from the terminal (not just the one-line summary). Common causes:
+If Cloud Build reports `build step 0 "gcr.io/cloud-builders/docker" failed`, Firebase rules already deployed — only the container image failed. The terminal will not show `npm` / `next build` output. Print it with:
 
-- Default Cloud Build machine ran out of memory or hit the 10-minute timeout while installing `firebase-tools` or tracing the Next.js standalone output
-- An older clone of this repo (pull `main` / this PR, then re-run the script)
+```bash
+gcloud builds log --project=ghana-restaurant $(gcloud builds list --project=ghana-restaurant --limit=1 --format='value(id)')
+```
 
-This repo now uses a larger Cloud Build machine, omits emulator-only packages from the image, and keeps Next.js file tracing off the whole working directory.
+Common causes this repo already guards against:
+
+- Next.js standalone tracing the whole `/app` tree because of a dynamic `existsSync` path
+- Docker Hub rate limits pulling `node:22-bookworm-slim` (the Dockerfile uses `mirror.gcr.io`)
+- `firebase-tools` installed into the image
+- Default Cloud Build RAM / 10-minute timeout
+
+Pull the latest of this branch, then re-run the script.
 
 After it finishes you get:
 
