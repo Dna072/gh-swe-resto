@@ -9,6 +9,7 @@ import { Price } from "@/components/brand/price";
 import { Spinner } from "@/components/brand/loading-state";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 import { localizeMenuName } from "@/lib/i18n/catalog";
 import type { MessageKey, Translator } from "@/lib/i18n/messages";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
@@ -42,9 +43,9 @@ export function OrderConfirmation({
       signal: controller.signal,
     })
       .then(async (response) => {
-        const body = (await response.json()) as PublicOrder & { message?: string };
+        const body = (await response.json()) as PublicOrder & { message?: string; code?: string };
         if (!response.ok) {
-          setError(body.message ?? t("order.loadError"));
+          setError(customerErrorMessage(body.code, t, "order.loadError"));
           return;
         }
         setOrder(body);
@@ -68,9 +69,9 @@ export function OrderConfirmation({
       const response = await fetch(`/api/orders/${orderId}/cancel?token=${encodeURIComponent(token)}`, {
         method: "POST",
       });
-      const body = (await response.json()) as PublicOrder & { message?: string };
+      const body = (await response.json()) as PublicOrder & { message?: string; code?: string };
       if (!response.ok) {
-        setError(body.message ?? t("order.cancelError"));
+        setError(customerErrorMessage(body.code, t, "order.cancelError"));
         return;
       }
       setOrder(body);
@@ -89,9 +90,13 @@ export function OrderConfirmation({
       const response = await fetch(`/api/orders/${orderId}/reorder?token=${encodeURIComponent(token)}`, {
         method: "POST",
       });
-      const body = (await response.json()) as { lines?: Parameters<typeof cart.replaceWith>[0]; message?: string };
+      const body = (await response.json()) as {
+        lines?: Parameters<typeof cart.replaceWith>[0];
+        message?: string;
+        code?: string;
+      };
       if (!response.ok || !body.lines) {
-        setError(body.message ?? t("order.reorderError"));
+        setError(customerErrorMessage(body.code, t, "order.reorderError"));
         return;
       }
       cart.replaceWith(body.lines);

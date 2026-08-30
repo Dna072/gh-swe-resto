@@ -9,11 +9,8 @@ import { useT } from "@/components/i18n/locale-provider";
 import { fadeVariants, heroStagger, revealVariants } from "@/lib/motion";
 
 export function HomeHero({
-  eyebrow,
-  title,
-  subtitle,
-  primaryCta,
-  secondaryCta,
+  primaryHref,
+  secondaryHref,
   imageSrc,
   imageAlt,
   imagePosition,
@@ -21,11 +18,8 @@ export function HomeHero({
   mobileImageAlt,
   mobileImagePosition,
 }: {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  primaryCta: { label: string; href: string };
-  secondaryCta: { label: string; href: string };
+  primaryHref: string;
+  secondaryHref: string;
   imageSrc: string | null;
   imageAlt: string;
   imagePosition?: string;
@@ -35,6 +29,7 @@ export function HomeHero({
 }) {
   const t = useT();
   const reduced = useReducedMotion() ?? false;
+  const title = t("home.hero.title");
 
   return (
     <section className="relative isolate min-h-[100svh] overflow-hidden">
@@ -86,7 +81,7 @@ export function HomeHero({
           variants={revealVariants(reduced)}
           className="font-script text-5xl text-gold sm:text-6xl"
         >
-          {eyebrow}
+          {t("home.hero.eyebrow")}
         </motion.p>
         <motion.h1
           variants={revealVariants(reduced)}
@@ -101,17 +96,17 @@ export function HomeHero({
           variants={revealVariants(reduced)}
           className="max-w-xl text-base text-primary-foreground/80 sm:text-lg"
         >
-          {subtitle}
+          {t("home.hero.subtitle")}
         </motion.p>
         <motion.div
           variants={revealVariants(reduced)}
           className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"
         >
           <Button size="touch" variant="gold" asChild>
-            <Link href={primaryCta.href}>{primaryCta.label}</Link>
+            <Link href={primaryHref}>{t("home.hero.primary")}</Link>
           </Button>
           <Button size="touch" variant="gold-outline" asChild>
-            <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+            <Link href={secondaryHref}>{t("home.hero.secondary")}</Link>
           </Button>
         </motion.div>
       </motion.div>

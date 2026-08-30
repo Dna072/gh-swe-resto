@@ -30,4 +30,12 @@ describe("translator", () => {
     );
     expect(t("home.hero.title")).toMatch(/Ghanansk/i);
   });
+
+  it("keeps English and Swedish dictionaries aligned", () => {
+    const en = createTranslator("en");
+    const sv = createTranslator("sv");
+    expect(en("brand.restaurant")).toBe("Restaurant");
+    expect(sv("brand.restaurant")).toBe("Restaurang");
+    expect(en("errors.notFound")).not.toBe(sv("errors.notFound"));
+  });
 });

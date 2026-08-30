@@ -40,7 +40,7 @@ export function MealCard({
   featured = false,
   soldOut = false,
   lowStockLabel,
-  addLabel = "Add",
+  addLabel,
   onAdd,
   className,
   editorial = false,
@@ -48,6 +48,7 @@ export function MealCard({
 }: MealCardProps) {
   const t = useOptionalT();
   const reduced = useReducedMotion() ?? false;
+  const actionLabel = addLabel ?? t("menu.add");
   const media = (
     <div
       className={cn(
@@ -124,15 +125,15 @@ export function MealCard({
           <Price ore={priceOre} className="text-gold" />
           {onAdd ? (
             <Button size="touch" variant="gold-outline" disabled={soldOut} onClick={onAdd}>
-              {soldOut ? t("menu.unavailable") : addLabel}
+              {soldOut ? t("menu.unavailable") : actionLabel}
             </Button>
           ) : href ? (
             <Button size="touch" variant="gold-outline" disabled={soldOut} asChild>
-              <Link href={href}>{soldOut ? t("menu.unavailable") : addLabel}</Link>
+              <Link href={href}>{soldOut ? t("menu.unavailable") : actionLabel}</Link>
             </Button>
           ) : (
             <Button size="touch" variant="gold-outline" disabled={soldOut}>
-              {soldOut ? t("menu.unavailable") : addLabel}
+              {soldOut ? t("menu.unavailable") : actionLabel}
             </Button>
           )}
         </div>

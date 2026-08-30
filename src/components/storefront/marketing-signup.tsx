@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
 import { useT } from "@/components/i18n/locale-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 
 export function MarketingSignup() {
   const t = useT();
@@ -28,8 +29,8 @@ export function MarketingSignup() {
         body: JSON.stringify({ email, consent: true, source: "homepage" }),
       });
       if (!response.ok) {
-        const body = (await response.json()) as { message?: string };
-        toast.error(body.message ?? t("signup.failed"));
+        const body = (await response.json()) as { message?: string; code?: string };
+        toast.error(customerErrorMessage(body.code, t, "signup.failed"));
         return;
       }
       setEmail("");

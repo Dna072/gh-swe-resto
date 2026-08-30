@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
 import { useT } from "@/components/i18n/locale-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 import {
   rememberGuestOrder,
   readGuestOrders,
@@ -31,9 +32,14 @@ export function OrderLookup() {
       const response = await fetch(
         `/api/orders/lookup?number=${encodeURIComponent(number)}&token=${encodeURIComponent(token)}`,
       );
-      const body = (await response.json()) as { id?: string; publicOrderNumber?: string; message?: string };
+      const body = (await response.json()) as {
+        id?: string;
+        publicOrderNumber?: string;
+        message?: string;
+        code?: string;
+      };
       if (!response.ok || !body.id) {
-        setError(body.message ?? t("orders.notFound"));
+        setError(customerErrorMessage(body.code, t, "orders.notFound"));
         return;
       }
       rememberGuestOrder({

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { CustomerShell } from "@/components/brand/customer-shell";
 import { MenuListItem } from "@/components/brand/menu-list-item";
-import { PageBanner } from "@/components/brand/page-banner";
+import { LocalizedPageBanner } from "@/components/brand/localized-page-banner";
 import { Reveal, RevealGroup } from "@/components/brand/reveal";
+import { LocalizedCategoryDescription, LocalizedCategoryName } from "@/components/storefront/localized-category";
 import { TrackView } from "@/components/storefront/track-view";
 import { localizeCatalog } from "@/lib/i18n/catalog";
 import { getLocale, getTranslator } from "@/lib/i18n/server";
@@ -28,10 +29,10 @@ export default async function MenuPage() {
     <CustomerShell>
       <TrackView name="menu_viewed" properties={{ surface: "menu" }} />
       <main id="main">
-        <PageBanner
-          eyebrow={t("menuPage.eyebrow")}
-          title={t("menuPage.title")}
-          description={t("menuPage.description")}
+        <LocalizedPageBanner
+          eyebrowKey="menuPage.eyebrow"
+          titleKey="menuPage.title"
+          descriptionKey="menuPage.description"
         />
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-20 px-4 py-16 sm:py-24">
           {catalog.categories.map((category) => {
@@ -42,15 +43,20 @@ export default async function MenuPage() {
             return (
               <Reveal as="section" key={category.id} className="scroll-mt-28">
                 <div id={category.slug} className="text-center">
-                  <p className="font-script text-5xl text-gold">{category.name}</p>
-                  {category.description ? (
-                    <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{category.description}</p>
-                  ) : null}
+                  <p className="font-script text-5xl text-gold">
+                    <LocalizedCategoryName id={category.id} fallback={category.name} />
+                  </p>
+                  <LocalizedCategoryDescription
+                    id={category.id}
+                    fallback={category.description}
+                    className="mx-auto mt-4 max-w-2xl text-muted-foreground"
+                  />
                 </div>
                 <RevealGroup className="mt-10 divide-y divide-foreground/10">
                   {items.map((item) => (
                     <Reveal as="div" key={item.id}>
                       <MenuListItem
+                        itemId={item.id}
                         name={item.name}
                         description={item.shortDescription}
                         priceOre={item.displayPriceOre}
