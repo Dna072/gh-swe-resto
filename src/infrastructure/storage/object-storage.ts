@@ -13,4 +13,5 @@ export interface StoredObjectResult {
 export interface BinaryObjectStorage {
   put(object: StoredObjectWrite): Promise<StoredObjectResult>;
   publicUrl(path: string): string;
+  delete?(path: string): Promise<void>;
 }

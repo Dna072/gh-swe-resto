@@ -23,7 +23,7 @@ export default async function OrderPage({
         <SectionHeading
           eyebrow="Reserved"
           title="Your order"
-          description="The kitchen snapshot is stored. We will not take payment until Phase 5."
+          description="The kitchen has your snapshot. Card payment is still Phase 5 — you can cancel while the order is waiting, or order again."
         />
         <div className="mt-8">
           <OrderConfirmation orderId={id} tokenFromUrl={token} />

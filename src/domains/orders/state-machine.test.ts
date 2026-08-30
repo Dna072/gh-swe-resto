@@ -35,6 +35,7 @@ describe("OrderStateMachine", () => {
     expect(canTransition("PREPARING", "PACKING")).toBe(true);
     expect(canTransition("PACKING", "READY")).toBe(true);
     expect(canTransition("READY", "COURIER_ASSIGNED")).toBe(true);
+    expect(canTransition("READY", "DELIVERED")).toBe(true);
     expect(canTransition("COURIER_ASSIGNED", "OUT_FOR_DELIVERY")).toBe(true);
     expect(canTransition("OUT_FOR_DELIVERY", "DELIVERED")).toBe(true);
   });

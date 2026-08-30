@@ -239,4 +239,25 @@ export class MenuAdminService {
     }
     return this.saveHomepage({ ...current, hero });
   }
+
+  async cleanupRetiredImages(restaurantId: string): Promise<{ purged: number }> {
+    const items = await this.listItems(restaurantId);
+    let purged = 0;
+    for (const item of items) {
+      const retired = item.images.filter((image) => image.status === "PENDING_DELETE");
+      if (retired.length === 0) {
+        continue;
+      }
+      for (const image of retired) {
+        await this.media.purgeRetired(image);
+        purged += 1;
+      }
+      await this.menu.saveItem({
+        ...item,
+        images: item.images.filter((image) => image.status !== "PENDING_DELETE"),
+        updatedAt: nowIso(),
+      });
+    }
+    return { purged };
+  }
 }

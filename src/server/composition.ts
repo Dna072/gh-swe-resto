@@ -8,6 +8,7 @@ import { MediaService } from "@/domains/media/service";
 import { MenuAdminService } from "@/domains/menu/admin.service";
 import { MenuService } from "@/domains/menu/service";
 import { OrderService } from "@/domains/orders/service";
+import { PrintingService } from "@/domains/printing/service";
 import { PricingService } from "@/domains/pricing/service";
 import { PromotionService } from "@/domains/promotions/service";
 import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
@@ -16,7 +17,9 @@ import { InMemoryMenuRepository } from "@/infrastructure/memory/menu-repository"
 import { InMemoryOrderRepository } from "@/infrastructure/memory/order-repository";
 import { createMemoryState } from "@/infrastructure/memory/state";
 import { InMemoryPromotionRepository } from "@/infrastructure/memory/supporting-repositories";
+import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
 import { InMemoryTransactionRunner } from "@/infrastructure/memory/transaction-runner";
+import { BrowserPrintProvider } from "@/infrastructure/printing/providers";
 import {
   SEED_SOURCE,
   seedPricingCalendar,
@@ -29,7 +32,7 @@ import type { BinaryObjectStorage } from "@/infrastructure/storage/object-storag
 import { getEnv } from "@/lib/env";
 
 /**
- * Phase 2–3 serve catalog and guest orders from an in-memory demo seed so the
+ * Phase 2–4 serve catalog and guest orders from an in-memory demo seed so the
  * storefront works without Firebase credentials. Later phases swap these ports
  * to Firestore.
  */
@@ -74,7 +77,9 @@ export const deliveryService = new DeliveryService([mockDelivery], {
   preferCheapest: true,
   preferredProviders: ["mock"],
 });
-export const orderService = new OrderService(orderRepository, cartService, transactions);
+export const orderService = new OrderService(orderRepository, cartService, transactions, menuRepository);
+const printJobs = new InMemoryPrintJobRepository(state);
+export const printingService = new PrintingService(printJobs, new BrowserPrintProvider());
 export const analyticsService = new AnalyticsService(new LoggingAnalyticsSink());
 
 export const marketingSignups: Array<{ email: string; consentedAt: string; source?: string }> = [];

@@ -15,7 +15,7 @@ export default function OrdersPage() {
         <SectionHeading
           eyebrow="Orders"
           title="Find a guest order"
-          description="Use the link from checkout, or enter the public number and access token. Kitchen tracking is Phase 4."
+          description="Use the link from checkout, or enter the public number and access token. The kitchen board updates this status."
         />
         <div className="mt-8">
           <OrderLookup />

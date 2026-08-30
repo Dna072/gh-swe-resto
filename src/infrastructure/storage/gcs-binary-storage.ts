@@ -26,4 +26,8 @@ export class GcsBinaryStorage implements BinaryObjectStorage {
       contentType: object.contentType,
     };
   }
+
+  async delete(objectPath: string): Promise<void> {
+    await this.storage.bucket(this.bucketName).file(objectPath).delete({ ignoreNotFound: true });
+  }
 }

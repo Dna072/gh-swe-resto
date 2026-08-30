@@ -10,7 +10,11 @@ export default function TermsPage() {
         These are placeholder terms for the Phase 2 demo. The operating company name, organisation
         number, and Swedish consumer terms will be published before the first paid order.
       </p>
-      <p>Orders, cancellations, and refunds will be described when checkout opens in Phase 3.</p>
+      <p>
+        Guest orders can be cancelled while they are still waiting for the kitchen. After the kitchen
+        accepts an order, cancellations go through the restaurant. Card refunds arrive with Phase 5
+        payments.
+      </p>
     </LegalPage>
   );
 }

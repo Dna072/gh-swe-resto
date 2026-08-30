@@ -22,6 +22,7 @@ type CartContextValue = {
   updateQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
   clear: () => void;
+  replaceWith: (inputs: AddLineInput[]) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -90,6 +91,16 @@ export function CartProvider({
     persistCart(emptyCart(restaurantId));
   }, [restaurantId]);
 
+  const replaceWith = useCallback(
+    (inputs: AddLineInput[]) => {
+      persistCart({
+        restaurantId,
+        lines: inputs.map((input) => ({ id: crypto.randomUUID(), ...input })),
+      });
+    },
+    [restaurantId],
+  );
+
   const value = useMemo<CartContextValue>(
     () => ({
       restaurantId,
@@ -99,8 +110,9 @@ export function CartProvider({
       updateQuantity,
       removeLine,
       clear,
+      replaceWith,
     }),
-    [addLine, cart.lines, clear, removeLine, restaurantId, updateQuantity],
+    [addLine, cart.lines, clear, removeLine, replaceWith, restaurantId, updateQuantity],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
