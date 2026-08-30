@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { AdinkraRule } from "@/components/brand/adinkra-rule";
 import { FoodPhoto } from "@/components/brand/food-photo";
+import { useT } from "@/components/i18n/locale-provider";
 import { fadeVariants, heroStagger, revealVariants } from "@/lib/motion";
 
 export function HomeHero({
@@ -32,6 +33,7 @@ export function HomeHero({
   mobileImageAlt?: string;
   mobileImagePosition?: string;
 }) {
+  const t = useT();
   const reduced = useReducedMotion() ?? false;
 
   return (
@@ -117,7 +119,7 @@ export function HomeHero({
         href="#hours"
         className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-primary-foreground/70"
       >
-        <span>Scroll</span>
+        <span>{t("home.hero.scroll")}</span>
         <span className="block h-10 w-px origin-top bg-gold motion-safe:animate-[scroll-cue_1.8s_ease-in-out_infinite]" />
       </a>
     </section>

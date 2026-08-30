@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
+import { useT } from "@/components/i18n/locale-provider";
 
 export function MarketingSignup() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
@@ -15,7 +17,7 @@ export function MarketingSignup() {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!consent) {
-      toast.error("Please confirm you want to hear from us.");
+      toast.error(t("signup.needConsent"));
       return;
     }
     setPending(true);
@@ -27,14 +29,14 @@ export function MarketingSignup() {
       });
       if (!response.ok) {
         const body = (await response.json()) as { message?: string };
-        toast.error(body.message ?? "Could not save your email.");
+        toast.error(body.message ?? t("signup.failed"));
         return;
       }
       setEmail("");
       setConsent(false);
-      toast.success("You are on the list.");
+      toast.success(t("signup.success"));
     } catch {
-      toast.error("Could not save your email.");
+      toast.error(t("signup.failed"));
     } finally {
       setPending(false);
     }
@@ -42,7 +44,7 @@ export function MarketingSignup() {
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
-      <Field id="marketing-email" label="Email">
+      <Field id="marketing-email" label={t("signup.email")}>
         <Input
           id="marketing-email"
           type="email"
@@ -58,15 +60,12 @@ export function MarketingSignup() {
           checked={consent}
           onCheckedChange={(value) => setConsent(value === true)}
           className="mt-1"
-          aria-label="Marketing consent"
+          aria-label={t("signup.consentAria")}
         />
-        <span>
-          I want occasional menus and offers. You can unsubscribe any time. We will not sell your
-          email.
-        </span>
+        <span>{t("signup.consent")}</span>
       </label>
       <Button size="touch" type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Join the list"}
+        {pending ? t("signup.saving") : t("signup.join")}
       </Button>
     </form>
   );

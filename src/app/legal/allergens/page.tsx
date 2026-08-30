@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/brand/legal-page";
+import { getTranslator } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Allergens" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  return { title: t("legal.allergens.title") };
+}
 
-export default function AllergensPage() {
+export default async function AllergensPage() {
+  const t = await getTranslator();
   return (
-    <LegalPage eyebrow="Kitchen" title="Allergens">
-      <p>
-        Each meal lists EU major allergens from the catalog. Fufu with groundnut soup contains
-        peanut. Kenkey and tilapia contain fish. Waakye may contain egg and gluten. Malt contains
-        gluten.
-      </p>
-      <p>
-        Cross-contact is possible in a small kitchen. If you have a severe allergy, call us before
-        you order — contact details are on the contact page.
-      </p>
+    <LegalPage eyebrow={t("legal.kitchen")} title={t("legal.allergens.title")}>
+      <p>{t("legal.allergens.p1")}</p>
+      <p>{t("legal.allergens.p2")}</p>
     </LegalPage>
   );
 }

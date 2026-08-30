@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/brand/legal-page";
+import { getTranslator } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Privacy" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  return { title: t("legal.privacy.title") };
+}
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const t = await getTranslator();
   return (
-    <LegalPage eyebrow="Legal" title="Privacy">
-      <p>
-        This demo stores a guest cart in your browser and can save a marketing email if you
-        consent. No payment data is collected in Phase 2.
-      </p>
-      <p>
-        A full GDPR notice — controller, processors, retention, and your rights — will be published
-        before launch. Do not submit real personal data to this preview.
-      </p>
+    <LegalPage eyebrow={t("legal.legal")} title={t("legal.privacy.title")}>
+      <p>{t("legal.privacy.p1")}</p>
+      <p>{t("legal.privacy.p2")}</p>
     </LegalPage>
   );
 }

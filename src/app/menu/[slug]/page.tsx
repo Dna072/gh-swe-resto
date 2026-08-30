@@ -6,10 +6,13 @@ import { FoodPhoto } from "@/components/brand/food-photo";
 import { Price } from "@/components/brand/price";
 import { MealCustomizer } from "@/components/storefront/meal-customizer";
 import { TrackView } from "@/components/storefront/track-view";
+import { localizePublicItem } from "@/lib/i18n/catalog";
+import { getLocale, getTranslator } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { AppError } from "@/lib/errors";
 import { getEnv } from "@/lib/env";
 import { oreToSek } from "@/lib/money";
-import { lowStockLabel, soldOut } from "@/lib/menu/display";
+import { soldOut } from "@/lib/menu/display";
 import { loadPublicItem } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +27,9 @@ function pageUrl(slug: string): string {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const item = await loadPublicItem(slug);
+    const t = await getTranslator();
+    const locale = await getLocale();
+    const item = localizePublicItem(await loadPublicItem(slug), locale, t);
     const canonical = pageUrl(item.slug);
     return {
       title: item.name,
@@ -57,8 +62,26 @@ export default async function MealPage({ params }: PageProps) {
     throw error;
   }
 
+  const t = await getTranslator();
+  const locale = await getLocale();
+  item = localizePublicItem(item, locale, t);
   const unavailable = soldOut(item);
-  const stock = lowStockLabel(item);
+  const stock =
+    item.availability === "LOW_STOCK" && item.remainingPortions !== null
+      ? t("menu.lowStock", { count: item.remainingPortions })
+      : undefined;
+  const dietaryKey = (tag: string): MessageKey | null => {
+    if (tag === "HALAL" || tag === "VEGETARIAN" || tag === "VEGAN" || tag === "SPICY") {
+      return `dietary.${tag}`;
+    }
+    return null;
+  };
+  const allergenKey = (tag: string): MessageKey | null => {
+    if (tag === "EGG" || tag === "GLUTEN" || tag === "FISH" || tag === "PEANUT") {
+      return `allergen.${tag}`;
+    }
+    return null;
+  };
   const canonical = pageUrl(item.slug);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -99,20 +122,24 @@ export default async function MealPage({ params }: PageProps) {
             <p className="text-lg leading-relaxed text-muted-foreground">{item.description}</p>
             <div className="flex flex-wrap items-center gap-2">
               <Price ore={item.displayPriceOre} size="lg" className="text-gold" />
-              {unavailable ? <Badge variant="secondary">Sold out</Badge> : null}
+              {unavailable ? <Badge variant="secondary">{t("menu.soldOut")}</Badge> : null}
               {stock ? <Badge variant="earth">{stock}</Badge> : null}
               {item.dietaryTags.map((tag) => (
                 <Badge key={tag} variant={tag === "HALAL" ? "forest" : "outline"}>
-                  {tag.replaceAll("_", " ").toLowerCase()}
+                  {dietaryKey(tag) ? t(dietaryKey(tag)!) : tag.replaceAll("_", " ").toLowerCase()}
                 </Badge>
               ))}
             </div>
             {item.allergens.length > 0 ? (
               <p className="text-sm text-muted-foreground">
-                Allergens: {item.allergens.join(", ").toLowerCase()}
+                {t("menu.allergens", {
+                  list: item.allergens
+                    .map((tag) => (allergenKey(tag) ? t(allergenKey(tag)!) : tag.toLowerCase()))
+                    .join(", "),
+                })}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">No listed EU major allergens in the base plate.</p>
+              <p className="text-sm text-muted-foreground">{t("menu.noAllergens")}</p>
             )}
           </div>
           <MealCustomizer item={item} />

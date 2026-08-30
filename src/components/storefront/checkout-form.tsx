@@ -16,24 +16,24 @@ import { ErrorState } from "@/components/brand/error-state";
 import { Field } from "@/components/brand/field";
 import { Price } from "@/components/brand/price";
 import { Spinner } from "@/components/brand/loading-state";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { localizeMenuName } from "@/lib/i18n/catalog";
 import { analyticsSessionId, track } from "@/lib/analytics/client";
 import type { CartQuote } from "@/domains/cart/models";
 import { rememberGuestOrder } from "@/lib/orders/guest-orders";
 import type { AddressSnapshot } from "@/domains/shared/types";
 
-const formSchema = z.object({
-  fulfillment: z.enum(["DELIVERY", "PICKUP"]),
-  name: z.string().min(1, "Enter your name"),
-  email: z.email("Enter a valid email"),
-  phone: z.string().min(6, "Enter a phone number"),
-  line1: z.string().optional(),
-  postalCode: z.string().optional(),
-  city: z.string().optional(),
-  specialInstructions: z.string().max(300).optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  fulfillment: "DELIVERY" | "PICKUP";
+  name: string;
+  email: string;
+  phone: string;
+  line1?: string;
+  postalCode?: string;
+  city?: string;
+  specialInstructions?: string;
+};
 
 type DeliveryQuote = {
   key: string;
@@ -60,8 +60,24 @@ export function CheckoutForm({
   restaurantId: string;
   pickup: Pickup;
 }) {
+  const t = useT();
+  const { locale } = useLocale();
   const cart = useCart();
   const router = useRouter();
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        fulfillment: z.enum(["DELIVERY", "PICKUP"]),
+        name: z.string().min(1, t("checkout.nameError")),
+        email: z.email(t("checkout.emailError")),
+        phone: z.string().min(6, t("checkout.phoneError")),
+        line1: z.string().optional(),
+        postalCode: z.string().optional(),
+        city: z.string().optional(),
+        specialInstructions: z.string().max(300).optional(),
+      }),
+    [t],
+  );
   const idempotencyKey = useRef(
     typeof crypto !== "undefined" ? crypto.randomUUID() : "checkout-pending",
   );
@@ -122,7 +138,7 @@ export function CheckoutForm({
         .then(async (response) => {
           const body = (await response.json()) as DeliveryQuote & { message?: string };
           if (!response.ok) {
-            setDeliveryResult({ key: requestKey, quote: null, error: body.message ?? "We cannot deliver there yet." });
+            setDeliveryResult({ key: requestKey, quote: null, error: body.message ?? t("delivery.no") });
             return;
           }
           setDeliveryResult({ key: requestKey, quote: { ...body, key: requestKey }, error: null });
@@ -131,14 +147,14 @@ export function CheckoutForm({
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
           }
-          setDeliveryResult({ key: requestKey, quote: null, error: "We could not quote delivery." });
+          setDeliveryResult({ key: requestKey, quote: null, error: t("checkout.quoteDeliveryError") });
         });
     }, 350);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [canQuoteDelivery, city, deliveryKey, line1, postal, restaurantId]);
+  }, [canQuoteDelivery, city, deliveryKey, line1, postal, restaurantId, t]);
 
   const deliveryQuote = canQuoteDelivery && deliveryResult?.key === deliveryKey ? deliveryResult.quote : null;
   const deliveryError = canQuoteDelivery && deliveryResult?.key === deliveryKey ? deliveryResult.error : null;
@@ -177,7 +193,7 @@ export function CheckoutForm({
       .then(async (response) => {
         const body = (await response.json()) as CartQuote & { message?: string };
         if (!response.ok) {
-          setCartResult({ key: requestKey, quote: null, error: body.message ?? "We could not price this cart." });
+          setCartResult({ key: requestKey, quote: null, error: body.message ?? t("cart.priceError") });
           return;
         }
         setCartResult({ key: requestKey, quote: body, error: null });
@@ -186,10 +202,10 @@ export function CheckoutForm({
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setCartResult({ key: requestKey, quote: null, error: "We could not price this cart." });
+        setCartResult({ key: requestKey, quote: null, error: t("cart.priceError") });
       });
     return () => controller.abort();
-  }, [canQuoteCart, cartKey, deliveryFeeOre, linesPayload, restaurantId]);
+  }, [canQuoteCart, cartKey, deliveryFeeOre, linesPayload, restaurantId, t]);
 
   const cartQuote = canQuoteCart && cartResult?.key === cartKey ? cartResult.quote : null;
   const quoteError = canQuoteCart && cartResult?.key === cartKey ? cartResult.error : null;
@@ -197,11 +213,11 @@ export function CheckoutForm({
   if (cart.lines.length === 0) {
     return (
       <EmptyState
-        title="Nothing to check out"
-        description="Add a plate first. Guest checkout keeps your cart on this device."
+        title={t("checkout.emptyTitle")}
+        description={t("checkout.emptyBody")}
         action={
           <Button size="touch" asChild>
-            <Link href="/menu">View today’s menu</Link>
+            <Link href="/menu">{t("cart.viewMenu")}</Link>
           </Button>
         }
       />
@@ -211,11 +227,11 @@ export function CheckoutForm({
   async function onSubmit(values: FormValues) {
     if (values.fulfillment === "DELIVERY") {
       if (!values.line1?.trim() || !values.postalCode?.trim()) {
-        toast.error("Enter a street address and postcode.");
+        toast.error(t("checkout.needAddress"));
         return;
       }
       if (!deliveryQuote) {
-        toast.error(deliveryError ?? "Wait for the delivery quote.");
+        toast.error(deliveryError ?? t("checkout.waitQuote"));
         return;
       }
     }
@@ -256,7 +272,7 @@ export function CheckoutForm({
         message?: string;
       };
       if (!response.ok || !body.order || !body.accessToken) {
-        toast.error(body.message ?? "We could not place this order.");
+        toast.error(body.message ?? t("checkout.placeError"));
         return;
       }
       rememberGuestOrder({
@@ -266,10 +282,10 @@ export function CheckoutForm({
       });
       track("order_created", { orderId: body.order.id, publicOrderNumber: body.order.publicOrderNumber });
       cart.clear();
-      toast.success(`${body.order.publicOrderNumber} is reserved.`);
+      toast.success(t("checkout.reserved", { number: body.order.publicOrderNumber }));
       router.push(`/orders/${body.order.id}?token=${encodeURIComponent(body.accessToken)}`);
     } catch {
-      toast.error("We could not place this order.");
+      toast.error(t("checkout.placeError"));
     } finally {
       setSubmitting(false);
     }
@@ -284,7 +300,7 @@ export function CheckoutForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-8">
         <fieldset className="space-y-3">
-          <legend className="font-heading text-2xl">How should it arrive?</legend>
+          <legend className="font-heading text-2xl">{t("checkout.arrive")}</legend>
           <RadioGroup
             value={fulfillment}
             onValueChange={(value) => form.setValue("fulfillment", value as FormValues["fulfillment"])}
@@ -292,39 +308,41 @@ export function CheckoutForm({
           >
             <label className="flex min-h-14 items-center gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10">
               <RadioGroupItem value="DELIVERY" />
-              <span>Delivery in Uppsala</span>
+              <span>{t("checkout.deliveryOption")}</span>
             </label>
             <label className="flex min-h-14 items-center gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10">
               <RadioGroupItem value="PICKUP" />
-              <span>Pickup — {pickup.line1}, {pickup.postalCode} {pickup.city}</span>
+              <span>
+                {t("checkout.pickupOption", {
+                  address: `${pickup.line1}, ${pickup.postalCode} ${pickup.city}`,
+                })}
+              </span>
             </label>
           </RadioGroup>
         </fieldset>
 
         <fieldset className="grid gap-4">
-          <legend className="font-heading text-2xl">Contact</legend>
-          <p className="text-sm text-muted-foreground">
-            Guest checkout. You do not need an account. We use this to reach you about the order.
-          </p>
-          <Field id="name" label="Name" error={form.formState.errors.name?.message}>
+          <legend className="font-heading text-2xl">{t("checkout.contact")}</legend>
+          <p className="text-sm text-muted-foreground">{t("checkout.contactHint")}</p>
+          <Field id="name" label={t("checkout.name")} error={form.formState.errors.name?.message}>
             <Input id="name" autoComplete="name" {...form.register("name")} />
           </Field>
-          <Field id="email" label="Email" error={form.formState.errors.email?.message}>
+          <Field id="email" label={t("checkout.email")} error={form.formState.errors.email?.message}>
             <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
           </Field>
-          <Field id="phone" label="Phone" hint="Swedish mobile, for example +4670…" error={form.formState.errors.phone?.message}>
+          <Field id="phone" label={t("checkout.phone")} hint={t("checkout.phoneHint")} error={form.formState.errors.phone?.message}>
             <Input id="phone" type="tel" autoComplete="tel" inputMode="tel" {...form.register("phone")} />
           </Field>
         </fieldset>
 
         {fulfillment === "DELIVERY" ? (
           <fieldset className="grid gap-4">
-            <legend className="font-heading text-2xl">Delivery address</legend>
-            <Field id="line1" label="Street">
+            <legend className="font-heading text-2xl">{t("checkout.address")}</legend>
+            <Field id="line1" label={t("checkout.street")}>
               <Input id="line1" autoComplete="address-line1" {...form.register("line1")} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="postalCode" label="Postcode">
+              <Field id="postalCode" label={t("delivery.postcode")}>
                 <Input
                   id="postalCode"
                   inputMode="numeric"
@@ -333,13 +351,17 @@ export function CheckoutForm({
                   {...form.register("postalCode")}
                 />
               </Field>
-              <Field id="city" label="City">
+              <Field id="city" label={t("checkout.city")}>
                 <Input id="city" autoComplete="address-level2" {...form.register("city")} />
               </Field>
             </div>
             {deliveryQuote ? (
               <p role="status" className="text-sm text-forest">
-                {deliveryQuote.zoneName}: {deliveryQuote.feeLabel}, about {deliveryQuote.etaMinutes} minutes.
+                {t("checkout.deliveryQuote", {
+                  zone: deliveryQuote.zoneName,
+                  fee: deliveryQuote.feeLabel,
+                  eta: deliveryQuote.etaMinutes,
+                })}
               </p>
             ) : null}
             {deliveryError ? (
@@ -350,29 +372,28 @@ export function CheckoutForm({
           </fieldset>
         ) : (
           <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-foreground/10">
-            Pickup is at {pickup.line1}, {pickup.postalCode} {pickup.city}. Confirm this kitchen
-            address before launch.
+            {t("checkout.pickupNote", {
+              address: `${pickup.line1}, ${pickup.postalCode} ${pickup.city}`,
+            })}
           </p>
         )}
 
-        <Field id="notes" label="Kitchen or courier notes">
+        <Field id="notes" label={t("checkout.notes")}>
           <Textarea id="notes" maxLength={300} {...form.register("specialInstructions")} />
         </Field>
       </div>
 
       <aside className="h-fit rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-2xl">To pay later</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Totals are quoted on the server. Payment is Phase 5 — this demo only reserves the plate.
-        </p>
-        {!cartQuote && !quoteError ? <Spinner className="mt-4" label="Pricing order" /> : null}
+        <h2 className="font-heading text-2xl">{t("checkout.payLater")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("checkout.payLaterHint")}</p>
+        {!cartQuote && !quoteError ? <Spinner className="mt-4" label={t("checkout.pricing")} /> : null}
         {quoteError ? <ErrorState className="mt-4" message={quoteError} /> : null}
         {cartQuote ? (
           <dl className="mt-4 space-y-2 text-sm">
             {cartQuote.lines.map((line) => (
               <div key={`${line.menuItemId}-${line.name}`} className="flex justify-between gap-3">
                 <dt>
-                  {line.quantity}× {line.name}
+                  {line.quantity}× {localizeMenuName(line.menuItemId, line.name, locale)}
                 </dt>
                 <dd>
                   <Price ore={line.lineTotalOre} size="sm" />
@@ -380,13 +401,13 @@ export function CheckoutForm({
               </div>
             ))}
             <div className="flex justify-between gap-3">
-              <dt>Delivery</dt>
+              <dt>{t("checkout.deliveryFee")}</dt>
               <dd>
                 <Price ore={cartQuote.deliveryFeeOre} size="sm" />
               </dd>
             </div>
             <div className="flex justify-between gap-3 font-medium">
-              <dt>Total</dt>
+              <dt>{t("cart.total")}</dt>
               <dd>
                 <Price ore={cartQuote.totalOre} />
               </dd>
@@ -394,7 +415,7 @@ export function CheckoutForm({
           </dl>
         ) : null}
         <Button size="touch" className="mt-6 w-full" type="submit" disabled={!canPlace}>
-          {submitting ? "Placing order…" : "Place order"}
+          {submitting ? t("checkout.placing") : t("checkout.place")}
         </Button>
       </aside>
     </form>

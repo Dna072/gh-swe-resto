@@ -4,27 +4,34 @@ import { MenuListItem } from "@/components/brand/menu-list-item";
 import { PageBanner } from "@/components/brand/page-banner";
 import { Reveal, RevealGroup } from "@/components/brand/reveal";
 import { TrackView } from "@/components/storefront/track-view";
+import { localizeCatalog } from "@/lib/i18n/catalog";
+import { getLocale, getTranslator } from "@/lib/i18n/server";
 import { soldOut } from "@/lib/menu/display";
 import { loadPublicCatalog } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Today's menu",
-  description: "Ghanaian plates, sides and drinks for delivery in Uppsala.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  return {
+    title: t("menuPage.metaTitle"),
+    description: t("menuPage.metaDescription"),
+  };
+}
 
 export default async function MenuPage() {
-  const catalog = await loadPublicCatalog();
+  const t = await getTranslator();
+  const locale = await getLocale();
+  const catalog = localizeCatalog(await loadPublicCatalog(), locale, t);
 
   return (
     <CustomerShell>
       <TrackView name="menu_viewed" properties={{ surface: "menu" }} />
       <main id="main">
         <PageBanner
-          eyebrow="Our menu"
-          title="Today's Ghanaian plates"
-          description="Choose a meal to set protein, heat and extras. Display prices are resolved on the server."
+          eyebrow={t("menuPage.eyebrow")}
+          title={t("menuPage.title")}
+          description={t("menuPage.description")}
         />
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-20 px-4 py-16 sm:py-24">
           {catalog.categories.map((category) => {

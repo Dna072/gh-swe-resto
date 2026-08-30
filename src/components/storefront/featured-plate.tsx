@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useReducedMotion } from "motion/react";
 import { FoodPhoto } from "@/components/brand/food-photo";
 import { Price } from "@/components/brand/price";
+import { useT } from "@/components/i18n/locale-provider";
 import type { Ore } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ export function FeaturedPlate({
   featured?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const reduced = useReducedMotion() ?? false;
 
   return (
@@ -53,7 +55,7 @@ export function FeaturedPlate({
       <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 to-transparent transition-opacity duration-500 group-hover:via-ink/45" />
       <div className="absolute inset-x-0 bottom-0 space-y-2 p-6 sm:p-8">
         {featured ? (
-          <p className="text-[11px] uppercase tracking-[0.24em] text-gold">Popular</p>
+          <p className="text-[11px] uppercase tracking-[0.24em] text-gold">{t("menu.popular")}</p>
         ) : null}
         <h3 className="font-heading text-3xl sm:text-4xl">{name}</h3>
         <p className="max-w-md text-sm italic text-primary-foreground/75">{description}</p>

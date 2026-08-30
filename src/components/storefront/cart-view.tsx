@@ -8,7 +8,9 @@ import { ErrorState } from "@/components/brand/error-state";
 import { Price } from "@/components/brand/price";
 import { QuantityStepper } from "@/components/brand/quantity-stepper";
 import { Spinner } from "@/components/brand/loading-state";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { localizeMenuName, localizeOptionName } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartQuote } from "@/domains/cart/models";
 
@@ -23,6 +25,8 @@ function linesKey(restaurantId: string, lines: { menuItemId: string; quantity: n
 }
 
 export function CartView() {
+  const t = useT();
+  const { locale } = useLocale();
   const cart = useCart();
   const key = useMemo(
     () =>
@@ -66,7 +70,7 @@ export function CartView() {
       .then(async (response) => {
         const body = (await response.json()) as CartQuote & { message?: string };
         if (!response.ok) {
-          setResult({ key: requestKey, quote: null, error: body.message ?? "We could not price this cart." });
+          setResult({ key: requestKey, quote: null, error: body.message ?? t("cart.priceError") });
           return;
         }
         setResult({ key: requestKey, quote: body, error: null });
@@ -75,19 +79,19 @@ export function CartView() {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setResult({ key: requestKey, quote: null, error: "We could not price this cart." });
+        setResult({ key: requestKey, quote: null, error: t("cart.priceError") });
       });
     return () => controller.abort();
-  }, [cart.lines, cart.restaurantId, key]);
+  }, [cart.lines, cart.restaurantId, key, t]);
 
   if (cart.lines.length === 0) {
     return (
       <EmptyState
-        title="Your cart is empty"
-        description="Today’s plates are on the menu. Add a meal and we will price it on the server."
+        title={t("cart.emptyTitle")}
+        description={t("cart.emptyBody")}
         action={
           <Button size="touch" asChild>
-            <Link href="/menu">View today’s menu</Link>
+            <Link href="/menu">{t("cart.viewMenu")}</Link>
           </Button>
         }
       />
@@ -109,14 +113,14 @@ export function CartView() {
                 <div>
                   <p className="font-heading text-xl">
                     <Link href={`/menu/${line.slug}`} className="hover:text-earth">
-                      {line.name}
+                      {localizeMenuName(line.menuItemId, line.name, locale)}
                     </Link>
                   </p>
                   {matched?.modifiers.length ? (
                     <ul className="mt-2 text-sm text-muted-foreground">
                       {matched.modifiers.map((modifier) => (
                         <li key={`${modifier.groupId}-${modifier.optionId}`}>
-                          {modifier.optionName}
+                          {localizeOptionName(modifier.optionId, modifier.optionName, locale)}
                           {modifier.quantity > 1 ? ` ×${modifier.quantity}` : ""}
                         </li>
                       ))}
@@ -132,7 +136,7 @@ export function CartView() {
                   onChange={(next) => cart.updateQuantity(line.id, next)}
                 />
                 <Button variant="ghost" onClick={() => cart.removeLine(line.id)}>
-                  Remove
+                  {t("cart.remove")}
                 </Button>
               </div>
             </li>
@@ -140,28 +144,28 @@ export function CartView() {
         })}
       </ul>
       <aside className="h-fit rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-2xl">Totals</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Priced by the server. Delivery is added at checkout.</p>
-        {pending ? <Spinner className="mt-4" label="Pricing cart" /> : null}
+        <h2 className="font-heading text-2xl">{t("cart.totals")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("cart.totalsHint")}</p>
+        {pending ? <Spinner className="mt-4" label={t("cart.pricing")} /> : null}
         {error ? <ErrorState className="mt-4" message={error} /> : null}
         {quote ? (
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between gap-3">
-              <dt>Subtotal</dt>
+              <dt>{t("cart.subtotal")}</dt>
               <dd>
                 <Price ore={quote.subtotalOre} size="sm" />
               </dd>
             </div>
             {quote.discountTotalOre > 0 ? (
               <div className="flex justify-between gap-3">
-                <dt>Discount</dt>
+                <dt>{t("cart.discount")}</dt>
                 <dd>
                   <Price ore={quote.discountTotalOre} size="sm" />
                 </dd>
               </div>
             ) : null}
             <div className="flex justify-between gap-3 font-medium">
-              <dt>Total</dt>
+              <dt>{t("cart.total")}</dt>
               <dd>
                 <Price ore={quote.totalOre} />
               </dd>
@@ -169,7 +173,7 @@ export function CartView() {
           </dl>
         ) : null}
         <Button size="touch" className="mt-6 w-full" asChild>
-          <Link href="/checkout">Continue to checkout</Link>
+          <Link href="/checkout">{t("cart.checkout")}</Link>
         </Button>
       </aside>
     </div>

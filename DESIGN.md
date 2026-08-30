@@ -54,6 +54,10 @@ Until a real photograph exists, use `FoodPhoto` / `PhotoComingSoon` — a parchm
 
 Homepage hero, featured meals, and meal cards read image metadata from the backend (`url`, `altText`, focal point). Nothing is hard-coded in components.
 
+## Language
+
+Customer storefront is Swedish or English. Swedish is the default. The first visit reads `Accept-Language` and switches to English only when English ranks above Swedish. The visitor can override with SV / EN in the header and footer; the choice is stored in a `locale` cookie. Admin and kitchen stay English.
+
 ## Homepage
 
 Editorial restaurant layout inspired by premium restaurant sites (Grand Restaurant–class rhythm, not a clone): full-viewport cinematic hero, hours strip, overlay signature plates, dotted-leader menu, full-bleed photo band, split story, categories, delivery check, reviews, visit/order CTA. Ghanaian identity is charcoal, gold, earth, and a single flag stripe — not a red/yellow/green theme.

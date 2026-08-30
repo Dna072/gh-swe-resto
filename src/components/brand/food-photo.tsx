@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ComingSoonLabel } from "@/components/i18n/coming-soon-label";
 import { cn } from "@/lib/utils";
 
 export function PhotoComingSoon({
@@ -24,7 +25,7 @@ export function PhotoComingSoon({
           tone === "ink" ? "text-gold" : "text-earth",
         )}
       >
-        Photo coming soon
+        <ComingSoonLabel />
       </p>
       <p className="font-heading text-2xl text-balance sm:text-3xl">{name}</p>
     </div>

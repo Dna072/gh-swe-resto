@@ -8,7 +8,7 @@ import { QuantityStepper } from "./quantity-stepper";
 
 function Harness() {
   const [value, setValue] = useState(1);
-  return <QuantityStepper value={value} onChange={setValue} />;
+  return <QuantityStepper value={value} onChange={setValue} label="Quantity" />;
 }
 
 describe("QuantityStepper", () => {

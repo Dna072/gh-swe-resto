@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FoodPhoto } from "@/components/brand/food-photo";
 import { Price } from "@/components/brand/price";
+import { useOptionalT } from "@/components/i18n/locale-provider";
 import { revealVariants } from "@/lib/motion";
 import type { Ore } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ export function MealCard({
   editorial = false,
   dietaryLabels,
 }: MealCardProps) {
+  const t = useOptionalT();
   const reduced = useReducedMotion() ?? false;
   const media = (
     <div
@@ -66,12 +68,12 @@ export function MealCard({
       />
       {featured ? (
         <Badge variant="gold" className="absolute top-4 left-4 uppercase tracking-[0.16em]">
-          Popular
+          {t("menu.popular")}
         </Badge>
       ) : null}
       {soldOut ? (
         <Badge variant="secondary" className="absolute top-4 right-4">
-          Sold out
+          {t("menu.soldOut")}
         </Badge>
       ) : lowStockLabel ? (
         <Badge variant="earth" className="absolute top-4 right-4">
@@ -122,15 +124,15 @@ export function MealCard({
           <Price ore={priceOre} className="text-gold" />
           {onAdd ? (
             <Button size="touch" variant="gold-outline" disabled={soldOut} onClick={onAdd}>
-              {soldOut ? "Unavailable" : addLabel}
+              {soldOut ? t("menu.unavailable") : addLabel}
             </Button>
           ) : href ? (
             <Button size="touch" variant="gold-outline" disabled={soldOut} asChild>
-              <Link href={href}>{soldOut ? "Unavailable" : addLabel}</Link>
+              <Link href={href}>{soldOut ? t("menu.unavailable") : addLabel}</Link>
             </Button>
           ) : (
             <Button size="touch" variant="gold-outline" disabled={soldOut}>
-              {soldOut ? "Unavailable" : addLabel}
+              {soldOut ? t("menu.unavailable") : addLabel}
             </Button>
           )}
         </div>
