@@ -6,6 +6,8 @@ import { Price } from "@/components/brand/price";
 import { adminFetch } from "@/lib/admin/client";
 import type { KitchenAction, StaffOrder } from "@/lib/orders/staff";
 import { formatSlot } from "@/lib/orders/slot-format";
+import { SpiceLevelBadge } from "@/components/brand/spice-level-badge";
+import { spiceLevelOf } from "@/lib/menu/spice-level";
 import { toast } from "sonner";
 
 const COLUMNS: Array<{ id: string; title: string; statuses: StaffOrder["orderStatus"][] }> = [
@@ -126,10 +128,25 @@ export function KitchenBoard() {
                     <ul className="mt-3 space-y-1 text-sm">
                       {order.items.map((item) => (
                         <li key={`${order.id}-${item.menuItemId}-${item.name}`}>
-                          {item.quantity}× {item.name}
-                          {item.modifiers.length > 0
-                            ? ` (${item.modifiers.map((modifier) => modifier.optionName).join(", ")})`
-                            : ""}
+                          <span>
+                            {item.quantity}× {item.name}
+                          </span>
+                          {item.modifiers.length > 0 ? (
+                            <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                              {item.modifiers.map((modifier) => {
+                                const heat = spiceLevelOf(modifier);
+                                return (
+                                  <li
+                                    key={`${item.menuItemId}-${modifier.groupId}-${modifier.optionId}`}
+                                    className="flex flex-wrap items-center gap-2"
+                                  >
+                                    {modifier.optionName}
+                                    {heat ? <SpiceLevelBadge level={heat} /> : null}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

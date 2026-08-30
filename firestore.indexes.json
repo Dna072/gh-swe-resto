@@ -56,6 +56,22 @@
         { "fieldPath": "restaurantId", "order": "ASCENDING" },
         { "fieldPath": "customerId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "analyticsEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "restaurantId", "order": "ASCENDING" },
+        { "fieldPath": "occurredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "marketingSignups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "restaurantId", "order": "ASCENDING" },
+        { "fieldPath": "consentedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

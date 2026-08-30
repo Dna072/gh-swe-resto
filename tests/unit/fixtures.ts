@@ -79,8 +79,8 @@ export const heatGroup: ModifierGroup = {
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
   options: [
-    { id: "mild-shito", name: "Mild shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 1 },
-    { id: "hot-shito", name: "Hot shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 2 },
+    { id: "mild-shito", name: "Mild shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 1, spiceLevel: 1 },
+    { id: "hot-shito", name: "Hot shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 2, spiceLevel: 3 },
   ],
 };
 

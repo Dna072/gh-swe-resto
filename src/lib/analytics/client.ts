@@ -28,7 +28,13 @@ export function track(
     body: JSON.stringify({
       name,
       sessionId: analyticsSessionId(),
-      properties,
+      properties: {
+        path: window.location.pathname,
+        referrer: document.referrer || null,
+        locale: document.documentElement.lang || null,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ...properties,
+      },
     }),
     keepalive: true,
   }).catch(() => undefined);

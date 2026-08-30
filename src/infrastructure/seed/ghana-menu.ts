@@ -403,8 +403,8 @@ export const seedModifierGroups: ModifierGroup[] = [
     createdAt: STAMP,
     updatedAt: STAMP,
     options: [
-      { id: "mild-shito", name: "Mild shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 1 },
-      { id: "hot-shito", name: "Hot shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 2 },
+      { id: "mild-shito", name: "Mild shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 1, spiceLevel: 1 },
+      { id: "hot-shito", name: "Hot shito", priceOre: 0, isAvailable: true, allowsQuantity: false, displayOrder: 2, spiceLevel: 3 },
     ],
   },
   {

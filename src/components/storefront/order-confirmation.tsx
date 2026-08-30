@@ -13,6 +13,7 @@ import { customerErrorMessage } from "@/lib/i18n/api-errors";
 import { localizeMenuName } from "@/lib/i18n/catalog";
 import { formatSek } from "@/lib/money";
 import type { MessageKey, Translator } from "@/lib/i18n/messages";
+import { track } from "@/lib/analytics/client";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
 import type { PublicOrder } from "@/lib/orders/public";
 import { formatSlot } from "@/lib/orders/slot-format";
@@ -77,6 +78,7 @@ export function OrderConfirmation({
         return;
       }
       setOrder(body.order ?? body);
+      track("payment_completed", { orderId });
     } finally {
       setBusy(false);
     }

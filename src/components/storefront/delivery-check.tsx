@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
 import { useT } from "@/components/i18n/locale-provider";
 import { customerErrorMessage } from "@/lib/i18n/api-errors";
+import { track } from "@/lib/analytics/client";
 
 type CheckResult =
   | { ok: true; zoneName: string; feeLabel: string; etaMinutes: number }
@@ -44,6 +45,7 @@ export function DeliveryCheck() {
         feeLabel: body.feeLabel ?? "",
         etaMinutes: body.etaMinutes ?? 0,
       });
+      track("delivery_checked", { postalCode, deliverable: true });
     } catch {
       setResult({ ok: false, message: t("delivery.error") });
     } finally {

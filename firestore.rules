@@ -166,5 +166,15 @@ service cloud.firestore {
     match /webhookEvents/{eventId} {
       allow read, write: if false;
     }
+
+    match /analyticsEvents/{eventId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /marketingSignups/{signupId} {
+      allow read: if isAdmin() || role() == 'MARKETING';
+      allow write: if false;
+    }
   }
 }

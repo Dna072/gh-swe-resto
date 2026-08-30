@@ -105,6 +105,8 @@ export interface ModifierOption {
   allowsQuantity: boolean;
   maxQuantity?: number;
   displayOrder: number;
+  /** Filled chilli count, 1–3. Only set on heat options. */
+  spiceLevel?: 1 | 2 | 3;
 }
 
 export interface ModifierGroup extends Timestamped {

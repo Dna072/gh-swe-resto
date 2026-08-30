@@ -8,6 +8,7 @@ export type PublicModifierOption = {
   priceLabel: string;
   allowsQuantity: boolean;
   maxQuantity?: number;
+  spiceLevel?: 1 | 2 | 3;
 };
 
 export type PublicModifierGroup = {

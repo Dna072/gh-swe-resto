@@ -7,6 +7,8 @@ import { EmptyState } from "@/components/brand/empty-state";
 import { ErrorState } from "@/components/brand/error-state";
 import { Price } from "@/components/brand/price";
 import { QuantityStepper } from "@/components/brand/quantity-stepper";
+import { SpiceLevelBadge } from "@/components/brand/spice-level-badge";
+import { spiceLevelOf } from "@/lib/menu/spice-level";
 import { Spinner } from "@/components/brand/loading-state";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
@@ -121,8 +123,13 @@ export function CartView() {
                     <ul className="mt-2 text-sm text-muted-foreground">
                       {matched.modifiers.map((modifier) => (
                         <li key={`${modifier.groupId}-${modifier.optionId}`}>
-                          {localizeOptionName(modifier.optionId, modifier.optionName, locale)}
-                          {modifier.quantity > 1 ? ` ×${modifier.quantity}` : ""}
+                          <span className="inline-flex flex-wrap items-center gap-2">
+                            {localizeOptionName(modifier.optionId, modifier.optionName, locale)}
+                            {spiceLevelOf(modifier) ? (
+                              <SpiceLevelBadge level={spiceLevelOf(modifier)!} />
+                            ) : null}
+                            {modifier.quantity > 1 ? ` ×${modifier.quantity}` : ""}
+                          </span>
                         </li>
                       ))}
                     </ul>
