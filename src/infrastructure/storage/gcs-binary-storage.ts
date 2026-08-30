@@ -2,17 +2,23 @@ import { Storage } from "@google-cloud/storage";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
 export class GcsBinaryStorage implements BinaryObjectStorage {
-  constructor(
-    private readonly bucketName: string,
-    private readonly storage = new Storage(),
-  ) {}
+  private storageClient: Storage | undefined;
+
+  constructor(private readonly bucketName: string) {}
+
+  private storage(): Storage {
+    this.storageClient ??= new Storage({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID,
+    });
+    return this.storageClient;
+  }
 
   publicUrl(objectPath: string): string {
     return `https://storage.googleapis.com/${this.bucketName}/${objectPath}`;
   }
 
   async put(object: StoredObjectWrite): Promise<StoredObjectResult> {
-    const file = this.storage.bucket(this.bucketName).file(object.path);
+    const file = this.storage().bucket(this.bucketName).file(object.path);
     await file.save(object.bytes, {
       contentType: object.contentType,
       resumable: false,
@@ -28,6 +34,6 @@ export class GcsBinaryStorage implements BinaryObjectStorage {
   }
 
   async delete(objectPath: string): Promise<void> {
-    await this.storage.bucket(this.bucketName).file(objectPath).delete({ ignoreNotFound: true });
+    await this.storage().bucket(this.bucketName).file(objectPath).delete({ ignoreNotFound: true });
   }
 }

@@ -73,6 +73,8 @@ After it finishes you get:
 
 The script creates a Firestore Native database, a photo bucket (`{project}-resto-assets`), deploys rules when Firebase CLI can, and seeds the demo menu via `POST /api/admin/seed` with `X-Admin-Token` (not `Authorization` — Cloud Run would treat that as a Google identity token and return HTML 401).
 
+If `/api/health` or the storefront returns 500, the Next.js process failed while starting Firebase Admin (usually because `firebase-admin` was bundled into the standalone server). The image now keeps those packages external. Check `/api/health` for `initError` after redeploy.
+
 If the service is up but the menu is empty, paste the admin token on `/admin` and click **Seed demo menu**, or:
 
 ```bash
