@@ -1,5 +1,13 @@
 const TOKEN_KEY = "ghana-admin-token";
 
+const listeners = new Set<() => void>();
+
+function notifyAdminTokenListeners(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 export function getAdminToken(): string {
   if (typeof window === "undefined") {
     return "";
@@ -7,12 +15,25 @@ export function getAdminToken(): string {
   return sessionStorage.getItem(TOKEN_KEY) ?? "";
 }
 
+export function hasAdminToken(): boolean {
+  return getAdminToken().length > 0;
+}
+
+export function subscribeAdminToken(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 export function setAdminToken(token: string): void {
   sessionStorage.setItem(TOKEN_KEY, token);
+  notifyAdminTokenListeners();
 }
 
 export function clearAdminToken(): void {
   sessionStorage.removeItem(TOKEN_KEY);
+  notifyAdminTokenListeners();
 }
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

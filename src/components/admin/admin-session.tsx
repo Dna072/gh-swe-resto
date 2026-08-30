@@ -1,19 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
-import { clearAdminToken, getAdminToken, setAdminToken } from "@/lib/admin/client";
+import {
+  clearAdminToken,
+  getAdminToken,
+  hasAdminToken,
+  setAdminToken,
+  subscribeAdminToken,
+} from "@/lib/admin/client";
 import { signInStaff, staffPasswordLoginAvailable } from "@/lib/firebase/client";
 
+function useStoredAdminToken(): boolean {
+  return useSyncExternalStore(subscribeAdminToken, hasAdminToken, () => false);
+}
+
 export function AdminSession() {
+  const stored = useStoredAdminToken();
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const passwordLogin = staffPasswordLoginAvailable();
+  const saved = stored && !editing;
+
+  useEffect(() => {
+    const existing = getAdminToken();
+    if (existing) {
+      setToken(existing);
+    }
+  }, []);
 
   return (
     <div className="border-b border-border bg-secondary/60">
@@ -27,7 +46,7 @@ export function AdminSession() {
             void signInStaff(email, password)
               .then((idToken) => {
                 setAdminToken(idToken);
-                setSaved(true);
+                setEditing(false);
               })
               .catch((cause: unknown) => {
                 setError(cause instanceof Error ? cause.message : "Staff sign-in failed.");
@@ -64,7 +83,7 @@ export function AdminSession() {
         onSubmit={(event) => {
           event.preventDefault();
           setAdminToken(token.trim() || getAdminToken());
-          setSaved(true);
+          setEditing(false);
         }}
       >
         <Field
@@ -84,7 +103,7 @@ export function AdminSession() {
             value={token}
             onChange={(event) => {
               setToken(event.target.value);
-              setSaved(false);
+              setEditing(true);
             }}
             placeholder="Paste ADMIN_DEV_TOKEN"
           />
@@ -100,7 +119,7 @@ export function AdminSession() {
             onClick={() => {
               clearAdminToken();
               setToken("");
-              setSaved(false);
+              setEditing(false);
             }}
           >
             Clear
