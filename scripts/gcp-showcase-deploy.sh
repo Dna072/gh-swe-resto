@@ -174,7 +174,7 @@ gcloud run deploy "${SERVICE}" \
   --region "${REGION}" \
   --platform managed \
   --cpu 1 \
-  --memory 512Mi \
+  --memory 1Gi \
   --concurrency 80 \
   --min-instances 0 \
   --max-instances 2 \

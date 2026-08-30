@@ -69,7 +69,7 @@ After it finishes you get:
 | Payments / delivery / email | mock | Stripe and Wolt later |
 | Max instances | 2 | Shared Firestore; still cost-capped |
 | Min instances | 0 | Scale to zero overnight |
-| CPU / memory | 1 / 512Mi | Cost-safe default |
+| CPU / memory | 1 / 1Gi | Sharp photo variants need more than 512Mi |
 
 The script creates a Firestore Native database, a photo bucket (`{project}-resto-assets`), deploys rules when Firebase CLI can, and seeds the demo menu via `POST /api/admin/seed` with `X-Admin-Token` (not `Authorization` — Cloud Run would treat that as a Google identity token and return HTML 401).
 
