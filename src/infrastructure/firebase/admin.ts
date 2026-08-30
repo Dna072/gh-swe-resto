@@ -2,6 +2,7 @@ import { applicationDefault, cert, getApps, initializeApp, type App } from "fire
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { firebaseProjectId, getEnv } from "@/lib/env";
+import { isCloudRun } from "@/lib/runtime";
 
 let app: App | undefined;
 let firestoreConfigured = false;
@@ -28,11 +29,19 @@ export function getFirebaseAdminApp(): App {
     });
     return app;
   }
-  app = initializeApp({
-    credential: applicationDefault(),
-    projectId,
-  });
-  return app;
+  try {
+    // On Cloud Run, omit an explicit ADC call so the Admin SDK can use the
+    // metadata server. Calling applicationDefault() at import time throws when
+    // Next.js has bundled google-auth-library into the standalone server.
+    app = initializeApp({
+      ...(isCloudRun() ? {} : { credential: applicationDefault() }),
+      projectId,
+    });
+    return app;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "unknown";
+    throw new Error(`Firebase Admin failed to start for project ${projectId}: ${detail}`);
+  }
 }
 
 export function getAdminFirestore() {

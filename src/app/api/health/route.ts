@@ -1,13 +1,30 @@
 import { NextResponse } from "next/server";
-import { dataStoreName } from "@/server/composition";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({
-    ok: true,
+  const base = {
     service: process.env.K_SERVICE ?? "local",
     revision: process.env.K_REVISION ?? "dev",
-    dataStore: dataStoreName(),
-  });
+  };
+  try {
+    const { dataStoreInitError, dataStoreName } = await import("@/server/composition");
+    const initError = dataStoreInitError();
+    return NextResponse.json({
+      ok: !initError,
+      ...base,
+      dataStore: dataStoreName(),
+      ...(initError ? { initError } : {}),
+    }, { status: initError ? 503 : 200 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        ...base,
+        dataStore: "unavailable",
+        initError: error instanceof Error ? error.message : "composition failed to load",
+      },
+      { status: 503 },
+    );
+  }
 }

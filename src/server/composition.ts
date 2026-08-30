@@ -50,6 +50,7 @@ import { GcsBinaryStorage } from "@/infrastructure/storage/gcs-binary-storage";
 import type { BinaryObjectStorage } from "@/infrastructure/storage/object-storage";
 import { firestoreDataStoreEnabled } from "@/lib/data-store";
 import { getEnv } from "@/lib/env";
+import { logger } from "@/lib/logging/logger";
 
 const restaurantId = getEnv().DEFAULT_RESTAURANT_ID;
 const catalog = seededCatalog(restaurantId);
@@ -96,6 +97,10 @@ function createDataPorts(): {
       printJobs: new FirestorePrintJobRepository(db),
     };
   }
+  return createMemoryPorts();
+}
+
+function createMemoryPorts(): ReturnType<typeof createDataPorts> {
   return {
     menuRepository: new InMemoryMenuRepository(state, () => {
       if (shouldPersistLocalCatalog()) {
@@ -110,12 +115,39 @@ function createDataPorts(): {
   };
 }
 
-const ports = createDataPorts();
+function lazyProxy<T extends object>(factory: () => T): T {
+  let instance: T | undefined;
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      instance ??= factory();
+      const value = Reflect.get(instance, prop, instance);
+      return typeof value === "function" ? value.bind(instance) : value;
+    },
+  });
+}
 
-export const menuRepository = ports.menuRepository;
+let portsMemo: ReturnType<typeof createDataPorts> | undefined;
+let initError: string | undefined;
+
+function getPorts(): ReturnType<typeof createDataPorts> {
+  if (portsMemo) {
+    return portsMemo;
+  }
+  try {
+    portsMemo = createDataPorts();
+    return portsMemo;
+  } catch (error) {
+    initError = error instanceof Error ? error.message : "Firestore failed to initialize.";
+    logger.error("firestore_init_failed", { message: initError });
+    portsMemo = createMemoryPorts();
+    return portsMemo;
+  }
+}
+
+export const menuRepository = lazyProxy(() => getPorts().menuRepository);
 const mockDelivery = new MockDeliveryProvider(() => catalog.deliveryZones);
 
-export const objectStorage = createObjectStorage();
+export const objectStorage = lazyProxy(() => createObjectStorage());
 export const mediaService = new MediaService(objectStorage);
 export const menuService = new MenuService(menuRepository);
 export const menuAdminService = new MenuAdminService(menuRepository, mediaService);
@@ -125,14 +157,19 @@ export const cartService = new CartService(
   menuRepository,
   pricingService,
   promotionService,
-  ports.promotionRepository,
+  lazyProxy(() => getPorts().promotionRepository),
   seedPricingCalendar,
 );
 export const deliveryService = new DeliveryService([mockDelivery], {
   preferCheapest: true,
   preferredProviders: ["mock"],
 });
-export const orderService = new OrderService(ports.orderRepository, cartService, ports.transactions, menuRepository);
+export const orderService = new OrderService(
+  lazyProxy(() => getPorts().orderRepository),
+  cartService,
+  lazyProxy(() => getPorts().transactions),
+  menuRepository,
+);
 
 function createPaymentProvider() {
   const env = getEnv();
@@ -143,8 +180,14 @@ function createPaymentProvider() {
 }
 
 export const paymentProvider = createPaymentProvider();
-export const paymentService = new PaymentService(paymentProvider, ports.webhookStore);
-export const printingService = new PrintingService(ports.printJobs, new BrowserPrintProvider());
+export const paymentService = new PaymentService(
+  paymentProvider,
+  lazyProxy(() => getPorts().webhookStore),
+);
+export const printingService = new PrintingService(
+  lazyProxy(() => getPorts().printJobs),
+  new BrowserPrintProvider(),
+);
 export const analyticsService = new AnalyticsService(new LoggingAnalyticsSink());
 
 export const marketingSignups: Array<{ email: string; consentedAt: string; source?: string }> = [];
@@ -192,5 +235,15 @@ export function seedMeta() {
 }
 
 export function dataStoreName(): "firestore" | "memory" {
-  return firestoreEnabled ? "firestore" : "memory";
+  if (!firestoreEnabled || initError) {
+    return "memory";
+  }
+  return "firestore";
+}
+
+export function dataStoreInitError(): string | undefined {
+  if (firestoreEnabled && !portsMemo && !initError) {
+    getPorts();
+  }
+  return initError;
 }

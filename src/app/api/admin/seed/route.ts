@@ -2,13 +2,21 @@ import { NextResponse } from "next/server";
 import { getAdminFirestore } from "@/infrastructure/firebase/admin";
 import { restaurantHasMenu, seedFirestoreCatalog } from "@/infrastructure/firestore/seed";
 import { firestoreDataStoreEnabled } from "@/lib/data-store";
+import { AppError } from "@/lib/errors";
 import { requireAdmin } from "@/server/admin-auth";
-import { restaurantIdFromEnv } from "@/server/composition";
+import { dataStoreInitError, restaurantIdFromEnv } from "@/server/composition";
 import { errorResponse } from "@/server/http";
 
 export async function POST(request: Request) {
   try {
     await requireAdmin(request, "menu:write");
+    const initError = dataStoreInitError();
+    if (initError) {
+      return NextResponse.json(
+        { code: "INTERNAL", seeded: false, message: initError },
+        { status: 500 },
+      );
+    }
     if (!firestoreDataStoreEnabled()) {
       return NextResponse.json({
         seeded: false,
@@ -30,6 +38,10 @@ export async function POST(request: Request) {
     const result = await seedFirestoreCatalog(db, restaurantId);
     return NextResponse.json({ seeded: true, ...result });
   } catch (error) {
-    return errorResponse(error);
+    if (error instanceof AppError) {
+      return errorResponse(error);
+    }
+    const message = error instanceof Error ? error.message : "Seed failed.";
+    return NextResponse.json({ code: "INTERNAL", seeded: false, message }, { status: 500 });
   }
 }
