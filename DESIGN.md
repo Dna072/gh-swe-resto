@@ -23,6 +23,7 @@ Do not paint the UI red/yellow/green.
 
 ## Type
 
+- **Great Vibes** — script eyebrows (“Welcome to”, “Discover”)
 - **Fraunces** — headings
 - **Outfit** — body and UI
 - **Geist Mono** — order numbers
@@ -36,6 +37,8 @@ Primary controls use `size="touch"` (44px). Bottom navigation is 56px tall plus 
 ## Motion
 
 `src/lib/motion.ts` respects `prefers-reduced-motion`. Animation must never block add-to-cart.
+
+Storefront motion is editorial: hero ken-burns, staggered fade-up, section reveal on scroll, image hover scale, gold underline on nav. Reduced-motion users get the same layout without travel or zoom.
 
 ## Components
 
@@ -53,4 +56,4 @@ Homepage hero, featured meals, and meal cards read image metadata from the backe
 
 ## Homepage
 
-Editorial restaurant layout: full-viewport hero, signature plates, today’s menu, kitchen story, categories, delivery check, reviews, order CTA. Ghanaian identity is charcoal, gold, earth, and a single flag stripe — not a red/yellow/green theme.
+Editorial restaurant layout inspired by premium restaurant sites (Grand Restaurant–class rhythm, not a clone): full-viewport cinematic hero, hours strip, overlay signature plates, dotted-leader menu, full-bleed photo band, split story, categories, delivery check, reviews, visit/order CTA. Ghanaian identity is charcoal, gold, earth, and a single flag stripe — not a red/yellow/green theme.

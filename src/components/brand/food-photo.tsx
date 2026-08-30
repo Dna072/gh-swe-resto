@@ -4,19 +4,29 @@ import { cn } from "@/lib/utils";
 export function PhotoComingSoon({
   name,
   className,
+  tone = "parchment",
 }: {
   name: string;
   className?: string;
+  tone?: "parchment" | "ink";
 }) {
   return (
     <div
       className={cn(
-        "relative flex size-full flex-col justify-between bg-secondary bg-kente p-5",
+        "relative flex size-full flex-col justify-between bg-kente p-5",
+        tone === "ink" ? "bg-ink text-primary-foreground" : "bg-secondary",
         className,
       )}
     >
-      <p className="text-xs font-medium uppercase tracking-[0.2em] text-earth">Photo coming soon</p>
-      <p className="font-heading text-2xl text-balance">{name}</p>
+      <p
+        className={cn(
+          "text-[11px] font-medium uppercase tracking-[0.28em]",
+          tone === "ink" ? "text-gold" : "text-earth",
+        )}
+      >
+        Photo coming soon
+      </p>
+      <p className="font-heading text-2xl text-balance sm:text-3xl">{name}</p>
     </div>
   );
 }
@@ -29,6 +39,8 @@ export function FoodPhoto({
   sizes,
   objectPosition,
   className,
+  kenBurns = false,
+  placeholderTone = "parchment",
 }: {
   src?: string | null;
   alt: string;
@@ -37,6 +49,8 @@ export function FoodPhoto({
   sizes: string;
   objectPosition?: string;
   className?: string;
+  kenBurns?: boolean;
+  placeholderTone?: "parchment" | "ink";
 }) {
   return (
     <div className={cn("relative overflow-hidden bg-secondary", className)}>
@@ -48,11 +62,14 @@ export function FoodPhoto({
           priority={priority}
           loading={priority ? undefined : "lazy"}
           sizes={sizes}
-          className="object-cover"
+          className={cn(
+            "object-cover",
+            kenBurns && "motion-safe:animate-[ken-burns_22s_ease-out_forwards]",
+          )}
           style={objectPosition ? { objectPosition } : undefined}
         />
       ) : (
-        <PhotoComingSoon name={name} />
+        <PhotoComingSoon name={name} tone={placeholderTone} />
       )}
     </div>
   );

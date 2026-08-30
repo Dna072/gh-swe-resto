@@ -102,9 +102,11 @@ export function DesignSystemGallery() {
 
         <Section id="type" title="Typography">
           <div className="space-y-3">
+            <p className="font-script text-5xl text-gold">Welcome to</p>
             <p className="font-heading text-4xl">Real Ghanaian food.</p>
             <p className="text-lg text-muted-foreground">
-              Outfit for interface copy. Fraunces for headlines. Order numbers stay tabular.
+              Great Vibes for script eyebrows. Fraunces for headlines. Outfit for interface copy.
+              Order numbers stay tabular.
             </p>
             <p className="font-mono text-sm">GH1048 · 129,00 kr</p>
           </div>
@@ -118,6 +120,9 @@ export function DesignSystemGallery() {
             </Button>
             <Button size="touch" variant="gold">
               Gold accent
+            </Button>
+            <Button size="touch" variant="gold-outline">
+              Gold outline
             </Button>
             <Button size="touch" variant="secondary">
               Secondary

@@ -37,14 +37,14 @@ export function BottomNav({ cartCount }: { cartCount?: number }) {
                 href={item.href}
                 className={cn(
                   "relative flex min-h-14 flex-col items-center justify-center gap-1 text-[11px]",
-                  active ? "text-earth" : "text-muted-foreground",
+                  active ? "text-gold" : "text-muted-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="size-5" aria-hidden="true" />
                 {item.label}
                 {item.href === "/cart" && count > 0 ? (
-                  <span className="absolute top-1 right-4 flex size-4 items-center justify-center rounded-full bg-earth text-[9px] text-earth-foreground">
+                  <span className="absolute top-1 right-4 flex size-4 items-center justify-center rounded-full bg-gold text-[9px] text-gold-foreground">
                     {count}
                   </span>
                 ) : null}
