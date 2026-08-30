@@ -15,6 +15,12 @@ import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
 import { InMemoryMenuRepository } from "@/infrastructure/memory/menu-repository";
 import { InMemoryOrderRepository } from "@/infrastructure/memory/order-repository";
+import {
+  applyPersistedCatalog,
+  loadPersistedCatalog,
+  persistCatalog,
+  shouldPersistLocalCatalog,
+} from "@/infrastructure/memory/persist";
 import { createMemoryState } from "@/infrastructure/memory/state";
 import { InMemoryPromotionRepository } from "@/infrastructure/memory/supporting-repositories";
 import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
@@ -45,6 +51,12 @@ const state = createMemoryState({
   inventory: catalog.inventory,
   homepage: defaultHomepageContent(restaurantId),
 });
+if (shouldPersistLocalCatalog()) {
+  const persisted = loadPersistedCatalog();
+  if (persisted) {
+    applyPersistedCatalog(state, persisted);
+  }
+}
 
 function createObjectStorage(): BinaryObjectStorage {
   const env = getEnv();
@@ -54,7 +66,11 @@ function createObjectStorage(): BinaryObjectStorage {
   return new LocalObjectStorage();
 }
 
-export const menuRepository = new InMemoryMenuRepository(state);
+export const menuRepository = new InMemoryMenuRepository(state, () => {
+  if (shouldPersistLocalCatalog()) {
+    persistCatalog(state);
+  }
+});
 const promotionRepository = new InMemoryPromotionRepository(state);
 const orderRepository = new InMemoryOrderRepository(state);
 const transactions = new InMemoryTransactionRunner(state);

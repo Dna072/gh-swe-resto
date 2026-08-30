@@ -31,6 +31,25 @@ describe("media display helpers", () => {
     expect(primaryImage([retired, secondary, card])?.id).toBe("a");
   });
 
+  it("serves local uploads through the media route", () => {
+    expect(imageUrl(card, "card")).toBe("/api/media/restaurants/uppsala-main/menu/jollof/a-card.webp");
+    expect(
+      imageUrl({
+        ...card,
+        url: "/api/media/restaurants/uppsala-main/menu/jollof/a-card.webp",
+        variants: [
+          {
+            kind: "card",
+            storagePath: "restaurants/uppsala-main/menu/jollof/a-card.webp",
+            url: "/api/media/restaurants/uppsala-main/menu/jollof/a-card.webp",
+            width: 960,
+            height: 720,
+          },
+        ],
+      }),
+    ).toBe("/api/media/restaurants/uppsala-main/menu/jollof/a-card.webp");
+  });
+
   it("returns null when no photograph is published", () => {
     expect(imageUrl(undefined)).toBeNull();
     expect(imageUrl({ ...card, status: "PENDING_DELETE" })).toBeNull();

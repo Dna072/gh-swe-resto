@@ -50,6 +50,7 @@ next-env.d.ts
 # Local photograph uploads (Cloud Storage in production)
 /public/uploads/*
 !/public/uploads/.gitignore
+/data/local-catalog.json
 
 # emulator
 .firebase/

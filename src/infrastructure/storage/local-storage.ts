@@ -2,15 +2,20 @@ import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
+export function localUploadsRoot(): string {
+  return process.env.LOCAL_UPLOADS_DIR ?? path.join(process.cwd(), "public", "uploads");
+}
+
 /**
- * Development adapter. Writes under public/uploads so Next can serve files.
+ * Development adapter. Writes under public/uploads and serves them through
+ * /api/media so files created after `next start` are still reachable.
  * Production uses Cloud Storage.
  */
 export class LocalObjectStorage implements BinaryObjectStorage {
-  constructor(private readonly root = path.join(process.cwd(), "public", "uploads")) {}
+  constructor(private readonly root = localUploadsRoot()) {}
 
   publicUrl(objectPath: string): string {
-    return `/uploads/${objectPath}`;
+    return `/api/media/${objectPath}`;
   }
 
   async put(object: StoredObjectWrite): Promise<StoredObjectResult> {

@@ -29,10 +29,13 @@ export function imageUrl(
   if (!candidate) {
     return null;
   }
+  if (candidate.startsWith("/uploads/")) {
+    return `/api/media/${candidate.slice("/uploads/".length)}`;
+  }
   if (candidate.startsWith("/") || candidate.startsWith("https://") || candidate.startsWith("http://")) {
     return candidate;
   }
-  return `/${candidate}`;
+  return `/api/media/${candidate}`;
 }
 
 export function objectPosition(image: MenuItemImage | undefined): string | undefined {
