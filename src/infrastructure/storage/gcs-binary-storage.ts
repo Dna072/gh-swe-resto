@@ -1,4 +1,4 @@
-import { Storage } from "@google-cloud/storage";
+import type { Storage } from "@google-cloud/storage";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
 export class GcsBinaryStorage implements BinaryObjectStorage {
@@ -7,9 +7,12 @@ export class GcsBinaryStorage implements BinaryObjectStorage {
   constructor(private readonly bucketName: string) {}
 
   private storage(): Storage {
-    this.storageClient ??= new Storage({
-      projectId: process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID,
-    });
+    if (!this.storageClient) {
+      const { Storage } = require("@google-cloud/storage") as typeof import("@google-cloud/storage");
+      this.storageClient = new Storage({
+        projectId: process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID,
+      });
+    }
     return this.storageClient;
   }
 

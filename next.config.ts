@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
   typescript: {
     tsconfigPath: "tsconfig.build.json",
   },
+  outputFileTracingIncludes: {
+    "*": [
+      "node_modules/firebase-admin/**",
+      "node_modules/gcp-metadata/**",
+      "node_modules/google-auth-library/**",
+      "node_modules/google-logging-utils/**",
+      "node_modules/gtoken/**",
+      "node_modules/@google-cloud/firestore/**",
+      "node_modules/@google-cloud/storage/**",
+    ],
+  },
   outputFileTracingExcludes: {
     "*": [
       "node_modules/firebase-tools/**",
