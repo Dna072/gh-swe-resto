@@ -1,6 +1,6 @@
 # Architecture
 
-Ghana Restaurant is a **modular monolith**. One Next.js application on Cloud Run owns the customer site, admin APIs, and trusted server logic.
+Meridian Fusion Cuisine is a **modular monolith**. One Next.js application on Cloud Run owns the customer site, admin APIs, and trusted server logic.
 
 ```
 Browser / kitchen tablet

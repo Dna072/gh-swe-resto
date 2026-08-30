@@ -23,7 +23,7 @@ const ALL_DAYS: Weekday[] = [
 
 export const seedRestaurant = {
   id: SEED_RESTAURANT_ID,
-  name: "Ghana Restaurant",
+  name: "Meridian Fusion Cuisine",
   city: "Uppsala",
   country: "SE",
   timeZone: "Europe/Stockholm" as const,

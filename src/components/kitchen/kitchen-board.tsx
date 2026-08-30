@@ -188,7 +188,7 @@ function formatTicket(payload: Record<string, unknown>): string {
     return `  ${item.quantity}× ${item.name}${extras ? ` (${extras})` : ""}`;
   });
   return [
-    String(payload.restaurantName ?? "Ghana Restaurant"),
+    String(payload.restaurantName ?? "Meridian Fusion Cuisine"),
     String(payload.orderNumber ?? ""),
     String(payload.customerName ?? ""),
     String(payload.phone ?? ""),

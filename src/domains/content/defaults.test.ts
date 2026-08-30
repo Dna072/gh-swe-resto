@@ -6,6 +6,6 @@ describe("homepage defaults", () => {
     const homepage = defaultHomepageContent("uppsala-main");
     expect(homepage.hero.image).toBeUndefined();
     expect(homepage.featuredMealIds).toContain("jollof");
-    expect(homepage.hero.title).toMatch(/Ghanaian/i);
+    expect(homepage.hero.title).toMatch(/Meridian Fusion/i);
   });
 });

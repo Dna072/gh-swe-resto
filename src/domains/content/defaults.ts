@@ -8,15 +8,15 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     featuredMealIds: ["jollof", "waakye", "banku-tilapia", "red-red"],
     hero: {
       eyebrow: "Welcome to",
-      title: "Ghanaian cooking\nin Uppsala",
-      subtitle: "Jollof, waakye, banku, fufu — cooked here. Order online for delivery or pickup from today’s menu.",
+      title: "Meridian Fusion\nin Uppsala",
+      subtitle: "Ghanaian plates, and more to come — cooked here. Order online for delivery or pickup from today’s menu.",
       primaryCta: { label: "Order today", href: "#todays-menu" },
       secondaryCta: { label: "View the menu", href: "/menu" },
     },
     story: {
       eyebrow: "Discover",
       title: "Our story",
-      body: "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. We open first on our own site in Uppsala. Wolt and Foodora are delivery rails later — not the brand.",
+      body: "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. Ghanaian plates first, with more meals to come. We open on our own site in Uppsala.",
     },
     delivery: {
       eyebrow: "Delivery",

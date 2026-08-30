@@ -41,12 +41,12 @@ export const NOTIFICATION_COPY: Record<NotificationEvent, { subject: string; bod
     body: "A courier has been assigned to your order.",
   },
   OUT_FOR_DELIVERY: {
-    subject: "Your Ghanaian feast is on the way",
-    body: "Your Ghanaian feast is on the way.",
+    subject: "Your Meridian order is on the way",
+    body: "Your order from Meridian Fusion Cuisine is on the way.",
   },
   DELIVERED: {
     subject: "Enjoy your meal!",
-    body: "Enjoy your meal! 🇬🇭",
+    body: "Enjoy your meal!",
   },
   PAYMENT_FAILED: {
     subject: "We could not complete your payment",
