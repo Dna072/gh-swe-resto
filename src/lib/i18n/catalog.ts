@@ -8,6 +8,65 @@ type CatalogCopy = {
   description: string;
 };
 
+const itemsEn: Record<string, CatalogCopy> = {
+  jollof: {
+    name: "Jollof Rice",
+    shortDescription: "Smoky Ghanaian jollof",
+    description:
+      "One-pot tomato rice cooked down with onion, ginger and scotch bonnet. Served with your protein and shito.",
+  },
+  waakye: {
+    name: "Waakye",
+    shortDescription: "Rice and beans, Accra style",
+    description: "Rice and beans steamed with millet leaves, served with salad, spaghetti and your protein.",
+  },
+  "red-red": {
+    name: "Red Red",
+    shortDescription: "Bean stew and plantain",
+    description: "Black-eyed bean stew in palm oil, finished with crispy fried ripe plantain.",
+  },
+  "banku-tilapia": {
+    name: "Banku & Tilapia",
+    shortDescription: "Grilled tilapia with banku",
+    description: "Fermented banku with grilled tilapia, onion and pepper sauce. Limited portions each day.",
+  },
+  "banku-okro": {
+    name: "Banku & Okro Soup",
+    shortDescription: "Banku with okro",
+    description: "Soft banku with a glossy okro soup. Choose chicken or fish.",
+  },
+  "fufu-light": {
+    name: "Fufu & Light Soup",
+    shortDescription: "Fufu with light soup",
+    description: "Pounded fufu with a clear, aromatic light soup. A Sunday classic, available every day.",
+  },
+  "fufu-groundnut": {
+    name: "Fufu & Groundnut Soup",
+    shortDescription: "Fufu with groundnut soup",
+    description: "Fufu in a deep, roasted groundnut soup. Please note peanuts.",
+  },
+  "kenkey-fish": {
+    name: "Kenkey & Fish",
+    shortDescription: "Ga kenkey with fried fish",
+    description: "Fermented kenkey with fried fish and fresh pepper. A coastal plate.",
+  },
+  "fried-plantain": {
+    name: "Fried Plantain",
+    shortDescription: "Ripe plantain, fried to order",
+    description: "Sweet ripe plantain, fried until the edges caramelise.",
+  },
+  sobolo: {
+    name: "Sobolo",
+    shortDescription: "Hibiscus cooler",
+    description: "Cold hibiscus drink with ginger and citrus.",
+  },
+  malt: {
+    name: "Malt",
+    shortDescription: "Chilled malt drink",
+    description: "A cold bottle of malt — the classic plate companion.",
+  },
+};
+
 const itemsSv: Record<string, CatalogCopy> = {
   jollof: {
     name: "Jollofris",
@@ -36,9 +95,9 @@ const itemsSv: Record<string, CatalogCopy> = {
     description: "Mjuk banku med blank okrosoppa. Välj kyckling eller fisk.",
   },
   "fufu-light": {
-    name: "Fufu och light soup",
-    shortDescription: "Fufu med light soup",
-    description: "Stött fufu med en klar, aromatisk light soup. En söndagsklassiker, varje dag.",
+    name: "Fufu och ljus soppa",
+    shortDescription: "Fufu med ljus soppa",
+    description: "Stött fufu med en klar, aromatisk ljus soppa. En söndagsklassiker, varje dag.",
   },
   "fufu-groundnut": {
     name: "Fufu och jordnötssoppa",
@@ -67,11 +126,33 @@ const itemsSv: Record<string, CatalogCopy> = {
   },
 };
 
+const groupsEn: Record<string, string> = {
+  protein: "Protein",
+  heat: "Spice level",
+  extras: "Extras",
+  drinks: "Drinks",
+};
+
 const groupsSv: Record<string, string> = {
   protein: "Protein",
   heat: "Styrka",
   extras: "Tillägg",
   drinks: "Dryck",
+};
+
+const optionsEn: Record<string, string> = {
+  chicken: "Chicken",
+  beef: "Beef",
+  fish: "Fish",
+  "mild-shito": "Mild shito",
+  "hot-shito": "Hot shito",
+  "extra-chicken": "Extra chicken",
+  "extra-beef": "Extra beef",
+  "extra-fish": "Extra fish",
+  plantain: "Plantain",
+  salad: "Salad",
+  "drink-sobolo": "Sobolo",
+  "drink-malt": "Malt",
 };
 
 const optionsSv: Record<string, string> = {
@@ -95,22 +176,55 @@ const categoryKeys: Record<string, { name: MessageKey; description?: MessageKey 
   drinks: { name: "category.drinks" },
 };
 
+function itemsFor(locale: Locale): Record<string, CatalogCopy> {
+  return locale === "sv" ? itemsSv : itemsEn;
+}
+
+function groupsFor(locale: Locale): Record<string, string> {
+  return locale === "sv" ? groupsSv : groupsEn;
+}
+
+function optionsFor(locale: Locale): Record<string, string> {
+  return locale === "sv" ? optionsSv : optionsEn;
+}
+
 export function localizeMenuName(id: string, fallback: string, locale: Locale): string {
-  if (locale !== "sv") {
-    return fallback;
-  }
-  return itemsSv[id]?.name ?? fallback;
+  return itemsFor(locale)[id]?.name ?? fallback;
+}
+
+export function localizeMenuDescription(
+  id: string,
+  fallback: string,
+  locale: Locale,
+  field: "shortDescription" | "description" = "shortDescription",
+): string {
+  return itemsFor(locale)[id]?.[field] ?? fallback;
 }
 
 export function localizeOptionName(id: string, fallback: string, locale: Locale): string {
-  if (locale !== "sv") {
-    return fallback;
-  }
-  return optionsSv[id] ?? fallback;
+  return optionsFor(locale)[id] ?? fallback;
+}
+
+export function localizeGroupName(id: string, fallback: string, locale: Locale): string {
+  return groupsFor(locale)[id] ?? fallback;
+}
+
+export function localizeCategoryName(id: string, fallback: string, t: Translator): string {
+  const keys = categoryKeys[id];
+  return keys ? t(keys.name) : fallback;
+}
+
+export function localizeCategoryDescription(
+  id: string,
+  fallback: string | undefined,
+  t: Translator,
+): string | undefined {
+  const keys = categoryKeys[id];
+  return keys?.description ? t(keys.description) : fallback;
 }
 
 export function localizePublicItem(item: PublicMenuItem, locale: Locale, t: Translator): PublicMenuItem {
-  const copy = locale === "sv" ? itemsSv[item.id] : undefined;
+  const copy = itemsFor(locale)[item.id];
   const category = categoryKeys[item.categoryId];
   return {
     ...item,
@@ -121,7 +235,7 @@ export function localizePublicItem(item: PublicMenuItem, locale: Locale, t: Tran
     imageAlt: copy?.name ?? item.imageAlt,
     modifierGroups: item.modifierGroups.map((group) => ({
       ...group,
-      name: locale === "sv" ? (groupsSv[group.id] ?? group.name) : group.name,
+      name: localizeGroupName(group.id, group.name, locale),
       options: group.options.map((option) => ({
         ...option,
         name: localizeOptionName(option.id, option.name, locale),
@@ -145,15 +259,32 @@ export function localizeCatalog(catalog: PublicCatalog, locale: Locale, t: Trans
   };
 }
 
-export function localizeHomepageCopy<T extends { hero: { eyebrow: string; title: string; subtitle: string; primaryCta: { label: string }; secondaryCta: { label: string } }; story: { eyebrow: string; title: string; body: string }; delivery: { eyebrow: string; title: string; body: string }; promotional: { eyebrow: string; title: string; body: string }; reviews: Array<{ id: string; quote: string }> }>(
-  homepage: T,
-  t: Translator,
-): T {
-  const reviewKey: Record<string, MessageKey> = {
-    r1: "home.reviews.r1",
-    r2: "home.reviews.r2",
-    r3: "home.reviews.r3",
-  };
+const reviewKeys: Record<string, MessageKey> = {
+  r1: "home.reviews.r1",
+  r2: "home.reviews.r2",
+  r3: "home.reviews.r3",
+};
+
+export function localizeReviewQuote(id: string, fallback: string, t: Translator): string {
+  const key = reviewKeys[id];
+  return key ? t(key) : fallback;
+}
+
+export function localizeHomepageCopy<
+  T extends {
+    hero: {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      primaryCta: { label: string };
+      secondaryCta: { label: string };
+    };
+    story: { eyebrow: string; title: string; body: string };
+    delivery: { eyebrow: string; title: string; body: string };
+    promotional: { eyebrow: string; title: string; body: string };
+    reviews: Array<{ id: string; quote: string }>;
+  },
+>(homepage: T, t: Translator): T {
   return {
     ...homepage,
     hero: {
@@ -182,12 +313,9 @@ export function localizeHomepageCopy<T extends { hero: { eyebrow: string; title:
       title: t("home.promo.title"),
       body: t("home.promo.body"),
     },
-    reviews: homepage.reviews.map((review) => {
-      const key = reviewKey[review.id];
-      return {
-        ...review,
-        quote: key ? t(key) : review.quote,
-      };
-    }),
+    reviews: homepage.reviews.map((review) => ({
+      ...review,
+      quote: localizeReviewQuote(review.id, review.quote, t),
+    })),
   };
 }

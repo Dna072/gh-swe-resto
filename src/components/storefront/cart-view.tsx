@@ -10,6 +10,7 @@ import { QuantityStepper } from "@/components/brand/quantity-stepper";
 import { Spinner } from "@/components/brand/loading-state";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { customerErrorMessage } from "@/lib/i18n/api-errors";
 import { localizeMenuName, localizeOptionName } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartQuote } from "@/domains/cart/models";
@@ -68,9 +69,9 @@ export function CartView() {
       signal: controller.signal,
     })
       .then(async (response) => {
-        const body = (await response.json()) as CartQuote & { message?: string };
+        const body = (await response.json()) as CartQuote & { message?: string; code?: string };
         if (!response.ok) {
-          setResult({ key: requestKey, quote: null, error: body.message ?? t("cart.priceError") });
+          setResult({ key: requestKey, quote: null, error: customerErrorMessage(body.code, t, "cart.priceError") });
           return;
         }
         setResult({ key: requestKey, quote: body, error: null });

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CustomerShell } from "@/components/brand/customer-shell";
-import { PageBanner } from "@/components/brand/page-banner";
+import { LocalizedPageBanner } from "@/components/brand/localized-page-banner";
 import { CartView } from "@/components/storefront/cart-view";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -13,14 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CartPage() {
-  const t = await getTranslator();
   return (
     <CustomerShell>
       <main id="main">
-        <PageBanner
-          eyebrow={t("cart.eyebrow")}
-          title={t("cart.title")}
-          description={t("cart.description")}
+        <LocalizedPageBanner
+          eyebrowKey="cart.eyebrow"
+          titleKey="cart.title"
+          descriptionKey="cart.description"
         />
         <div className="mx-auto w-full max-w-5xl px-4 py-12">
           <CartView />

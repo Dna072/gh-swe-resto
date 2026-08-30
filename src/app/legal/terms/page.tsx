@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage } from "@/components/brand/legal-page";
+import { LocalizedLegalPage } from "@/components/brand/localized-legal-page";
 import { getTranslator } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,12 +7,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("legal.terms.title") };
 }
 
-export default async function TermsPage() {
-  const t = await getTranslator();
+export default function TermsPage() {
   return (
-    <LegalPage eyebrow={t("legal.legal")} title={t("legal.terms.title")}>
-      <p>{t("legal.terms.p1")}</p>
-      <p>{t("legal.terms.p2")}</p>
-    </LegalPage>
+    <LocalizedLegalPage
+      eyebrowKey="legal.legal"
+      titleKey="legal.terms.title"
+      bodyKeys={["legal.terms.p1", "legal.terms.p2"]}
+    />
   );
 }
