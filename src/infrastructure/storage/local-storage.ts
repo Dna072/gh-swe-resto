@@ -3,7 +3,8 @@ import path from "node:path";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
 export function localUploadsRoot(): string {
-  return process.env.LOCAL_UPLOADS_DIR ?? path.join(process.cwd(), "public", "uploads");
+  // Static segments only so Next.js file tracing stays inside public/uploads.
+  return path.join(process.cwd(), "public", "uploads");
 }
 
 /**

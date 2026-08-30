@@ -3,6 +3,21 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  outputFileTracingExcludes: {
+    "*": [
+      "node_modules/firebase-tools/**",
+      "node_modules/@firebase/rules-unit-testing/**",
+      "node_modules/vitest/**",
+      "node_modules/@testing-library/**",
+      "node_modules/jsdom/**",
+      "tests/**",
+      "data/**",
+      ".firebase/**",
+      "coverage/**",
+      "emulator-data/**",
+      "scripts/**",
+    ],
+  },
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   images: {
     formats: ["image/avif", "image/webp"],

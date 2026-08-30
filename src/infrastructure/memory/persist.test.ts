@@ -4,7 +4,13 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultHomepageContent } from "@/domains/content/defaults";
 import type { MenuItem } from "@/domains/menu/models";
-import { applyPersistedCatalog, persistCatalog, refreshPersistedCatalog, resetPersistCache } from "./persist";
+import {
+  applyPersistedCatalog,
+  catalogPersistPath,
+  persistCatalog,
+  refreshPersistedCatalog,
+  resetPersistCache,
+} from "./persist";
 import { createMemoryState } from "./state";
 
 const tempDirs: string[] = [];
@@ -55,6 +61,10 @@ function sampleItem(id: string, name: string): MenuItem {
 }
 
 describe("local catalog persist", () => {
+  it("keeps the default persist file inside data/ so Next.js does not trace the repo root", () => {
+    expect(catalogPersistPath().replace(/\\/g, "/")).toMatch(/\/data\/local-catalog\.json$/);
+  });
+
   it("writes and reloads meal photographs onto the seed catalog", () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "catalog-"));
     tempDirs.push(dir);
