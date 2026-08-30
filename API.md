@@ -2,7 +2,7 @@
 
 Trusted Next.js Route Handlers. Provider credentials never appear in responses.
 
-Phase 4 adds the kitchen board, persisted order transitions, and print tickets. Guest checkout remains from Phase 3. Payments remain Phase 5.
+Phase 5 adds guest payment after checkout (`POST /api/orders/:id/pay`). The mock provider confirms locally. Stripe is used when `PAYMENT_PROVIDER=stripe` and keys are set. Kitchen board and print tickets remain from Phase 4.
 
 ## Customer
 
@@ -19,6 +19,7 @@ Phase 4 adds the kitchen board, persisted order transitions, and print tickets. 
 | GET | `/api/orders/:id` | Guest order (`?token=`) |
 | GET | `/api/orders/lookup` | Lookup by `GH` number + token |
 | POST | `/api/orders/:id/cancel` | Customer/admin cancel |
+| POST | `/api/orders/:id/pay` | Guest payment (mock succeeds; Stripe session when configured) |
 | POST | `/api/orders/:id/reorder` | Rebuild a cart from a snapshot |
 | POST | `/api/payments/create` | Payment session |
 | POST | `/api/payments/webhook` | Verified provider webhook |

@@ -29,6 +29,18 @@ describe("translator", () => {
       "Uppsala centrum",
     );
     expect(t("home.hero.title")).toMatch(/Ghanansk/i);
+    expect(t("home.hero.subtitle")).not.toMatch(/boka bord/i);
+    expect(t("cart.eyebrow")).toBe("Din order");
+    expect(t("checkout.eyebrow")).toBe("Kassa");
+  });
+
+  it("describes an online restaurant without table booking", () => {
+    const t = createTranslator("en");
+    expect(t("home.hero.subtitle")).toMatch(/delivery or pickup/i);
+    expect(t("home.hero.subtitle")).not.toMatch(/book the table/i);
+    expect(t("cart.eyebrow")).toBe("Your order");
+    expect(t("checkout.eyebrow")).toBe("Checkout");
+    expect(t("order.eyebrow")).toBe("Your order");
   });
 
   it("keeps English and Swedish dictionaries aligned", () => {

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/brand/field";
 import { FoodPhoto } from "@/components/brand/food-photo";
+import { ActionResultDialog } from "@/components/admin/action-result-dialog";
+import { useActionFeedback } from "@/components/admin/use-action-feedback";
 import { adminFetch } from "@/lib/admin/client";
 import { imageUrl } from "@/lib/media/display";
 import type { HomepageContent } from "@/domains/content/models";
@@ -20,6 +22,8 @@ export default function AdminHomepagePage() {
   const [altText, setAltText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [mobile, setMobile] = useState(false);
+  const [busy, setBusy] = useState<"save" | "upload" | null>(null);
+  const { feedback, succeed, fail, close } = useActionFeedback();
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +51,7 @@ export default function AdminHomepagePage() {
     if (!homepage) {
       return;
     }
+    setBusy("save");
     setStatus(null);
     try {
       const saved = await adminFetch<{ homepage: HomepageContent }>("/api/admin/homepage", {
@@ -67,16 +72,24 @@ export default function AdminHomepagePage() {
       });
       setHomepage(saved.homepage);
       setStatus("Homepage copy saved.");
+      succeed("Homepage saved", "The storefront will use this copy on the next load.");
     } catch (cause) {
-      setStatus(cause instanceof Error ? cause.message : "Could not save homepage.");
+      const message = cause instanceof Error ? cause.message : "Could not save homepage.";
+      setStatus(message);
+      fail("Homepage not saved", message);
+    } finally {
+      setBusy(null);
     }
   }
 
   async function uploadHero() {
     if (!file || !altText.trim()) {
-      setStatus("Choose a real restaurant photograph and write alt text.");
+      const message = "Choose a real restaurant photograph and write alt text.";
+      setStatus(message);
+      fail("Hero photograph not uploaded", message);
       return;
     }
+    setBusy("upload");
     const body = new FormData();
     body.set("file", file);
     body.set("altText", altText.trim());
@@ -89,8 +102,13 @@ export default function AdminHomepagePage() {
       setHomepage(saved.homepage);
       setFile(null);
       setStatus("Hero photograph stored.");
+      succeed("Hero photograph uploaded", "The homepage hero will use this image.");
     } catch (cause) {
-      setStatus(cause instanceof Error ? cause.message : "Hero upload failed.");
+      const message = cause instanceof Error ? cause.message : "Hero upload failed.";
+      setStatus(message);
+      fail("Hero photograph not uploaded", message);
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -240,8 +258,11 @@ export default function AdminHomepagePage() {
           <Checkbox checked={mobile} onCheckedChange={(checked) => setMobile(checked === true)} />
           Upload as mobile-specific hero
         </label>
-        <Button type="button" size="touch" onClick={() => void uploadHero()}>
-          Upload hero photograph
+        <p className="text-sm text-muted-foreground">
+          {file ? `Selected: ${file.name}` : "No file chosen yet."}
+        </p>
+        <Button type="button" size="touch" disabled={busy !== null} onClick={() => void uploadHero()}>
+          {busy === "upload" ? "Uploading photograph…" : "Upload hero photograph"}
         </Button>
       </section>
 
@@ -285,10 +306,15 @@ export default function AdminHomepagePage() {
         onChange={(promotional) => setHomepage({ ...homepage, promotional })}
       />
 
-      <Button size="touch" onClick={() => void save()}>
-        Save homepage
+      <Button size="touch" disabled={busy !== null} onClick={() => void save()}>
+        {busy === "save" ? "Saving homepage…" : "Save homepage"}
       </Button>
-      {status ? <p role="status">{status}</p> : null}
+      {status ? (
+        <p role="status" className="text-sm text-earth">
+          {status}
+        </p>
+      ) : null}
+      <ActionResultDialog feedback={feedback} onClose={close} />
     </main>
   );
 }

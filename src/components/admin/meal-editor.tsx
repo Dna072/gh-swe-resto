@@ -11,7 +11,10 @@ import { Field } from "@/components/brand/field";
 import { MealCard } from "@/components/brand/meal-card";
 import { FoodPhoto } from "@/components/brand/food-photo";
 import { Price } from "@/components/brand/price";
+import { ActionResultDialog } from "@/components/admin/action-result-dialog";
+import { useActionFeedback } from "@/components/admin/use-action-feedback";
 import { adminFetch } from "@/lib/admin/client";
+import { defaultMealAltText, mealUploadIssue } from "@/lib/admin/meal-upload";
 import { imageAlt, imageUrl, objectPosition, primaryImage } from "@/lib/media/display";
 import { oreToSek, sekToOre } from "@/lib/money";
 import type { Allergen, DietaryTag, MenuCategory, MenuItem, ModifierGroup } from "@/domains/menu/models";
@@ -73,7 +76,8 @@ export function MealEditor({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<"card" | "detail" | "mobile">("card");
   const [status, setStatus] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"save" | "upload" | "image" | "archive" | null>(null);
+  const { feedback, succeed, fail, close } = useActionFeedback();
 
   const draftPriceOre = useMemo(() => {
     try {
@@ -86,7 +90,7 @@ export function MealEditor({
   const photo = item ? primaryImage(item.images) : undefined;
 
   async function save() {
-    setBusy(true);
+    setBusy("save");
     setStatus(null);
     try {
       const payload = {
@@ -116,58 +120,79 @@ export function MealEditor({
         body: JSON.stringify(payload),
       });
       setItem(saved.item);
-      setStatus("Meal saved. Upload a real kitchen photograph next.");
+      setStatus("Meal saved.");
+      succeed("Meal saved", `${saved.item.name} is stored. You can upload a kitchen photograph next.`);
       if (!item?.id) {
         window.history.replaceState(null, "", `/admin/menu/${saved.item.id}`);
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not save meal.");
+      const message = error instanceof Error ? error.message : "Could not save meal.";
+      setStatus(message);
+      fail("Could not save meal", message);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   async function uploadImage() {
-    if (!item?.id || !file || !altText.trim()) {
-      setStatus("Save the meal, then choose a photograph and write alt text.");
+    const resolvedAlt = altText.trim() || defaultMealAltText(name);
+    if (resolvedAlt && !altText.trim()) {
+      setAltText(resolvedAlt);
+    }
+    const issue = mealUploadIssue({ mealId: item?.id, file, altText: resolvedAlt });
+    if (issue) {
+      setStatus(issue);
+      fail("Photograph not uploaded", issue);
       return;
     }
-    setBusy(true);
+    setBusy("upload");
     setStatus(null);
     try {
       const body = new FormData();
-      body.set("file", file);
-      body.set("altText", altText.trim());
-      const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}/images`, {
+      body.set("file", file!);
+      body.set("altText", resolvedAlt);
+      const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item!.id}/images`, {
         method: "POST",
         body,
       });
       setItem(saved.item);
       setFile(null);
       setPreviewUrl(null);
-      setStatus("Photograph stored. The storefront will use this image.");
+      setStatus("Photograph stored.");
+      succeed("Photograph uploaded", `${saved.item.name} will use this image on the storefront.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Upload failed.");
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setStatus(message);
+      fail("Photograph not uploaded", message);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   async function mutateImage(imageId: string, action: "primary" | "remove") {
     if (!item?.id) {
+      fail("Photograph not updated", "Save the meal first.");
       return;
     }
-    setBusy(true);
+    setBusy("image");
     try {
       const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}/images/${imageId}`, {
         method: "PATCH",
         body: JSON.stringify({ action }),
       });
       setItem(saved.item);
+      succeed(
+        action === "remove" ? "Photograph removed" : "Primary photograph updated",
+        action === "remove"
+          ? "That image will no longer appear on the storefront."
+          : "The storefront will use this image first.",
+      );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not update photograph.");
+      const message = error instanceof Error ? error.message : "Could not update photograph.";
+      setStatus(message);
+      fail("Photograph not updated", message);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -175,22 +200,38 @@ export function MealEditor({
     if (!item?.id) {
       return;
     }
-    const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}/images/${imageId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ action: "focus", focalPointX: x, focalPointY: y }),
-    });
-    setItem(saved.item);
+    try {
+      const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}/images/${imageId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ action: "focus", focalPointX: x, focalPointY: y }),
+      });
+      setItem(saved.item);
+    } catch (error) {
+      fail("Focus not saved", error instanceof Error ? error.message : "Could not update the photograph crop.");
+    }
   }
 
   async function archive(next: boolean) {
     if (!item?.id) {
+      fail("Meal not updated", "Save the meal first.");
       return;
     }
-    const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ archived: next }),
-    });
-    setItem(saved.item);
+    setBusy("archive");
+    try {
+      const saved = await adminFetch<{ item: MenuItem }>(`/api/admin/menu/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ archived: next }),
+      });
+      setItem(saved.item);
+      succeed(
+        next ? "Meal archived" : "Meal restored",
+        next ? "It is hidden from the storefront menu." : "It is visible on the storefront menu again.",
+      );
+    } catch (error) {
+      fail("Meal not updated", error instanceof Error ? error.message : "Could not update the meal.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
@@ -334,12 +375,18 @@ export function MealEditor({
           ))}
         </fieldset>
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" size="touch" disabled={busy}>
-            Save meal
+          <Button type="submit" size="touch" disabled={busy !== null}>
+            {busy === "save" ? "Saving meal…" : "Save meal"}
           </Button>
           {item?.id ? (
-            <Button type="button" size="touch" variant="outline" onClick={() => void archive(!item.archivedAt)}>
-              {item.archivedAt ? "Restore" : "Archive"}
+            <Button
+              type="button"
+              size="touch"
+              variant="outline"
+              disabled={busy !== null}
+              onClick={() => void archive(!item.archivedAt)}
+            >
+              {busy === "archive" ? "Updating…" : item.archivedAt ? "Restore" : "Archive"}
             </Button>
           ) : null}
           {item?.slug ? (
@@ -361,16 +408,25 @@ export function MealEditor({
           <Field id="alt" label="Alt text" hint='Describe the actual plate, e.g. "Jollof rice with grilled chicken".'>
             <Input id="alt" value={altText} onChange={(event) => setAltText(event.target.value)} />
           </Field>
-          <Input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Meal photograph"
-            onChange={(event) => {
-              const next = event.target.files?.[0] ?? null;
-              setFile(next);
-              setPreviewUrl(next ? URL.createObjectURL(next) : null);
-            }}
-          />
+          <div className="space-y-2">
+            <Input
+              id="meal-photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Meal photograph"
+              onChange={(event) => {
+                const next = event.target.files?.[0] ?? null;
+                setFile(next);
+                setPreviewUrl(next ? URL.createObjectURL(next) : null);
+                if (next && !altText.trim()) {
+                  setAltText(defaultMealAltText(name));
+                }
+              }}
+            />
+            <p className="text-sm text-muted-foreground">
+              {file ? `Selected: ${file.name}` : "No file chosen yet."}
+            </p>
+          </div>
           {previewUrl ? (
             <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
               {/* Local object URL preview before upload — not a production asset. */}
@@ -378,9 +434,18 @@ export function MealEditor({
               <img src={previewUrl} alt="Upload preview" className="size-full object-cover" />
             </div>
           ) : null}
-          <Button type="button" size="touch" disabled={busy || !item?.id} onClick={() => void uploadImage()}>
-            Upload photograph
+          <Button type="button" size="touch" disabled={busy !== null} onClick={() => void uploadImage()}>
+            {busy === "upload" ? "Uploading photograph…" : "Upload photograph"}
           </Button>
+          {status ? (
+            <p role="status" className="text-sm text-earth">
+              {status}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Choose a JPEG, PNG, or WebP, then upload. You will see a confirmation when it is stored.
+            </p>
+          )}
           <ul className="space-y-4">
             {(item?.images ?? [])
               .filter((image) => image.status !== "PENDING_DELETE")
@@ -399,10 +464,22 @@ export function MealEditor({
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void mutateImage(id, "primary")}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={busy !== null}
+                        onClick={() => void mutateImage(id, "primary")}
+                      >
                         {image.isPrimary ? "Primary" : "Make primary"}
                       </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void mutateImage(id, "remove")}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={busy !== null}
+                        onClick={() => void mutateImage(id, "remove")}
+                      >
                         Remove
                       </Button>
                     </div>
@@ -482,11 +559,7 @@ export function MealEditor({
           </div>
         </section>
       </aside>
-      {status ? (
-        <p role="status" className="lg:col-span-2 text-sm text-muted-foreground">
-          {status}
-        </p>
-      ) : null}
+      <ActionResultDialog feedback={feedback} onClose={close} />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { MenuService } from "@/domains/menu/service";
 import { OrderService } from "@/domains/orders/service";
 import { PrintingService } from "@/domains/printing/service";
 import { PricingService } from "@/domains/pricing/service";
+import { PaymentService } from "@/domains/payments/service";
 import { PromotionService } from "@/domains/promotions/service";
 import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
@@ -22,7 +23,9 @@ import {
   shouldPersistLocalCatalog,
 } from "@/infrastructure/memory/persist";
 import { createMemoryState } from "@/infrastructure/memory/state";
-import { InMemoryPromotionRepository } from "@/infrastructure/memory/supporting-repositories";
+import { InMemoryPromotionRepository, InMemoryWebhookStore } from "@/infrastructure/memory/supporting-repositories";
+import { MockPaymentProvider } from "@/infrastructure/payments/mock-provider";
+import { StripePaymentProvider } from "@/infrastructure/payments/stripe-provider";
 import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
 import { InMemoryTransactionRunner } from "@/infrastructure/memory/transaction-runner";
 import { BrowserPrintProvider } from "@/infrastructure/printing/providers";
@@ -94,6 +97,17 @@ export const deliveryService = new DeliveryService([mockDelivery], {
   preferredProviders: ["mock"],
 });
 export const orderService = new OrderService(orderRepository, cartService, transactions, menuRepository);
+
+function createPaymentProvider() {
+  const env = getEnv();
+  if (env.PAYMENT_PROVIDER === "stripe" && env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET) {
+    return new StripePaymentProvider(env.STRIPE_SECRET_KEY, env.STRIPE_WEBHOOK_SECRET);
+  }
+  return new MockPaymentProvider();
+}
+
+export const paymentProvider = createPaymentProvider();
+export const paymentService = new PaymentService(paymentProvider, new InMemoryWebhookStore(state));
 const printJobs = new InMemoryPrintJobRepository(state);
 export const printingService = new PrintingService(printJobs, new BrowserPrintProvider());
 export const analyticsService = new AnalyticsService(new LoggingAnalyticsSink());

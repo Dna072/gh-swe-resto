@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Price } from "@/components/brand/price";
 import { adminFetch } from "@/lib/admin/client";
 import type { KitchenAction, StaffOrder } from "@/lib/orders/staff";
+import { toast } from "sonner";
 
 const COLUMNS: Array<{ id: string; title: string; statuses: StaffOrder["orderStatus"][] }> = [
   { id: "incoming", title: "Incoming", statuses: ["PENDING_PAYMENT", "PAID"] },
@@ -46,6 +47,7 @@ export function KitchenBoard() {
           { method: "POST", body: JSON.stringify({ action: "send_to_kitchen" }) },
         );
         setOrders((current) => current.map((entry) => (entry.id === order.id ? result.order : entry)));
+        toast.success(`${order.publicOrderNumber} sent to the kitchen.`);
         if (result.job?.payload) {
           setTicket(formatTicket(result.job.payload));
         }
@@ -56,25 +58,39 @@ export function KitchenBoard() {
         body: JSON.stringify({ action: "transition", to: action.to }),
       });
       setOrders((current) => current.map((entry) => (entry.id === order.id ? result.order : entry)));
+      toast.success(`${order.publicOrderNumber}: ${action.label}.`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not update the order.");
+      const message = cause instanceof Error ? cause.message : "Could not update the order.";
+      setError(message);
+      toast.error(message);
     } finally {
       setBusyId(null);
     }
   }
 
-  async function printTicket(orderId: string) {
-    const result = await adminFetch<{ job: { payload: Record<string, unknown> } }>(
-      `/api/admin/orders/${orderId}/print`,
-      { method: "POST" },
-    );
-    setTicket(formatTicket(result.job.payload));
+  async function printTicket(order: StaffOrder) {
+    try {
+      const result = await adminFetch<{ job: { payload: Record<string, unknown> } }>(
+        `/api/admin/orders/${order.id}/print`,
+        { method: "POST" },
+      );
+      setTicket(formatTicket(result.job.payload));
+      toast.success(`Ticket ready for ${order.publicOrderNumber}.`);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Could not prepare the ticket.";
+      setError(message);
+      toast.error(message);
+    }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Refreshes every five seconds. Payment collection is still Phase 5.</p>
+        <p className="text-sm text-muted-foreground">
+          Refreshes every five seconds. Only prepaid online orders can be sent to
+          the kitchen. Unpaid tickets wait here until the guest pays — there is no
+          cash-at-counter path.
+        </p>
         <Button size="touch" variant="outline" onClick={load}>
           Refresh
         </Button>
@@ -136,7 +152,7 @@ export function KitchenBoard() {
                         size="touch"
                         variant="outline"
                         disabled={busyId === order.id}
-                        onClick={() => void printTicket(order.id)}
+                        onClick={() => void printTicket(order)}
                       >
                         Print ticket
                       </Button>

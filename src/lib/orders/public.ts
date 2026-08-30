@@ -20,7 +20,8 @@ export type PublicOrder = {
   specialInstructions?: string;
   estimatedDeliveryTime?: string;
   createdAt: string;
-  paymentDeferred: true;
+  paymentDeferred: boolean;
+  payable: boolean;
   cancellable: boolean;
   tracking: Array<{ status: string; label: string; done: boolean; current: boolean }>;
 };

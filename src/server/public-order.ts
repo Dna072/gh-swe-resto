@@ -37,7 +37,8 @@ export function toPublicOrder(order: Order): PublicOrder {
     specialInstructions: order.specialInstructions,
     estimatedDeliveryTime: order.estimatedDeliveryTime,
     createdAt: order.createdAt,
-    paymentDeferred: true,
+    paymentDeferred: false,
+    payable: order.orderStatus === "PENDING_PAYMENT" && order.paymentStatus !== "PAID",
     cancellable: order.orderStatus === "PENDING_PAYMENT",
     tracking: terminal
       ? []

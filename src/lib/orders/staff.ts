@@ -35,7 +35,10 @@ export function fulfillmentOf(order: Pick<Order, "deliveryStatus" | "fulfillment
 
 export function kitchenActions(order: Order): KitchenAction[] {
   const fulfillment = fulfillmentOf(order);
-  if (order.orderStatus === "PENDING_PAYMENT" || order.orderStatus === "PAID") {
+  if (order.orderStatus === "PENDING_PAYMENT") {
+    return [{ to: "CANCELLED", label: "Cancel" }];
+  }
+  if (order.orderStatus === "PAID") {
     return [
       { to: "SEND_TO_KITCHEN", label: "Send to kitchen" },
       { to: "CANCELLED", label: "Cancel" },

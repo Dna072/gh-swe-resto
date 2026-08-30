@@ -5,11 +5,13 @@ export default function AdminHomePage() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-earth">Phase 4</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-earth">Phase 5</p>
         <h1 className="mt-2 font-heading text-4xl">Kitchen and menu</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Run the board, print tickets, and manage meals. Card payment remains Phase 5. Upload real
-          kitchen photographs only — never AI-generated food.
+          Run the board, print tickets, and manage meals. This is an online restaurant
+          — delivery and pickup only, no table booking, and no cash at the counter.
+          Guests pay online after checkout (mock provider, or Stripe when keys are
+          set). Upload real kitchen photographs only — never AI-generated food.
         </p>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
