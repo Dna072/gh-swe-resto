@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/brand/error-state";
 import { Price } from "@/components/brand/price";
 import { Spinner } from "@/components/brand/loading-state";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
+import { localizeMenuName } from "@/lib/i18n/catalog";
+import type { MessageKey, Translator } from "@/lib/i18n/messages";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
 import type { PublicOrder } from "@/lib/orders/public";
 
@@ -18,6 +21,8 @@ export function OrderConfirmation({
   orderId: string;
   tokenFromUrl?: string;
 }) {
+  const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const cart = useCart();
   const [order, setOrder] = useState<PublicOrder | null>(null);
@@ -28,7 +33,7 @@ export function OrderConfirmation({
     const token = tokenFromUrl || guestTokenFor(orderId);
     if (!token) {
       const timer = window.setTimeout(() => {
-        setError("This order link is missing its guest access token.");
+        setError(t("order.missingToken"));
       }, 0);
       return () => window.clearTimeout(timer);
     }
@@ -39,7 +44,7 @@ export function OrderConfirmation({
       .then(async (response) => {
         const body = (await response.json()) as PublicOrder & { message?: string };
         if (!response.ok) {
-          setError(body.message ?? "We could not load this order.");
+          setError(body.message ?? t("order.loadError"));
           return;
         }
         setOrder(body);
@@ -48,10 +53,10 @@ export function OrderConfirmation({
         if (caught instanceof DOMException && caught.name === "AbortError") {
           return;
         }
-        setError("We could not load this order.");
+        setError(t("order.loadError"));
       });
     return () => controller.abort();
-  }, [orderId, tokenFromUrl]);
+  }, [orderId, tokenFromUrl, t]);
 
   async function cancel() {
     const token = tokenFromUrl || guestTokenFor(orderId);
@@ -65,7 +70,7 @@ export function OrderConfirmation({
       });
       const body = (await response.json()) as PublicOrder & { message?: string };
       if (!response.ok) {
-        setError(body.message ?? "We could not cancel this order.");
+        setError(body.message ?? t("order.cancelError"));
         return;
       }
       setOrder(body);
@@ -86,7 +91,7 @@ export function OrderConfirmation({
       });
       const body = (await response.json()) as { lines?: Parameters<typeof cart.replaceWith>[0]; message?: string };
       if (!response.ok || !body.lines) {
-        setError(body.message ?? "We could not rebuild this cart.");
+        setError(body.message ?? t("order.reorderError"));
         return;
       }
       cart.replaceWith(body.lines);
@@ -99,11 +104,11 @@ export function OrderConfirmation({
   if (error) {
     return (
       <ErrorState
-        title="Order unavailable"
+        title={t("order.unavailable")}
         message={error}
         action={
           <Button size="touch" variant="outline" asChild>
-            <Link href="/orders">Find an order</Link>
+            <Link href="/orders">{t("nav.findOrder")}</Link>
           </Button>
         }
       />
@@ -111,7 +116,7 @@ export function OrderConfirmation({
   }
 
   if (!order) {
-    return <Spinner label="Loading order" />;
+    return <Spinner label={t("order.loading")} />;
   }
 
   return (
@@ -119,19 +124,19 @@ export function OrderConfirmation({
       <p className="font-mono text-sm text-earth">{order.publicOrderNumber}</p>
       <dl className="grid gap-2 text-sm">
         <div className="flex justify-between gap-3">
-          <dt>Status</dt>
-          <dd>{order.orderStatus.replaceAll("_", " ").toLowerCase()}</dd>
+          <dt>{t("order.status")}</dt>
+          <dd>{statusLabel(order.orderStatus, t)}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt>Payment</dt>
+          <dt>{t("order.payment")}</dt>
           <dd>
-            {order.paymentStatus.toLowerCase()}
-            {order.paymentDeferred ? " — card checkout is Phase 5" : ""}
+            {paymentLabel(order.paymentStatus, t)}
+            {order.paymentDeferred ? t("order.paymentDeferred") : ""}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt>Fulfillment</dt>
-          <dd>{order.fulfillment === "PICKUP" ? "Pickup" : "Delivery"}</dd>
+          <dt>{t("order.fulfillment")}</dt>
+          <dd>{order.fulfillment === "PICKUP" ? t("order.pickup") : t("order.delivery")}</dd>
         </div>
       </dl>
       {order.tracking.length > 0 ? (
@@ -148,18 +153,18 @@ export function OrderConfirmation({
               }
             >
               {step.done ? "✓ " : step.current ? "→ " : "○ "}
-              {step.label}
+              {trackingLabel(step.status, order.fulfillment, t)}
             </li>
           ))}
         </ol>
       ) : order.orderStatus === "CANCELLED" ? (
-        <p className="rounded-xl bg-card p-4 text-sm ring-1 ring-foreground/10">This order was cancelled.</p>
+        <p className="rounded-xl bg-card p-4 text-sm ring-1 ring-foreground/10">{t("order.cancelled")}</p>
       ) : null}
       <ul className="grid gap-2">
         {order.items.map((item) => (
           <li key={`${item.menuItemId}-${item.name}`} className="flex justify-between gap-3 text-sm">
             <span>
-              {item.quantity}× {item.name}
+              {item.quantity}× {localizeMenuName(item.menuItemId, item.name, locale)}
             </span>
             <Price ore={item.lineTotalOre} size="sm" />
           </li>
@@ -167,13 +172,13 @@ export function OrderConfirmation({
       </ul>
       <dl className="space-y-2 text-sm">
         <div className="flex justify-between gap-3">
-          <dt>Delivery</dt>
+          <dt>{t("order.delivery")}</dt>
           <dd>
             <Price ore={order.deliveryFeeOre} size="sm" />
           </dd>
         </div>
         <div className="flex justify-between gap-3 font-medium">
-          <dt>Total</dt>
+          <dt>{t("order.total")}</dt>
           <dd>
             <Price ore={order.totalOre} size="lg" />
           </dd>
@@ -182,29 +187,79 @@ export function OrderConfirmation({
       <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-foreground/10">
         {order.fulfillment === "PICKUP" ? (
           <>
-            Pickup at {order.deliveryAddress.line1}, {order.deliveryAddress.postalCode}{" "}
-            {order.deliveryAddress.city}.
+            {t("order.pickupAt", {
+              address: `${order.deliveryAddress.line1}, ${order.deliveryAddress.postalCode} ${order.deliveryAddress.city}`,
+            })}
           </>
         ) : (
           <>
-            Deliver to {order.deliveryAddress.line1}, {order.deliveryAddress.postalCode}{" "}
-            {order.deliveryAddress.city}.
+            {t("order.deliverTo", {
+              address: `${order.deliveryAddress.line1}, ${order.deliveryAddress.postalCode} ${order.deliveryAddress.city}`,
+            })}
           </>
         )}
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         {order.cancellable ? (
           <Button size="touch" variant="outline" disabled={busy} onClick={() => void cancel()}>
-            Cancel order
+            {t("order.cancel")}
           </Button>
         ) : null}
         <Button size="touch" variant="outline" disabled={busy} onClick={() => void reorder()}>
-          Order again
+          {t("order.again")}
         </Button>
         <Button size="touch" asChild>
-          <Link href="/menu">Menu</Link>
+          <Link href="/menu">{t("nav.menu")}</Link>
         </Button>
       </div>
     </div>
   );
+}
+
+function statusLabel(status: string, t: Translator): string {
+  const key = `order.status.${status}` as MessageKey;
+  return key in {
+    "order.status.PENDING_PAYMENT": true,
+    "order.status.CONFIRMED": true,
+    "order.status.PREPARING": true,
+    "order.status.READY": true,
+    "order.status.COURIER_ASSIGNED": true,
+    "order.status.OUT_FOR_DELIVERY": true,
+    "order.status.DELIVERED": true,
+    "order.status.CANCELLED": true,
+    "order.status.REFUNDED": true,
+  }
+    ? t(key)
+    : status.replaceAll("_", " ").toLowerCase();
+}
+
+function paymentLabel(status: string, t: Translator): string {
+  const key = `order.payment.${status}` as MessageKey;
+  return key in {
+    "order.payment.UNPAID": true,
+    "order.payment.PENDING": true,
+    "order.payment.PAID": true,
+    "order.payment.FAILED": true,
+    "order.payment.REFUNDED": true,
+  }
+    ? t(key)
+    : status.toLowerCase();
+}
+
+function trackingLabel(status: string, fulfillment: "DELIVERY" | "PICKUP", t: Translator): string {
+  if (status === "READY") {
+    return t(fulfillment === "PICKUP" ? "tracking.READY_PICKUP" : "tracking.READY_DELIVERY");
+  }
+  if (status === "DELIVERED") {
+    return t(fulfillment === "PICKUP" ? "tracking.DELIVERED_PICKUP" : "tracking.DELIVERED_DELIVERY");
+  }
+  const key = `tracking.${status}` as MessageKey;
+  return key in {
+    "tracking.CONFIRMED": true,
+    "tracking.PREPARING": true,
+    "tracking.COURIER_ASSIGNED": true,
+    "tracking.OUT_FOR_DELIVERY": true,
+  }
+    ? t(key)
+    : status.replaceAll("_", " ").toLowerCase();
 }

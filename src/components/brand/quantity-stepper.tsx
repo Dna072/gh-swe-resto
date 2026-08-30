@@ -3,6 +3,7 @@
 import { Minus, Plus } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { useOptionalT } from "@/components/i18n/locale-provider";
 import { scalePopVariants } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ export function QuantityStepper({
   max = 20,
   disabled = false,
   className,
-  label = "Quantity",
+  label,
 }: {
   value: number;
   onChange: (next: number) => void;
@@ -23,19 +24,21 @@ export function QuantityStepper({
   className?: string;
   label?: string;
 }) {
+  const t = useOptionalT();
   const reduced = useReducedMotion() ?? false;
+  const accessibleLabel = label ?? t("quantity.label");
 
   return (
     <div className={cn("inline-flex items-center gap-2", className)}>
-      <span className="sr-only" id={`${label}-live`} aria-live="polite">
-        {label}: {value}
+      <span className="sr-only" id={`${accessibleLabel}-live`} aria-live="polite">
+        {accessibleLabel}: {value}
       </span>
       <Button
         type="button"
         variant="outline"
         size="icon-touch"
         disabled={disabled || value <= min}
-        aria-label={`Decrease ${label}`}
+        aria-label={`Decrease ${accessibleLabel}`}
         onClick={() => onChange(Math.max(min, value - 1))}
       >
         <Minus />
@@ -54,7 +57,7 @@ export function QuantityStepper({
         variant="outline"
         size="icon-touch"
         disabled={disabled || value >= max}
-        aria-label={`Increase ${label}`}
+        aria-label={`Increase ${accessibleLabel}`}
         onClick={() => onChange(Math.min(max, value + 1))}
       >
         <Plus />

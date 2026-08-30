@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
+import { useT } from "@/components/i18n/locale-provider";
 import {
   rememberGuestOrder,
   readGuestOrders,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/orders/guest-orders";
 
 export function OrderLookup() {
+  const t = useT();
   const router = useRouter();
   const recent = useSyncExternalStore(subscribeGuestOrders, readGuestOrders, () => EMPTY_GUEST_ORDERS);
   const [number, setNumber] = useState("");
@@ -31,7 +33,7 @@ export function OrderLookup() {
       );
       const body = (await response.json()) as { id?: string; publicOrderNumber?: string; message?: string };
       if (!response.ok || !body.id) {
-        setError(body.message ?? "We could not find that order.");
+        setError(body.message ?? t("orders.notFound"));
         return;
       }
       rememberGuestOrder({
@@ -41,7 +43,7 @@ export function OrderLookup() {
       });
       router.push(`/orders/${body.id}?token=${encodeURIComponent(token)}`);
     } catch {
-      setError("We could not find that order.");
+      setError(t("orders.notFound"));
     } finally {
       setPending(false);
     }
@@ -58,14 +60,14 @@ export function OrderLookup() {
                 className="flex min-h-14 items-center justify-between rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10 hover:text-earth"
               >
                 <span className="font-mono">{order.publicOrderNumber}</span>
-                <span className="text-sm text-muted-foreground">Open</span>
+                <span className="text-sm text-muted-foreground">{t("orders.open")}</span>
               </Link>
             </li>
           ))}
         </ul>
       ) : null}
       <form onSubmit={onSubmit} className="grid gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
-        <Field id="order-number" label="Order number" hint="Looks like GH1001">
+        <Field id="order-number" label={t("orders.number")} hint={t("orders.numberHint")}>
           <Input
             id="order-number"
             value={number}
@@ -74,7 +76,7 @@ export function OrderLookup() {
             required
           />
         </Field>
-        <Field id="order-token" label="Guest access token">
+        <Field id="order-token" label={t("orders.token")}>
           <Input
             id="order-token"
             value={token}
@@ -89,7 +91,7 @@ export function OrderLookup() {
           </p>
         ) : null}
         <Button size="touch" type="submit" disabled={pending}>
-          {pending ? "Looking up…" : "Find order"}
+          {pending ? t("orders.looking") : t("orders.find")}
         </Button>
       </form>
     </div>

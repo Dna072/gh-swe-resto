@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
+import { useT } from "@/components/i18n/locale-provider";
 
 type CheckResult =
   | { ok: true; zoneName: string; feeLabel: string; etaMinutes: number }
   | { ok: false; message: string };
 
 export function DeliveryCheck() {
+  const t = useT();
   const [postalCode, setPostalCode] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
@@ -31,7 +33,7 @@ export function DeliveryCheck() {
         message?: string;
       };
       if (!response.ok) {
-        setResult({ ok: false, message: body.message ?? "We cannot deliver there yet." });
+        setResult({ ok: false, message: body.message ?? t("delivery.no") });
         return;
       }
       setResult({
@@ -41,7 +43,7 @@ export function DeliveryCheck() {
         etaMinutes: body.etaMinutes ?? 0,
       });
     } catch {
-      setResult({ ok: false, message: "Something went wrong. Please try again." });
+      setResult({ ok: false, message: t("delivery.error") });
     } finally {
       setPending(false);
     }
@@ -51,8 +53,8 @@ export function DeliveryCheck() {
     <form onSubmit={onSubmit} className="grid gap-4 bg-background p-6 shadow-[0_18px_50px_-32px_rgba(40,28,16,0.5)] ring-1 ring-foreground/8 sm:p-8">
       <Field
         id="postal-code"
-        label="Postcode"
-        hint="We check Uppsala delivery zones on the server."
+        label={t("delivery.postcode")}
+        hint={t("delivery.hint")}
       >
         <Input
           id="postal-code"
@@ -66,12 +68,15 @@ export function DeliveryCheck() {
         />
       </Field>
       <Button size="touch" variant="gold" type="submit" disabled={pending}>
-        {pending ? "Checking…" : "Check delivery"}
+        {pending ? t("delivery.checking") : t("delivery.check")}
       </Button>
       {result?.ok ? (
         <p role="status" className="text-sm text-forest">
-          Yes — we deliver to {result.zoneName}. From {result.feeLabel}, about {result.etaMinutes}{" "}
-          minutes.
+          {t("delivery.yes", {
+            zone: result.zoneName,
+            fee: result.feeLabel,
+            eta: result.etaMinutes,
+          })}
         </p>
       ) : null}
       {result && !result.ok ? (

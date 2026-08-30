@@ -5,16 +5,11 @@ import Link from "next/link";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlagAccent } from "@/components/brand/flag-accent";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { restaurantDisplay } from "@/lib/restaurant/display";
 import { cn } from "@/lib/utils";
-
-const links = [
-  { href: "/menu", label: "Menu" },
-  { href: "/#story", label: "Our story" },
-  { href: "/#delivery", label: "Delivery" },
-  { href: "/contact", label: "Contact" },
-];
 
 export function SiteHeader({
   cartCount,
@@ -25,10 +20,17 @@ export function SiteHeader({
   overlay?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const cart = useCart();
   const count = cartCount ?? cart.itemCount;
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const links = [
+    { href: "/menu", label: t("nav.menu") },
+    { href: "/#story", label: t("nav.story") },
+    { href: "/#delivery", label: t("nav.delivery") },
+    { href: "/contact", label: t("nav.contact") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 36);
@@ -67,9 +69,9 @@ export function SiteHeader({
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:h-[4.5rem]">
         <Link href="/" className="flex flex-col leading-none">
           <span className="font-script text-[2rem] text-gold">Ghana</span>
-          <span className="mt-0.5 text-[10px] uppercase tracking-[0.38em]">Restaurant</span>
+          <span className="mt-0.5 text-[10px] uppercase tracking-[0.38em]">{t("brand.restaurant")}</span>
         </Link>
-        <nav aria-label="Primary" className="hidden items-center gap-8 text-[12px] uppercase tracking-[0.22em] md:flex">
+        <nav aria-label={t("a11y.primaryNav")} className="hidden items-center gap-8 text-[12px] uppercase tracking-[0.22em] md:flex">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -81,14 +83,15 @@ export function SiteHeader({
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher className="hidden md:inline-flex" />
           <Button variant="gold-outline" size="sm" className="hidden h-10 px-4 md:inline-flex" asChild>
-            <Link href="/menu">Order now</Link>
+            <Link href="/menu">{t("nav.orderNow")}</Link>
           </Button>
           <Button
             variant="outline"
             size="icon-touch"
             className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 md:hidden"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("a11y.closeMenu") : t("a11y.openMenu")}
             aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
           >
@@ -100,7 +103,7 @@ export function SiteHeader({
             className="relative border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
             asChild
           >
-            <Link href="/cart" aria-label={`Cart, ${count} items`}>
+            <Link href="/cart" aria-label={t("a11y.cart", { count })}>
               <ShoppingBag />
               {count > 0 ? (
                 <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-gold text-[10px] text-gold-foreground">
@@ -125,11 +128,12 @@ export function SiteHeader({
               </Link>
             ))}
             <Link href="/account" className="min-h-12 py-3" onClick={() => setOpen(false)}>
-              Account
+              {t("nav.account")}
             </Link>
+            <LanguageSwitcher className="mt-2 justify-start" />
             <Button variant="gold" size="touch" className="mt-3" asChild>
               <Link href="/menu" onClick={() => setOpen(false)}>
-                Order now
+                {t("nav.orderNow")}
               </Link>
             </Button>
           </nav>

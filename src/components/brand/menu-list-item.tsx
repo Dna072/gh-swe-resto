@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Price } from "@/components/brand/price";
+import { useT } from "@/components/i18n/locale-provider";
 import type { Ore } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +21,7 @@ export function MenuListItem({
   soldOut?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const title = (
     <h3 className="font-heading text-xl leading-tight sm:text-2xl">
       {href ? (
@@ -38,7 +42,7 @@ export function MenuListItem({
         <Price ore={priceOre} className="shrink-0 text-gold" />
       </div>
       <p className="mt-2 max-w-xl text-sm italic leading-relaxed text-muted-foreground">{description}</p>
-      {soldOut ? <p className="mt-1 text-xs uppercase tracking-[0.18em] text-earth">Sold out</p> : null}
+      {soldOut ? <p className="mt-1 text-xs uppercase tracking-[0.18em] text-earth">{t("menu.soldOut")}</p> : null}
     </article>
   );
 }

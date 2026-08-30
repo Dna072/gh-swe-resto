@@ -3,25 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { House, UtensilsCrossed, ShoppingBag, Receipt, UserRound } from "lucide-react";
+import { useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
 
-const items = [
-  { href: "/", label: "Home", icon: House },
-  { href: "/menu", label: "Menu", icon: UtensilsCrossed },
-  { href: "/cart", label: "Cart", icon: ShoppingBag },
-  { href: "/orders", label: "Orders", icon: Receipt },
-  { href: "/account", label: "Account", icon: UserRound },
-] as const;
-
 export function BottomNav({ cartCount }: { cartCount?: number }) {
+  const t = useT();
   const pathname = usePathname();
   const cart = useCart();
   const count = cartCount ?? cart.itemCount;
+  const items = [
+    { href: "/", label: t("nav.home"), icon: House },
+    { href: "/menu", label: t("nav.menu"), icon: UtensilsCrossed },
+    { href: "/cart", label: t("nav.cart"), icon: ShoppingBag },
+    { href: "/orders", label: t("nav.orders"), icon: Receipt },
+    { href: "/account", label: t("nav.account"), icon: UserRound },
+  ] as const;
 
   return (
     <nav
-      aria-label="Customer"
+      aria-label={t("a11y.customerNav")}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5">

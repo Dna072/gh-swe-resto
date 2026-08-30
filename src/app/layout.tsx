@@ -3,6 +3,8 @@ import { Fraunces, Geist_Mono, Great_Vibes, Outfit } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { SkipLink } from "@/components/brand/skip-link";
 import { getEnv } from "@/lib/env";
+import { getLocale, getTranslator } from "@/lib/i18n/server";
+import { localeHtmlLang, localeOpenGraph } from "@/lib/i18n/locales";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -27,31 +29,39 @@ const greatVibes = Great_Vibes({
   weight: "400",
 });
 
-export const metadata: Metadata = {
-  title: "Ghana Restaurant Uppsala",
-  description: "Authentic Ghanaian food delivered in Uppsala.",
-  metadataBase: new URL(process.env.APP_BASE_URL ?? "http://localhost:3000"),
-  openGraph: {
-    title: "Ghana Restaurant Uppsala",
-    description: "Authentic Ghanaian food delivered in Uppsala.",
-    locale: "sv_SE",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  const locale = await getLocale();
+  return {
+    title: t("meta.siteTitle"),
+    description: t("meta.siteDescription"),
+    metadataBase: new URL(process.env.APP_BASE_URL ?? "http://localhost:3000"),
+    openGraph: {
+      title: t("meta.siteTitle"),
+      description: t("meta.siteDescription"),
+      locale: localeOpenGraph(locale),
+      type: "website",
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const t = await getTranslator();
   return (
     <html
-      lang="sv"
+      lang={localeHtmlLang(locale)}
       className={`${outfit.variable} ${fraunces.variable} ${geistMono.variable} ${greatVibes.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <SkipLink />
-        <Providers restaurantId={getEnv().DEFAULT_RESTAURANT_ID}>{children}</Providers>
+        <SkipLink label={t("a11y.skip")} />
+        <Providers restaurantId={getEnv().DEFAULT_RESTAURANT_ID} locale={locale}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

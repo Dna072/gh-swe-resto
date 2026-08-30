@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/brand/legal-page";
+import { getTranslator } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Terms" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslator();
+  return { title: t("legal.terms.title") };
+}
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const t = await getTranslator();
   return (
-    <LegalPage eyebrow="Legal" title="Terms of use">
-      <p>
-        These are placeholder terms for the Phase 2 demo. The operating company name, organisation
-        number, and Swedish consumer terms will be published before the first paid order.
-      </p>
-      <p>
-        Guest orders can be cancelled while they are still waiting for the kitchen. After the kitchen
-        accepts an order, cancellations go through the restaurant. Card refunds arrive with Phase 5
-        payments.
-      </p>
+    <LegalPage eyebrow={t("legal.legal")} title={t("legal.terms.title")}>
+      <p>{t("legal.terms.p1")}</p>
+      <p>{t("legal.terms.p2")}</p>
     </LegalPage>
   );
 }

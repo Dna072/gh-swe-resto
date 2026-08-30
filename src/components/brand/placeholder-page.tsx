@@ -2,19 +2,21 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CustomerShell } from "@/components/brand/customer-shell";
 import { PageBanner } from "@/components/brand/page-banner";
+import { getTranslator } from "@/lib/i18n/server";
 
-export function PlaceholderPage({ title }: { title: string }) {
+export async function PlaceholderPage({ title }: { title: string }) {
+  const t = await getTranslator();
   return (
     <CustomerShell>
       <main id="main">
         <PageBanner
-          eyebrow="Coming later"
+          eyebrow={t("placeholder.eyebrow")}
           title={title}
-          description="This route is reserved. Menu, cart, and guest checkout are live. Accounts and kitchen tools come later."
+          description={t("placeholder.body")}
         />
         <div className="mx-auto max-w-xl px-4 py-12 text-center">
           <Button size="touch" variant="gold" asChild>
-            <Link href="/menu">View today’s menu</Link>
+            <Link href="/menu">{t("cart.viewMenu")}</Link>
           </Button>
         </div>
       </main>

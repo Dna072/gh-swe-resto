@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Price } from "@/components/brand/price";
 import { QuantityStepper } from "@/components/brand/quantity-stepper";
+import { useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { track } from "@/lib/analytics/client";
 import type { CartModifierSelection } from "@/lib/cart/types";
 import { soldOut } from "@/lib/menu/display";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
-import { addOre, multiplyOre } from "@/lib/money";
+import { addOre, formatSek, multiplyOre } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 function defaultSelections(groups: PublicModifierGroup[]): Record<string, string[]> {
@@ -48,6 +48,7 @@ function toModifiers(
 }
 
 export function MealCustomizer({ item }: { item: PublicMenuItem }) {
+  const t = useT();
   const router = useRouter();
   const cart = useCart();
   const unavailable = soldOut(item);
@@ -97,7 +98,7 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
     for (const group of item.modifierGroups) {
       const count = selected[group.id]?.length ?? 0;
       if (count < group.minSelections || count > group.maxSelections) {
-        toast.error(`Please choose options for ${group.name}.`);
+        toast.error(t("menu.chooseOptions", { name: group.name }));
         return;
       }
     }
@@ -110,7 +111,7 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
       notes: notes.trim() || undefined,
     });
     track("item_added", { menuItemId: item.id, slug: item.slug, quantity });
-    toast.success(`${item.name} added to cart`);
+    toast.success(t("menu.added", { name: item.name }));
     router.push("/cart");
   }
 
@@ -123,9 +124,9 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
             <legend className="flex items-center gap-2 font-heading text-xl">
               {group.name}
               {group.required ? (
-                <Badge variant="earth">Required</Badge>
+                <Badge variant="earth">{t("menu.required")}</Badge>
               ) : (
-                <Badge variant="outline">Optional</Badge>
+                <Badge variant="outline">{t("menu.optional")}</Badge>
               )}
             </legend>
             {single ? (
@@ -188,14 +189,14 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
 
       <div className="grid gap-2">
         <label htmlFor="kitchen-notes" className="text-sm font-medium">
-          Kitchen notes
+          {t("menu.kitchenNotes")}
         </label>
         <textarea
           id="kitchen-notes"
           maxLength={200}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          placeholder="No extra shito on the side, please."
+          placeholder={t("menu.kitchenNotesPlaceholder")}
           className="min-h-24 rounded-lg border border-input bg-card px-3 py-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
@@ -203,9 +204,9 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
       <div className="sticky bottom-16 z-30 flex items-center justify-between gap-3 bg-ink/95 p-3 text-primary-foreground shadow-[0_18px_40px_-24px_rgba(0,0,0,0.7)] backdrop-blur-md md:bottom-4">
         <QuantityStepper value={quantity} onChange={setQuantity} disabled={unavailable} />
         <Button size="touch" variant="gold" disabled={unavailable} onClick={addToCart}>
-          {unavailable ? "Unavailable" : (
+          {unavailable ? t("menu.unavailable") : (
             <span className="flex items-center gap-2">
-              Add <Price ore={previewOre} className="text-gold-foreground" />
+              {t("menu.addPriced", { price: formatSek(previewOre) })}
             </span>
           )}
         </Button>
