@@ -120,10 +120,15 @@ fi
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:$(git rev-parse --short HEAD 2>/dev/null || echo latest)"
 echo "Building ${IMAGE}…"
-gcloud builds submit \
+echo "If Cloud Build fails, open the log URL it prints — the terminal only shows that Docker step 0 exited 1."
+if ! gcloud builds submit \
   --project "${PROJECT_ID}" \
   --config cloudbuild.yaml \
-  --substitutions="_IMAGE=${IMAGE}"
+  --substitutions="_IMAGE=${IMAGE}"; then
+  echo "Image build failed. Pull the latest deploy fixes, then re-run:" >&2
+  echo "  git pull && GCP_PROJECT_ID=${PROJECT_ID} ./scripts/gcp-showcase-deploy.sh" >&2
+  exit 1
+fi
 
 echo "Deploying Cloud Run service ${SERVICE}…"
 gcloud run deploy "${SERVICE}" \

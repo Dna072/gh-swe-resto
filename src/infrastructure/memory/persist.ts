@@ -10,7 +10,9 @@ export type PersistedCatalog = {
 };
 
 export function catalogPersistPath(): string {
-  return process.env.LOCAL_CATALOG_PATH ?? path.join(process.cwd(), "data", "local-catalog.json");
+  // Static segments only. A dynamic env path makes Next.js standalone trace
+  // the entire working directory into the Cloud Run image.
+  return path.join(process.cwd(), "data", "local-catalog.json");
 }
 
 export function shouldPersistLocalCatalog(): boolean {

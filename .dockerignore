@@ -4,6 +4,9 @@ node_modules
 .github
 coverage
 emulator-data
+data
+.firebase
+public/uploads
 *.md
 !README.md
 tests
