@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { createTranslator, type Translator } from "@/lib/i18n/messages";
 import { localeCookieHeader, localeHtmlLang, type Locale } from "@/lib/i18n/locales";
 
@@ -20,7 +19,6 @@ export function LocaleProvider({
   locale: Locale;
   children: ReactNode;
 }) {
-  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   const value = useMemo<LocaleContextValue>(() => {
@@ -28,13 +26,16 @@ export function LocaleProvider({
       locale,
       t: createTranslator(locale),
       setLocale(next) {
+        if (next === locale) {
+          return;
+        }
         document.cookie = localeCookieHeader(next);
         document.documentElement.lang = localeHtmlLang(next);
         setLocaleState(next);
-        router.refresh();
+        window.location.reload();
       },
     };
-  }, [locale, router]);
+  }, [locale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

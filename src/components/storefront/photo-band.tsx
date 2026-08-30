@@ -4,22 +4,22 @@ import { useReducedMotion } from "motion/react";
 import { AdinkraRule } from "@/components/brand/adinkra-rule";
 import { FoodPhoto } from "@/components/brand/food-photo";
 import { Reveal } from "@/components/brand/reveal";
+import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function PhotoBand({
   imageSrc,
   imageAlt,
   imagePosition,
-  script,
-  title,
 }: {
   imageSrc: string | null;
   imageAlt: string;
   imagePosition?: string;
-  script: string;
-  title: string;
 }) {
+  const t = useT();
   const reduced = useReducedMotion() ?? false;
+  const script = t("home.band.script");
+  const title = t("home.band.title");
 
   return (
     <section className="relative isolate min-h-[56svh] overflow-hidden md:min-h-[70svh]">
