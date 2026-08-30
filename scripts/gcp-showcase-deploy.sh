@@ -22,20 +22,44 @@ if ! command -v gcloud >/dev/null 2>&1; then
 fi
 
 gcloud config set project "${PROJECT_ID}"
-ACCOUNT="$(gcloud config get-value account 2>/dev/null || true)"
-if [[ -z "${ACCOUNT}" || "${ACCOUNT}" == "(unset)" ]]; then
-  ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n 1 || true)"
-  if [[ -n "${ACCOUNT}" ]]; then
-    gcloud config set account "${ACCOUNT}"
+
+resolve_gcloud_account() {
+  local configured
+  configured="$(gcloud config get-value account 2>/dev/null || true)"
+  if [[ -n "${configured}" && "${configured}" != "(unset)" ]]; then
+    printf '%s' "${configured}"
+    return 0
   fi
+  gcloud auth list --format='value(account)' 2>/dev/null | head -n 1 || true
+}
+
+ACCOUNT="$(resolve_gcloud_account)"
+if [[ -n "${ACCOUNT}" ]]; then
+  gcloud config set account "${ACCOUNT}" >/dev/null
 fi
+
 if ! gcloud auth print-access-token >/dev/null 2>&1; then
-  echo "gcloud has no usable credentials (config account is ${ACCOUNT:-(unset)})." >&2
-  echo "Cloud Shell sessions expire. Sign in again, then re-run the script:" >&2
-  echo "  gcloud auth login" >&2
+  echo "gcloud has no usable credentials yet. Starting login in this terminal…"
+  echo "Complete the Cloud Shell / browser prompt, then the deploy will continue."
+  gcloud auth login --update-adc
+  ACCOUNT="$(resolve_gcloud_account)"
+  if [[ -n "${ACCOUNT}" ]]; then
+    gcloud config set account "${ACCOUNT}" >/dev/null
+  fi
+  gcloud config set project "${PROJECT_ID}" >/dev/null
+fi
+
+if ! gcloud auth print-access-token >/dev/null 2>&1; then
+  echo "Still no gcloud access token after login." >&2
+  echo "In this Cloud Shell, run these two commands yourself:" >&2
+  echo "  gcloud auth login --update-adc" >&2
+  echo "  gcloud auth list" >&2
+  echo "You should see one account marked ACTIVE. Then re-run:" >&2
   echo "  GCP_PROJECT_ID=${PROJECT_ID} ./scripts/gcp-showcase-deploy.sh" >&2
   exit 1
 fi
+
+echo "Using gcloud account: $(gcloud config get-value account 2>/dev/null)"
 
 echo "Enabling APIs in ${PROJECT_ID} (${REGION})…"
 gcloud services enable \
