@@ -1,10 +1,20 @@
 import { applicationDefault, cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { firebaseProjectId, getEnv } from "@/lib/env";
+import { firebaseProjectId, getEnv, type AppEnv } from "@/lib/env";
 
 let app: App | undefined;
 let firestoreConfigured = false;
+
+function usingFirebaseEmulators(env: AppEnv): boolean {
+  return Boolean(
+    env.FIRESTORE_EMULATOR_HOST ||
+      env.FIREBASE_AUTH_EMULATOR_HOST ||
+      process.env.FIRESTORE_EMULATOR_HOST ||
+      process.env.FIREBASE_AUTH_EMULATOR_HOST ||
+      process.env.FIREBASE_STORAGE_EMULATOR_HOST,
+  );
+}
 
 export function getFirebaseAdminApp(): App {
   if (app) {
@@ -26,6 +36,12 @@ export function getFirebaseAdminApp(): App {
       }),
       projectId,
     });
+    return app;
+  }
+  // Emulators do not need ADC. Calling applicationDefault() locally hangs while
+  // probing the metadata server / gcloud credentials, which freezes page loads.
+  if (usingFirebaseEmulators(env)) {
+    app = initializeApp({ projectId });
     return app;
   }
   app = initializeApp({
