@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
@@ -12,6 +12,7 @@ import {
   subscribeAdminToken,
 } from "@/lib/admin/client";
 import { signInStaff, staffPasswordLoginAvailable } from "@/lib/firebase/client";
+import { toast } from "sonner";
 
 function useStoredAdminToken(): boolean {
   return useSyncExternalStore(subscribeAdminToken, hasAdminToken, () => false);
@@ -27,13 +28,6 @@ export function AdminSession() {
   const passwordLogin = staffPasswordLoginAvailable();
   const saved = stored && !editing;
 
-  useEffect(() => {
-    const existing = getAdminToken();
-    if (existing) {
-      setToken(existing);
-    }
-  }, []);
-
   return (
     <div className="border-b border-border bg-secondary/60">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3">
@@ -47,9 +41,12 @@ export function AdminSession() {
               .then((idToken) => {
                 setAdminToken(idToken);
                 setEditing(false);
+                toast.success("Signed in. Kitchen and menu actions will use this session.");
               })
               .catch((cause: unknown) => {
-                setError(cause instanceof Error ? cause.message : "Staff sign-in failed.");
+                const message = cause instanceof Error ? cause.message : "Staff sign-in failed.";
+                setError(message);
+                toast.error(message);
               });
           }}
         >
@@ -82,8 +79,14 @@ export function AdminSession() {
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
-          setAdminToken(token.trim() || getAdminToken());
+          const next = token.trim() || getAdminToken();
+          if (!next) {
+            toast.error("Paste the admin token, then click Use token.");
+            return;
+          }
+          setAdminToken(next);
           setEditing(false);
+          toast.success("Admin token saved. You can save meals and upload photographs.");
         }}
       >
         <Field
@@ -120,6 +123,7 @@ export function AdminSession() {
               clearAdminToken();
               setToken("");
               setEditing(false);
+              toast.message("Admin token cleared.");
             }}
           >
             Clear

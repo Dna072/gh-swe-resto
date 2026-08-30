@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  adminFetch,
   clearAdminToken,
   getAdminToken,
   hasAdminToken,
@@ -50,5 +51,9 @@ describe("admin token store", () => {
     expect(hasAdminToken()).toBe(false);
     unsubscribe();
     expect(seen).toEqual([true, false]);
+  });
+
+  it("refuses admin requests until a token is saved", async () => {
+    await expect(adminFetch("/api/admin/menu")).rejects.toThrow(/Use token/i);
   });
 });
