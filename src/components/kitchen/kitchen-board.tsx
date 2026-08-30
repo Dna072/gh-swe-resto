@@ -74,7 +74,7 @@ export function KitchenBoard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Refreshes every five seconds. Payment collection is still Phase 5.</p>
+        <p className="text-sm text-muted-foreground">Refreshes every five seconds. Paid orders and unpaid cash reservations both appear here.</p>
         <Button size="touch" variant="outline" onClick={load}>
           Refresh
         </Button>

@@ -178,9 +178,16 @@ export class OrderService {
     return this.orders.update(applyOrderTransition(order, to));
   }
 
+  async markPaid(orderId: string, accessToken: string): Promise<Order> {
+    const order = await this.getForCustomer(orderId, accessToken);
+    if (order.orderStatus !== "PENDING_PAYMENT") {
+      throw new AppError("INVALID_TRANSITION", "This order is not waiting for payment.");
+    }
+    return this.orders.update(applyOrderTransition(order, "PAID"));
+  }
+
   /**
-   * Until Phase 5 card payments exist, kitchen staff may accept a reserved
-   * guest order (mock / cash-on-delivery) and move it into the kitchen.
+   * Kitchen may still accept an unpaid reservation as cash-at-counter.
    */
   async sendToKitchen(actor: Actor, orderId: string): Promise<Order> {
     authorizationService.requirePermission(actor, "orders:transition");

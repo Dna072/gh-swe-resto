@@ -78,6 +78,30 @@ describe("OrderService", () => {
     expect(loaded.id).toBe(order.id);
   });
 
+  it("marks a pending guest order as paid", async () => {
+    const { service } = createHarness();
+    const { order, accessToken } = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "hot-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "pay-1",
+      guestSessionId: "guest-pay",
+    });
+    const paid = await service.markPaid(order.id, accessToken);
+    expect(paid.orderStatus).toBe("PAID");
+    expect(paid.paymentStatus).toBe("PAID");
+  });
+
   it("is idempotent when the same checkout key is reused", async () => {
     const { service } = createHarness();
     const first = await service.create({

@@ -10,6 +10,7 @@ import { Spinner } from "@/components/brand/loading-state";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { localizeMenuName } from "@/lib/i18n/catalog";
+import { formatSek } from "@/lib/money";
 import type { MessageKey, Translator } from "@/lib/i18n/messages";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
 import type { PublicOrder } from "@/lib/orders/public";
@@ -57,6 +58,27 @@ export function OrderConfirmation({
       });
     return () => controller.abort();
   }, [orderId, tokenFromUrl, t]);
+
+  async function pay() {
+    const token = tokenFromUrl || guestTokenFor(orderId);
+    if (!token) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/orders/${orderId}/pay?token=${encodeURIComponent(token)}`, {
+        method: "POST",
+      });
+      const body = (await response.json()) as PublicOrder & { order?: PublicOrder; message?: string };
+      if (!response.ok) {
+        setError(body.message ?? t("order.payError"));
+        return;
+      }
+      setOrder(body.order ?? body);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function cancel() {
     const token = tokenFromUrl || guestTokenFor(orderId);
@@ -131,7 +153,7 @@ export function OrderConfirmation({
           <dt>{t("order.payment")}</dt>
           <dd>
             {paymentLabel(order.paymentStatus, t)}
-            {order.paymentDeferred ? t("order.paymentDeferred") : ""}
+            {order.payable ? t("order.paymentDue") : ""}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
@@ -200,6 +222,11 @@ export function OrderConfirmation({
         )}
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
+        {order.payable ? (
+          <Button size="touch" disabled={busy} onClick={() => void pay()}>
+            {t("order.pay", { price: formatSek(order.totalOre) })}
+          </Button>
+        ) : null}
         {order.cancellable ? (
           <Button size="touch" variant="outline" disabled={busy} onClick={() => void cancel()}>
             {t("order.cancel")}

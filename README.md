@@ -4,7 +4,7 @@ Production-grade online ordering and operations platform for a Ghanaian restaura
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phase 4 kitchen board, order transitions, and print tickets. Guest checkout and admin meal photography remain from Phase 3. Payment is still Phase 5.
+**Current status:** Phase 5 guest payment. Guests can pay after checkout (mock provider locally; Stripe when keys are set). Kitchen board, print tickets, and admin photography remain from earlier phases.
 
 Meal photographs must be real kitchen photos uploaded by an admin. The storefront never ships AI-generated food. Until a photograph is uploaded, customers see a branded “Photo coming soon” treatment.
 
@@ -66,8 +66,8 @@ npm run build
 1. Design system
 2. Customer menu and cart UI
 3. Delivery and checkout
-4. Orders, kitchen, printing — **this release**
-5. Payments
+4. Orders, kitchen, printing
+5. Payments — **this release**
 6. Live delivery providers
 7. Tracking
 8. Admin CMS

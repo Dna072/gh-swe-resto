@@ -70,7 +70,8 @@ describe("Phase 3 checkout", () => {
     expect(created.accessToken.length).toBeGreaterThan(20);
     const publicOrder = toPublicOrder(created.order);
     expect(publicOrder).not.toHaveProperty("accessTokenHash");
-    expect(publicOrder.paymentDeferred).toBe(true);
+    expect(publicOrder.paymentDeferred).toBe(false);
+    expect(publicOrder.payable).toBe(true);
     expect(publicOrder.cancellable).toBe(true);
     expect(publicOrder.fulfillment).toBe("DELIVERY");
     rememberGuestToken(created.order.id, "phase3-delivery-1", created.accessToken);
