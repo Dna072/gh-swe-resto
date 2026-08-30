@@ -37,7 +37,7 @@ function createHarness() {
     { timeZone: "Europe/Stockholm", weekendDays: ["saturday", "sunday"] },
   );
   const orders = new InMemoryOrderRepository(state);
-  const service = new OrderService(orders, cart, new InMemoryTransactionRunner(state));
+  const service = new OrderService(orders, cart, new InMemoryTransactionRunner(state), menu);
   return { state, service, orders };
 }
 
@@ -139,5 +139,50 @@ describe("OrderService", () => {
       guestSessionId: "guest-1",
     });
     await expect(service.getForCustomer(order.id, "wrong-token")).rejects.toThrow(/cannot view/i);
+  });
+
+  it("cancels a pending guest order and restores inventory", async () => {
+    const { service, state } = createHarness();
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: tilapiaLine,
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "cancel-me",
+      guestSessionId: "guest-1",
+    });
+    expect(state.inventory.find((item) => item.sku === "tilapia")?.availableQuantity).toBe(0);
+    const cancelled = await service.cancel(created.order.id, created.accessToken);
+    expect(cancelled.orderStatus).toBe("CANCELLED");
+    expect(state.inventory.find((item) => item.sku === "tilapia")?.availableQuantity).toBe(1);
+  });
+
+  it("lets kitchen staff accept a reserved order and persist CONFIRMED", async () => {
+    const { service, orders } = createHarness();
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "kitchen-accept",
+      guestSessionId: "guest-1",
+    });
+    const kitchen = { uid: "cook-1", role: "KITCHEN" as const };
+    const confirmed = await service.sendToKitchen(kitchen, created.order.id);
+    expect(confirmed.orderStatus).toBe("CONFIRMED");
+    expect(confirmed.paymentStatus).toBe("PAID");
+    const stored = await orders.getById(created.order.id);
+    expect(stored?.orderStatus).toBe("CONFIRMED");
+    const preparing = await service.transition(kitchen, created.order.id, "PREPARING");
+    expect(preparing.preparingAt).toBeTruthy();
   });
 });

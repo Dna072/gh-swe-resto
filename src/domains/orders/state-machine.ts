@@ -7,7 +7,7 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   CONFIRMED: ["PREPARING", "CANCELLED", "REFUNDED"],
   PREPARING: ["PACKING", "CANCELLED"],
   PACKING: ["READY", "CANCELLED"],
-  READY: ["COURIER_ASSIGNED", "CANCELLED"],
+  READY: ["COURIER_ASSIGNED", "DELIVERED", "CANCELLED"],
   COURIER_ASSIGNED: ["OUT_FOR_DELIVERY", "DELIVERY_FAILED", "CANCELLED"],
   OUT_FOR_DELIVERY: ["DELIVERED", "DELIVERY_FAILED"],
   DELIVERED: ["REFUNDED"],
@@ -66,7 +66,7 @@ export function applyOrderTransition(order: Order, to: OrderStatus, at = new Dat
   if (to === "OUT_FOR_DELIVERY") {
     next.deliveryStatus = "IN_TRANSIT";
   }
-  if (to === "DELIVERED") {
+  if (to === "DELIVERED" && order.deliveryStatus !== "NOT_REQUESTED") {
     next.deliveryStatus = "DELIVERED";
   }
   if (to === "DELIVERY_FAILED") {
@@ -75,7 +75,7 @@ export function applyOrderTransition(order: Order, to: OrderStatus, at = new Dat
   return next;
 }
 
-export const CUSTOMER_TRACKING_STEPS: Array<{ status: OrderStatus; label: string }> = [
+export const DELIVERY_TRACKING_STEPS: Array<{ status: OrderStatus; label: string }> = [
   { status: "CONFIRMED", label: "Order confirmed" },
   { status: "PREPARING", label: "Kitchen preparing" },
   { status: "READY", label: "Food packed" },
@@ -83,3 +83,17 @@ export const CUSTOMER_TRACKING_STEPS: Array<{ status: OrderStatus; label: string
   { status: "OUT_FOR_DELIVERY", label: "On the way" },
   { status: "DELIVERED", label: "Delivered" },
 ];
+
+export const PICKUP_TRACKING_STEPS: Array<{ status: OrderStatus; label: string }> = [
+  { status: "CONFIRMED", label: "Order confirmed" },
+  { status: "PREPARING", label: "Kitchen preparing" },
+  { status: "READY", label: "Ready for pickup" },
+  { status: "DELIVERED", label: "Collected" },
+];
+
+export function trackingStepsFor(fulfillment: "DELIVERY" | "PICKUP") {
+  return fulfillment === "PICKUP" ? PICKUP_TRACKING_STEPS : DELIVERY_TRACKING_STEPS;
+}
+
+/** @deprecated use DELIVERY_TRACKING_STEPS or trackingStepsFor */
+export const CUSTOMER_TRACKING_STEPS = DELIVERY_TRACKING_STEPS;

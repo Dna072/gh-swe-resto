@@ -1,20 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CustomerShell } from "@/components/brand/customer-shell";
+import { PageBanner } from "@/components/brand/page-banner";
 
 export function PlaceholderPage({ title }: { title: string }) {
   return (
     <CustomerShell>
-      <main id="main" className="mx-auto max-w-xl px-4 py-16">
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-earth">Coming later</p>
-        <h1 className="mt-3 font-heading text-4xl">{title}</h1>
-        <p className="mt-3 text-muted-foreground">
-          This route is reserved. Menu, cart, and guest checkout are live. Accounts and kitchen
-          tools come later.
-        </p>
-        <Button size="touch" className="mt-6" asChild>
-          <Link href="/menu">View today’s menu</Link>
-        </Button>
+      <main id="main">
+        <PageBanner
+          eyebrow="Coming later"
+          title={title}
+          description="This route is reserved. Menu, cart, and guest checkout are live. Accounts and kitchen tools come later."
+        />
+        <div className="mx-auto max-w-xl px-4 py-12 text-center">
+          <Button size="touch" variant="gold" asChild>
+            <Link href="/menu">View today’s menu</Link>
+          </Button>
+        </div>
       </main>
     </CustomerShell>
   );

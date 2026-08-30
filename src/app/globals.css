@@ -9,6 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-script: var(--font-great-vibes), cursive;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -177,6 +178,13 @@
     letter-spacing: -0.02em;
   }
 
+  .font-script {
+    font-family: var(--font-script);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
@@ -195,11 +203,43 @@
 
 @keyframes hero-in {
   from {
-    transform: scale(1.06);
-    opacity: 0.88;
+    transform: scale(1.08);
+    opacity: 0.7;
   }
   to {
     transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1.16);
+  }
+}
+
+@keyframes float-line {
+  from {
+    transform: scaleY(0.4);
+    opacity: 0.2;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(8px);
     opacity: 1;
   }
 }

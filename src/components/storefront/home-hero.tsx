@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { AdinkraRule } from "@/components/brand/adinkra-rule";
 import { FoodPhoto } from "@/components/brand/food-photo";
+import { fadeVariants, heroStagger, revealVariants } from "@/lib/motion";
 
 export function HomeHero({
   eyebrow,
@@ -27,8 +32,10 @@ export function HomeHero({
   mobileImageAlt?: string;
   mobileImagePosition?: string;
 }) {
+  const reduced = useReducedMotion() ?? false;
+
   return (
-    <section className="relative isolate min-h-[85svh] overflow-hidden md:min-h-[100svh]">
+    <section className="relative isolate min-h-[100svh] overflow-hidden">
       <div className="absolute inset-0">
         {mobileImageSrc ? (
           <>
@@ -40,38 +47,79 @@ export function HomeHero({
                 priority
                 sizes="100vw"
                 objectPosition={mobileImagePosition}
-                className="size-full motion-safe:animate-[hero-in_1.1s_ease-out]"
+                kenBurns={!reduced}
+                placeholderTone="ink"
+                className="size-full"
               />
             </div>
             <div className="absolute inset-0 hidden md:block">
-              <HeroMedia src={imageSrc} alt={imageAlt} title={title} objectPosition={imagePosition} />
+              <HeroMedia
+                src={imageSrc}
+                alt={imageAlt}
+                title={title}
+                objectPosition={imagePosition}
+                kenBurns={!reduced}
+              />
             </div>
           </>
         ) : (
-          <HeroMedia src={imageSrc} alt={imageAlt} title={title} objectPosition={imagePosition} />
+          <HeroMedia
+            src={imageSrc}
+            alt={imageAlt}
+            title={title}
+            objectPosition={imagePosition}
+            kenBurns={!reduced}
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/20" />
+        <div className="absolute inset-0 bg-ink/15" />
       </div>
-      <div className="relative mx-auto flex min-h-[85svh] max-w-6xl flex-col justify-end gap-5 px-4 pb-12 pt-24 text-primary-foreground md:min-h-[100svh] md:pb-20">
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-gold">{eyebrow}</p>
-        <h1 className="max-w-xl whitespace-pre-line font-heading text-4xl text-balance sm:text-6xl md:text-7xl">
+      <motion.div
+        className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center gap-6 px-4 pb-24 pt-28 text-center text-primary-foreground"
+        variants={reduced ? undefined : heroStagger}
+        initial={reduced ? "visible" : "hidden"}
+        animate="visible"
+      >
+        <motion.p
+          variants={revealVariants(reduced)}
+          className="font-script text-5xl text-gold sm:text-6xl"
+        >
+          {eyebrow}
+        </motion.p>
+        <motion.h1
+          variants={revealVariants(reduced)}
+          className="whitespace-pre-line font-heading text-5xl text-balance sm:text-7xl md:text-8xl"
+        >
           {title}
-        </h1>
-        <p className="max-w-md text-base text-primary-foreground/85 sm:text-lg">{subtitle}</p>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        </motion.h1>
+        <motion.div variants={fadeVariants(reduced)}>
+          <AdinkraRule className="mx-auto text-gold" />
+        </motion.div>
+        <motion.p
+          variants={revealVariants(reduced)}
+          className="max-w-xl text-base text-primary-foreground/80 sm:text-lg"
+        >
+          {subtitle}
+        </motion.p>
+        <motion.div
+          variants={revealVariants(reduced)}
+          className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"
+        >
           <Button size="touch" variant="gold" asChild>
             <Link href={primaryCta.href}>{primaryCta.label}</Link>
           </Button>
-          <Button
-            size="touch"
-            variant="outline"
-            className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-            asChild
-          >
+          <Button size="touch" variant="gold-outline" asChild>
             <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
           </Button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
+      <a
+        href="#hours"
+        className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-primary-foreground/70"
+      >
+        <span>Scroll</span>
+        <span className="block h-10 w-px origin-top bg-gold motion-safe:animate-[scroll-cue_1.8s_ease-in-out_infinite]" />
+      </a>
     </section>
   );
 }
@@ -81,29 +129,25 @@ function HeroMedia({
   alt,
   title,
   objectPosition,
+  kenBurns,
 }: {
   src: string | null;
   alt: string;
   title: string;
   objectPosition?: string;
+  kenBurns?: boolean;
 }) {
-  if (src) {
-    return (
-      <FoodPhoto
-        src={src}
-        alt={alt}
-        name={title}
-        priority
-        sizes="100vw"
-        objectPosition={objectPosition}
-        className="size-full motion-safe:animate-[hero-in_1.1s_ease-out]"
-      />
-    );
-  }
-
   return (
-    <div className="flex size-full items-end bg-ink bg-kente p-6">
-      <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold">Photograph coming soon</p>
-    </div>
+    <FoodPhoto
+      src={src}
+      alt={alt}
+      name={title}
+      priority
+      sizes="100vw"
+      objectPosition={objectPosition}
+      kenBurns={kenBurns}
+      placeholderTone="ink"
+      className="size-full"
+    />
   );
 }

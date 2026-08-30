@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Geist_Mono, Outfit } from "next/font/google";
+import { Fraunces, Geist_Mono, Great_Vibes, Outfit } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { SkipLink } from "@/components/brand/skip-link";
 import { getEnv } from "@/lib/env";
@@ -19,6 +19,12 @@ const fraunces = Fraunces({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const greatVibes = Great_Vibes({
+  variable: "--font-great-vibes",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -41,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="sv"
-      className={`${outfit.variable} ${fraunces.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${outfit.variable} ${fraunces.variable} ${geistMono.variable} ${greatVibes.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         <SkipLink />

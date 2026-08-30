@@ -3,14 +3,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AdinkraRule } from "@/components/brand/adinkra-rule";
 import { CustomerShell } from "@/components/brand/customer-shell";
-import { MealCard } from "@/components/brand/meal-card";
+import { FoodPhoto } from "@/components/brand/food-photo";
+import { MenuListItem } from "@/components/brand/menu-list-item";
+import { Reveal, RevealGroup } from "@/components/brand/reveal";
 import { SectionHeading } from "@/components/brand/section-heading";
+import { FeaturedPlate } from "@/components/storefront/featured-plate";
 import { HomeHero } from "@/components/storefront/home-hero";
+import { HomeHours } from "@/components/storefront/home-hours";
+import { PhotoBand } from "@/components/storefront/photo-band";
 import { DeliveryCheck } from "@/components/storefront/delivery-check";
 import { MarketingSignup } from "@/components/storefront/marketing-signup";
 import { TrackView } from "@/components/storefront/track-view";
 import { imageUrl, objectPosition } from "@/lib/media/display";
-import { lowStockLabel, soldOut } from "@/lib/menu/display";
+import { restaurantDisplay } from "@/lib/restaurant/display";
+import { soldOut } from "@/lib/menu/display";
 import { loadHomepage, loadPublicCatalog } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +61,8 @@ export default async function HomePage() {
   const featuredFallback =
     featured.length > 0 ? featured : catalog.items.filter((item) => item.featured || item.popular).slice(0, 4);
   const today = catalog.items.filter((item) => item.categoryId === "plates");
+  const storyImage = featuredFallback[0];
+  const bandImage = featuredFallback[1] ?? storyImage;
 
   return (
     <CustomerShell overlay>
@@ -74,161 +82,200 @@ export default async function HomePage() {
           mobileImagePosition={objectPosition(homepage.hero.mobileImage)}
         />
 
-        <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-12 sm:gap-20 sm:py-16">
-          <section id="featured" className="scroll-mt-20 space-y-8">
+        <HomeHours />
+
+        <section id="featured" className="scroll-mt-24 bg-background py-20 sm:py-28">
+          <Reveal className="mx-auto max-w-4xl px-4">
             <SectionHeading
-              eyebrow="Signature plates"
-              title="What we want you to taste first"
+              align="center"
+              eyebrow="Delightful"
+              title="Signature plates"
               description="Real kitchen photographs replace these placeholders as soon as the restaurant uploads them."
             />
-            <div className="grid gap-4 md:grid-cols-2">
-              {featuredFallback.map((item, index) => (
-                <MealCard
-                  key={item.id}
+          </Reveal>
+          <RevealGroup className="mx-auto mt-12 grid max-w-6xl gap-px bg-foreground/10 sm:grid-cols-2">
+            {featuredFallback.map((item, index) => (
+              <Reveal as="div" key={item.id} className={index === 0 ? "sm:col-span-2" : undefined}>
+                <FeaturedPlate
                   name={item.name}
                   description={item.shortDescription}
                   priceOre={item.displayPriceOre}
-                  imageAlt={item.imageAlt}
-                  imageUrl={item.imageUrl}
-                  imagePosition={item.imagePosition}
                   href={`/menu/${item.slug}`}
+                  imageUrl={item.imageUrl}
+                  imageAlt={item.imageAlt}
+                  imagePosition={item.imagePosition}
                   featured={item.popular}
-                  soldOut={soldOut(item)}
-                  lowStockLabel={lowStockLabel(item)}
-                  addLabel="Order"
-                  editorial={index === 0}
-                  className={index === 0 ? "md:col-span-2" : undefined}
-                  dietaryLabels={item.dietaryTags.map((tag) => tag.replaceAll("_", " ").toLowerCase())}
+                  className={index === 0 ? "md:min-h-[36rem]" : undefined}
                 />
-              ))}
-            </div>
-          </section>
+              </Reveal>
+            ))}
+          </RevealGroup>
+        </section>
 
-          <section id="todays-menu" className="scroll-mt-20 space-y-8">
-            <SectionHeading
-              eyebrow="Today’s kitchen"
-              title="What can I order today?"
-              description="Prices include today’s weekday or weekend rate. The server is the source of truth."
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section id="todays-menu" className="scroll-mt-24 bg-card py-20 sm:py-28">
+          <div className="mx-auto grid max-w-6xl gap-14 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <Reveal className="lg:sticky lg:top-28">
+              <SectionHeading
+                eyebrow="Checkout"
+                title="Today’s kitchen"
+                description="Prices include today’s weekday or weekend rate. The server is the source of truth."
+              />
+              <Button size="touch" variant="gold-outline" className="mt-8" asChild>
+                <Link href="/menu">See sides and drinks</Link>
+              </Button>
+            </Reveal>
+            <RevealGroup className="divide-y divide-foreground/10">
               {today.map((item) => (
-                <MealCard
-                  key={item.id}
-                  name={item.name}
-                  description={item.shortDescription}
-                  priceOre={item.displayPriceOre}
-                  imageAlt={item.imageAlt}
-                  imageUrl={item.imageUrl}
-                  imagePosition={item.imagePosition}
-                  href={`/menu/${item.slug}`}
-                  soldOut={soldOut(item)}
-                  lowStockLabel={lowStockLabel(item)}
-                  addLabel="Customize"
-                  dietaryLabels={item.dietaryTags.map((tag) => tag.replaceAll("_", " ").toLowerCase())}
-                />
+                <Reveal as="div" key={item.id}>
+                  <MenuListItem
+                    name={item.name}
+                    description={item.shortDescription}
+                    priceOre={item.displayPriceOre}
+                    href={`/menu/${item.slug}`}
+                    soldOut={soldOut(item)}
+                  />
+                </Reveal>
               ))}
-            </div>
-            <Button size="touch" variant="outline" asChild>
-              <Link href="/menu">See sides and drinks</Link>
-            </Button>
-          </section>
+            </RevealGroup>
+          </div>
+        </section>
 
-          <section id="story" className="scroll-mt-20 grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-            <SectionHeading
-              eyebrow={homepage.story.eyebrow}
-              title={homepage.story.title}
-              description={homepage.story.body}
-            />
-            <aside className="relative overflow-hidden rounded-2xl bg-ink px-6 py-8 text-primary-foreground bg-kente">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-gold">Ghana in Uppsala</p>
-              <h3 className="mt-3 font-heading text-3xl text-balance">Home food, cooked here</h3>
-              <AdinkraRule className="mt-4 text-gold" />
-              <p className="mt-4 text-primary-foreground/80">
-                Jollof that tastes of the pot, banku with proper pepper, waakye on a Saturday. The brand is
-                Ghanaian; the kitchen is in Uppsala.
-              </p>
-              <p className="mt-6 text-xs uppercase tracking-[0.18em] text-gold/80">Photograph coming soon</p>
-            </aside>
-          </section>
+        <PhotoBand
+          imageSrc={bandImage?.imageUrl ?? null}
+          imageAlt={bandImage?.imageAlt ?? "Restaurant atmosphere"}
+          imagePosition={bandImage?.imagePosition}
+          script="Amazing"
+          title="Delicious"
+        />
 
-          <section id="categories" className="space-y-8">
-            <SectionHeading eyebrow="Menu" title="Browse by plate" />
-            <ul className="grid gap-3 sm:grid-cols-3">
+        <section id="story" className="scroll-mt-24 bg-background py-20 sm:py-28">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 lg:grid-cols-2 lg:gap-16">
+            <Reveal>
+              <div className="relative aspect-[4/5] overflow-hidden bg-ink">
+                <FoodPhoto
+                  src={storyImage?.imageUrl}
+                  alt={storyImage?.imageAlt ?? homepage.story.title}
+                  name={homepage.story.title}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  objectPosition={storyImage?.imagePosition}
+                  placeholderTone="ink"
+                  className="size-full"
+                />
+              </div>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <SectionHeading
+                eyebrow={homepage.story.eyebrow}
+                title={homepage.story.title}
+                description={homepage.story.body}
+              />
+              <aside className="mt-10 border-l border-gold/50 pl-6">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-earth">Ghana in Uppsala</p>
+                <p className="mt-3 font-heading text-3xl text-balance">Home food, cooked here</p>
+                <p className="mt-4 text-muted-foreground">
+                  Jollof that tastes of the pot, banku with proper pepper, waakye on a Saturday. The
+                  brand is Ghanaian; the kitchen is in Uppsala.
+                </p>
+              </aside>
+            </Reveal>
+          </div>
+        </section>
+
+        <section id="categories" className="bg-card py-20 sm:py-24">
+          <Reveal className="mx-auto max-w-6xl px-4">
+            <SectionHeading align="center" eyebrow="Discover" title="Browse the menu" />
+            <ul className="mt-12 grid gap-px bg-foreground/10 sm:grid-cols-3">
               {catalog.categories.map((category) => (
                 <li key={category.id}>
                   <Link
                     href={`/menu#${category.slug}`}
-                    className="flex min-h-24 flex-col justify-between rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-colors hover:bg-secondary"
+                    className="group flex min-h-44 flex-col justify-end bg-background px-6 py-8 transition-colors hover:bg-ink hover:text-primary-foreground"
                   >
-                    <p className="text-xs uppercase tracking-[0.18em] text-earth">Category</p>
-                    <h3 className="font-heading text-2xl">{category.name}</h3>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-gold">Menu</p>
+                    <h3 className="mt-3 font-heading text-3xl transition-transform duration-500 group-hover:-translate-y-1">
+                      {category.name}
+                    </h3>
                   </Link>
                 </li>
               ))}
             </ul>
-          </section>
+          </Reveal>
+        </section>
 
-          <section id="how-it-works" className="scroll-mt-20 space-y-8">
-            <SectionHeading eyebrow="How it works" title="From postcode to plate" />
-            <ol className="grid gap-4 md:grid-cols-3">
+        <section id="how-it-works" className="scroll-mt-24 bg-background py-20 sm:py-24">
+          <Reveal className="mx-auto max-w-6xl px-4">
+            <SectionHeading align="center" eyebrow="Simple" title="From postcode to plate" />
+            <ol className="mt-14 grid gap-10 md:grid-cols-3">
               {STEPS.map((step, index) => (
-                <li key={step.title} className="rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
-                  <p className="font-mono text-sm text-earth">0{index + 1}</p>
-                  <h3 className="mt-2 font-heading text-2xl">{step.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{step.body}</p>
+                <li key={step.title} className="text-center">
+                  <p className="font-script text-4xl text-gold">0{index + 1}</p>
+                  <h3 className="mt-3 font-heading text-2xl sm:text-3xl">{step.title}</h3>
+                  <p className="mt-3 text-muted-foreground">{step.body}</p>
                 </li>
               ))}
             </ol>
-          </section>
+          </Reveal>
+        </section>
 
-          <section id="delivery" className="scroll-mt-20 grid gap-8 md:grid-cols-[1fr_20rem] md:items-start">
-            <SectionHeading
-              eyebrow={homepage.delivery.eyebrow}
-              title={homepage.delivery.title}
-              description={homepage.delivery.body}
-            />
-            <DeliveryCheck />
-          </section>
+        <section id="delivery" className="scroll-mt-24 bg-card py-20 sm:py-24">
+          <div className="mx-auto grid max-w-6xl gap-12 px-4 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+            <Reveal>
+              <SectionHeading
+                eyebrow={homepage.delivery.eyebrow}
+                title={homepage.delivery.title}
+                description={homepage.delivery.body}
+              />
+            </Reveal>
+            <Reveal delay={0.08}>
+              <DeliveryCheck />
+            </Reveal>
+          </div>
+        </section>
 
-          <section className="space-y-8">
-            <SectionHeading eyebrow="From guests" title="What people say" />
-            <ul className="grid gap-4 md:grid-cols-3">
+        <section className="bg-background py-20 sm:py-24">
+          <Reveal className="mx-auto max-w-6xl px-4">
+            <SectionHeading align="center" eyebrow="Guests" title="What people say" />
+            <ul className="mt-14 grid gap-10 md:grid-cols-3">
               {homepage.reviews.map((review) => (
-                <li key={review.id} className="rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
-                  <p className="font-mono text-sm text-gold">{"★".repeat(review.rating)}</p>
-                  <blockquote className="mt-3 text-lg">&ldquo;{review.quote}&rdquo;</blockquote>
-                  <p className="mt-3 text-sm text-muted-foreground">{review.name}</p>
+                <li key={review.id} className="text-center">
+                  <p className="font-script text-5xl leading-none text-gold">&ldquo;</p>
+                  <blockquote className="mt-2 text-lg leading-relaxed">&ldquo;{review.quote}&rdquo;</blockquote>
+                  <AdinkraRule className="mx-auto mt-5" />
+                  <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-earth">{review.name}</p>
                 </li>
               ))}
             </ul>
-          </section>
+          </Reveal>
+        </section>
 
-          <section className="grid gap-8 rounded-3xl bg-ink px-6 py-10 text-primary-foreground md:grid-cols-[1.2fr_0.8fr] md:items-center md:px-10">
-            <div className="space-y-4">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-gold">Order</p>
-              <h2 className="font-heading text-4xl text-balance">Hungry now? Start with today&apos;s menu.</h2>
-              <AdinkraRule className="text-gold" />
-              <div className="flex flex-col gap-3 sm:flex-row">
+        <section className="bg-ink px-4 py-20 text-primary-foreground sm:py-24">
+          <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-2 md:items-center">
+            <Reveal>
+              <p className="font-script text-5xl text-gold">Visit our</p>
+              <h2 className="mt-2 font-heading text-5xl text-balance sm:text-6xl">Restaurant</h2>
+              <AdinkraRule className="mt-5 text-gold" />
+              <p className="mt-6 max-w-md text-primary-foreground/75">
+                {restaurantDisplay.address}. Hungry now? Start with today&apos;s menu.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="touch" variant="gold" asChild>
                   <Link href="/menu">Order today</Link>
                 </Button>
-                <Button
-                  size="touch"
-                  variant="outline"
-                  className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-                  asChild
-                >
+                <Button size="touch" variant="gold-outline" asChild>
                   <Link href="#todays-menu">See today&apos;s plates</Link>
                 </Button>
               </div>
-            </div>
-            <div className="space-y-4 rounded-2xl bg-card p-5 text-foreground">
-              <h3 className="font-heading text-2xl">{homepage.promotional.title}</h3>
-              <p className="text-muted-foreground">{homepage.promotional.body}</p>
-              <MarketingSignup />
-            </div>
-          </section>
-        </div>
+            </Reveal>
+            <Reveal delay={0.08} className="bg-card p-6 text-foreground sm:p-8">
+              <p className="font-script text-4xl text-gold">{homepage.promotional.eyebrow}</p>
+              <h3 className="mt-2 font-heading text-3xl">{homepage.promotional.title}</h3>
+              <p className="mt-3 text-muted-foreground">{homepage.promotional.body}</p>
+              <div className="mt-6">
+                <MarketingSignup />
+              </div>
+            </Reveal>
+          </div>
+        </section>
       </main>
     </CustomerShell>
   );

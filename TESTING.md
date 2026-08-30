@@ -37,4 +37,4 @@ Playwright mobile viewport (390px) for the guest journey and kitchen board. Load
 
 Phase 2 unit coverage includes server-resolved seed prices, cart quotes, and Uppsala delivery-zone checks.
 
-Phase 3 adds guest order create, pickup vs delivery fees, and zone quotes (centrum 49 kr, södra 59 kr).
+Phase 3 adds guest order create, pickup vs delivery fees, and zone quotes (centrum 49 kr, södra 59 kr). Phase 4 adds kitchen accept (mock paid → confirmed), persisted transitions, guest cancel/reorder, and print jobs.

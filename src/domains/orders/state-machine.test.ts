@@ -35,6 +35,7 @@ describe("OrderStateMachine", () => {
     expect(canTransition("PREPARING", "PACKING")).toBe(true);
     expect(canTransition("PACKING", "READY")).toBe(true);
     expect(canTransition("READY", "COURIER_ASSIGNED")).toBe(true);
+    expect(canTransition("READY", "DELIVERED")).toBe(true);
     expect(canTransition("COURIER_ASSIGNED", "OUT_FOR_DELIVERY")).toBe(true);
     expect(canTransition("OUT_FOR_DELIVERY", "DELIVERED")).toBe(true);
   });
@@ -49,6 +50,15 @@ describe("OrderStateMachine", () => {
     expect(next.orderStatus).toBe("COURIER_ASSIGNED");
     expect(next.deliveryStatus).toBe("ASSIGNED");
     expect(next.dispatchedAt).toBeTruthy();
+  });
+
+  it("does not rewrite pickup delivery status when the guest collects", () => {
+    const pickup = applyOrderTransition(
+      { ...order("READY"), deliveryStatus: "NOT_REQUESTED" },
+      "DELIVERED",
+    );
+    expect(pickup.orderStatus).toBe("DELIVERED");
+    expect(pickup.deliveryStatus).toBe("NOT_REQUESTED");
   });
 
   it("marks delivery failures as attention required", () => {

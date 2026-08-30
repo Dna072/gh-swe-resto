@@ -21,4 +21,6 @@ export type PublicOrder = {
   estimatedDeliveryTime?: string;
   createdAt: string;
   paymentDeferred: true;
+  cancellable: boolean;
+  tracking: Array<{ status: string; label: string; done: boolean; current: boolean }>;
 };

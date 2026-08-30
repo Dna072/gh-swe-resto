@@ -200,12 +200,12 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
         />
       </div>
 
-      <div className="sticky bottom-16 z-30 flex items-center justify-between gap-3 rounded-2xl bg-background/95 p-3 ring-1 ring-foreground/10 backdrop-blur-md md:bottom-4">
+      <div className="sticky bottom-16 z-30 flex items-center justify-between gap-3 bg-ink/95 p-3 text-primary-foreground shadow-[0_18px_40px_-24px_rgba(0,0,0,0.7)] backdrop-blur-md md:bottom-4">
         <QuantityStepper value={quantity} onChange={setQuantity} disabled={unavailable} />
-        <Button size="touch" disabled={unavailable} onClick={addToCart}>
+        <Button size="touch" variant="gold" disabled={unavailable} onClick={addToCart}>
           {unavailable ? "Unavailable" : (
             <span className="flex items-center gap-2">
-              Add <Price ore={previewOre} className="text-primary-foreground" />
+              Add <Price ore={previewOre} className="text-gold-foreground" />
             </span>
           )}
         </Button>

@@ -9,9 +9,10 @@ import type { CartQuoteRequest } from "@/domains/cart/models";
 import { authorizationService } from "@/domains/auth/authorization-service";
 import type { Actor } from "@/domains/auth/models";
 import type { AddressSnapshot, CustomerSnapshot } from "@/domains/shared/types";
-import { applyOrderTransition } from "./state-machine";
+import type { MenuRepository } from "@/domains/menu/repository";
+import { applyOrderTransition, assertTransition, ORDER_TRANSITIONS } from "./state-machine";
 import type { Order, OrderStatus } from "./models";
-import type { OrderRepository } from "./repository";
+import type { OrderWriteRepository } from "./repository";
 
 export type FulfillmentMethod = "DELIVERY" | "PICKUP";
 
@@ -26,11 +27,21 @@ export interface CreateOrderRequest extends CartQuoteRequest {
   deliveryQuoteId?: string;
 }
 
+export type ReorderLine = {
+  menuItemId: string;
+  slug: string;
+  name: string;
+  quantity: number;
+  modifiers: Array<{ groupId: string; optionId: string; quantity: number }>;
+  notes?: string;
+};
+
 export class OrderService {
   constructor(
-    private readonly orders: OrderRepository,
+    private readonly orders: OrderWriteRepository,
     private readonly cart: CartService,
     private readonly transactions: TransactionRunner,
+    private readonly menu: MenuRepository,
   ) {}
 
   async create(request: CreateOrderRequest): Promise<{ order: Order; accessToken: string }> {
@@ -114,6 +125,7 @@ export class OrderService {
         paymentStatus: "PENDING",
         orderStatus: "PENDING_PAYMENT",
         deliveryStatus: request.fulfillment === "PICKUP" ? "NOT_REQUESTED" : "QUOTED",
+        fulfillment: request.fulfillment === "PICKUP" ? "PICKUP" : "DELIVERY",
         deliveryProvider: request.fulfillment === "PICKUP" ? undefined : request.deliveryProvider,
         deliveryId: request.deliveryQuoteId,
         deliveryAddressSnapshot: request.deliveryAddress,
@@ -137,10 +149,7 @@ export class OrderService {
   }
 
   async getForCustomer(orderId: string, accessToken?: string, actor?: Actor): Promise<Order> {
-    const order = await this.orders.getById(orderId);
-    if (!order) {
-      throw new AppError("NOT_FOUND", "Order not found.");
-    }
+    const order = await this.requireOrder(orderId);
     if (actor && authorizationService.can(actor, "orders:read")) {
       return order;
     }
@@ -153,12 +162,107 @@ export class OrderService {
     throw new AppError("FORBIDDEN", "You cannot view this order.");
   }
 
+  async listForStaff(actor: Actor, restaurantId: string, status?: OrderStatus) {
+    authorizationService.requirePermission(actor, "orders:read");
+    return this.orders.list({ restaurantId, status }, { limit: 50 });
+  }
+
+  async getForStaff(actor: Actor, orderId: string): Promise<Order> {
+    authorizationService.requirePermission(actor, "orders:read");
+    return this.requireOrder(orderId);
+  }
+
   async transition(actor: Actor, orderId: string, to: OrderStatus): Promise<Order> {
     authorizationService.requirePermission(actor, "orders:transition");
+    const order = await this.requireOrder(orderId);
+    return this.orders.update(applyOrderTransition(order, to));
+  }
+
+  /**
+   * Until Phase 5 card payments exist, kitchen staff may accept a reserved
+   * guest order (mock / cash-on-delivery) and move it into the kitchen.
+   */
+  async sendToKitchen(actor: Actor, orderId: string): Promise<Order> {
+    authorizationService.requirePermission(actor, "orders:transition");
+    let order = await this.requireOrder(orderId);
+    if (order.orderStatus === "PENDING_PAYMENT") {
+      order = await this.orders.update(applyOrderTransition(order, "PAID"));
+    }
+    if (order.orderStatus === "PAID") {
+      return this.orders.update(applyOrderTransition(order, "CONFIRMED"));
+    }
+    throw new AppError("INVALID_TRANSITION", "This order is already in the kitchen.");
+  }
+
+  async cancel(orderId: string, accessToken?: string, actor?: Actor): Promise<Order> {
+    const order = await this.requireOrder(orderId);
+    const staff = Boolean(actor && authorizationService.can(actor, "orders:cancel"));
+    if (!staff) {
+      await this.getForCustomer(orderId, accessToken, actor);
+      if (order.orderStatus !== "PENDING_PAYMENT") {
+        throw new AppError("INVALID_TRANSITION", "The kitchen has already taken this order.");
+      }
+    } else {
+      authorizationService.requirePermission(actor!, "orders:cancel");
+    }
+    assertTransition(order.orderStatus, "CANCELLED");
+    const next = applyOrderTransition(order, "CANCELLED");
+    await this.restoreInventory(next);
+    return this.orders.update(next);
+  }
+
+  async reorderLines(orderId: string, accessToken?: string, actor?: Actor): Promise<ReorderLine[]> {
+    const order = await this.getForCustomer(orderId, accessToken, actor);
+    const lines: ReorderLine[] = [];
+    for (const item of order.items) {
+      const menu = await this.menu.getItem(order.restaurantId, item.menuItemId);
+      if (!menu || menu.archivedAt) {
+        continue;
+      }
+      lines.push({
+        menuItemId: item.menuItemId,
+        slug: menu.slug,
+        name: menu.name,
+        quantity: item.quantity,
+        modifiers: item.modifiers.map((modifier) => ({
+          groupId: modifier.groupId,
+          optionId: modifier.optionId,
+          quantity: modifier.quantity,
+        })),
+        notes: item.notes,
+      });
+    }
+    if (lines.length === 0) {
+      throw new AppError("NOT_FOUND", "Those meals are no longer on the menu.");
+    }
+    return lines;
+  }
+
+  allowedTransitions(order: Order): OrderStatus[] {
+    return [...ORDER_TRANSITIONS[order.orderStatus]];
+  }
+
+  private async requireOrder(orderId: string): Promise<Order> {
     const order = await this.orders.getById(orderId);
     if (!order) {
       throw new AppError("NOT_FOUND", "Order not found.");
     }
-    return applyOrderTransition(order, to);
+    return order;
+  }
+
+  private async restoreInventory(order: Order): Promise<void> {
+    await this.transactions.run(async (tx) => {
+      for (const line of order.items) {
+        const item = await this.menu.getItem(order.restaurantId, line.menuItemId);
+        if (!item?.inventoryTracked || !item.inventorySku) {
+          continue;
+        }
+        const inventory = await tx.getInventory(order.restaurantId, item.inventorySku);
+        if (!inventory || !inventory.tracked) {
+          continue;
+        }
+        tx.saveInventory(applyInventoryDelta(inventory, line.quantity));
+      }
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { BinaryObjectStorage, StoredObjectResult, StoredObjectWrite } from "./object-storage";
 
@@ -22,5 +22,15 @@ export class LocalObjectStorage implements BinaryObjectStorage {
       url: this.publicUrl(object.path),
       contentType: object.contentType,
     };
+  }
+
+  async delete(objectPath: string): Promise<void> {
+    try {
+      await unlink(path.join(this.root, objectPath));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+    }
   }
 }

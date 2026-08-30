@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CustomerShell } from "@/components/brand/customer-shell";
-import { SectionHeading } from "@/components/brand/section-heading";
+import { PageBanner } from "@/components/brand/page-banner";
 import { OrderLookup } from "@/components/storefront/order-lookup";
 
 export const metadata: Metadata = {
@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 export default function OrdersPage() {
   return (
     <CustomerShell>
-      <main id="main" className="mx-auto w-full max-w-xl px-4 py-10">
-        <SectionHeading
-          eyebrow="Orders"
+      <main id="main">
+        <PageBanner
+          eyebrow="Kitchen"
           title="Find a guest order"
-          description="Use the link from checkout, or enter the public number and access token. Kitchen tracking is Phase 4."
+          description="Use the link from checkout, or enter the public number and access token. The kitchen board updates this status."
         />
-        <div className="mt-8">
+        <div className="mx-auto w-full max-w-xl px-4 py-12">
           <OrderLookup />
         </div>
       </main>

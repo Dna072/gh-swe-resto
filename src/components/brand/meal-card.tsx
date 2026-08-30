@@ -50,7 +50,7 @@ export function MealCard({
     <div
       className={cn(
         "relative overflow-hidden",
-        editorial ? "aspect-[4/5] sm:aspect-[5/4] md:min-h-[22rem] md:flex-1" : "aspect-[4/3]",
+        editorial ? "aspect-[4/5] sm:aspect-[5/4] md:min-h-[24rem] md:flex-1" : "aspect-[4/3]",
       )}
     >
       <FoodPhoto
@@ -60,21 +60,21 @@ export function MealCard({
         sizes="(max-width: 768px) 100vw, 420px"
         objectPosition={imagePosition}
         className={cn(
-          "size-full transition-transform duration-700",
-          !reduced && "group-hover:scale-[1.03]",
+          "size-full transition-transform duration-1000 ease-out",
+          !reduced && "group-hover:scale-[1.06]",
         )}
       />
       {featured ? (
-        <Badge variant="gold" className="absolute top-3 left-3">
+        <Badge variant="gold" className="absolute top-4 left-4 uppercase tracking-[0.16em]">
           Popular
         </Badge>
       ) : null}
       {soldOut ? (
-        <Badge variant="secondary" className="absolute top-3 right-3">
+        <Badge variant="secondary" className="absolute top-4 right-4">
           Sold out
         </Badge>
       ) : lowStockLabel ? (
-        <Badge variant="earth" className="absolute top-3 right-3">
+        <Badge variant="earth" className="absolute top-4 right-4">
           {lowStockLabel}
         </Badge>
       ) : null}
@@ -85,50 +85,51 @@ export function MealCard({
     <motion.article
       variants={revealVariants(reduced)}
       initial={reduced ? "visible" : "hidden"}
-      animate="visible"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10",
+        "group flex flex-col overflow-hidden bg-card shadow-[0_18px_50px_-32px_rgba(40,28,16,0.55)] ring-1 ring-foreground/8 transition-shadow duration-500 hover:shadow-[0_24px_60px_-28px_rgba(40,28,16,0.6)]",
         editorial && "md:flex-row",
         className,
       )}
     >
       {href ? (
-        <Link href={href} className="block focus-visible:outline-none">
+        <Link href={href} className="block overflow-hidden focus-visible:outline-none">
           {media}
         </Link>
       ) : (
         media
       )}
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="space-y-1">
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div className="space-y-2">
           {href ? (
-            <h3 className="font-heading text-xl leading-tight">
-              <Link href={href} className="hover:text-earth">
+            <h3 className="font-heading text-2xl leading-tight">
+              <Link href={href} className="transition-colors hover:text-gold">
                 {name}
               </Link>
             </h3>
           ) : (
-            <h3 className="font-heading text-xl leading-tight">{name}</h3>
+            <h3 className="font-heading text-2xl leading-tight">{name}</h3>
           )}
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm italic leading-relaxed text-muted-foreground">{description}</p>
           {dietaryLabels && dietaryLabels.length > 0 ? (
-            <p className="text-xs uppercase tracking-[0.14em] text-earth">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-earth">
               {dietaryLabels.join(" · ")}
             </p>
           ) : null}
         </div>
-        <div className="mt-auto flex items-center justify-between gap-3">
-          <Price ore={priceOre} />
+        <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+          <Price ore={priceOre} className="text-gold" />
           {onAdd ? (
-            <Button size="touch" disabled={soldOut} onClick={onAdd}>
+            <Button size="touch" variant="gold-outline" disabled={soldOut} onClick={onAdd}>
               {soldOut ? "Unavailable" : addLabel}
             </Button>
           ) : href ? (
-            <Button size="touch" disabled={soldOut} asChild>
+            <Button size="touch" variant="gold-outline" disabled={soldOut} asChild>
               <Link href={href}>{soldOut ? "Unavailable" : addLabel}</Link>
             </Button>
           ) : (
-            <Button size="touch" disabled={soldOut}>
+            <Button size="touch" variant="gold-outline" disabled={soldOut}>
               {soldOut ? "Unavailable" : addLabel}
             </Button>
           )}

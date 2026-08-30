@@ -130,4 +130,17 @@ export class MediaService {
       updatedAt: nowIso(),
     };
   }
+
+  async purgeRetired(image: MenuItemImage): Promise<void> {
+    if (image.status !== "PENDING_DELETE") {
+      return;
+    }
+    const paths = new Set<string>([
+      image.storagePath,
+      ...(image.variants ?? []).map((variant) => variant.storagePath),
+    ]);
+    for (const objectPath of paths) {
+      await this.storage.delete?.(objectPath);
+    }
+  }
 }

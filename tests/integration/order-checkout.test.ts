@@ -36,7 +36,7 @@ describe("checkout integration", () => {
       { timeZone: "Europe/Stockholm", weekendDays: ["saturday", "sunday"] },
     );
     const orders = new InMemoryOrderRepository(state);
-    const service = new OrderService(orders, cart, new InMemoryTransactionRunner(state));
+    const service = new OrderService(orders, cart, new InMemoryTransactionRunner(state), menu);
     const quote = await cart.quote({
       restaurantId: RESTAURANT_ID,
       lines: [

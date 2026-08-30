@@ -16,6 +16,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Kitchen admin
           </Link>
           <nav aria-label="Admin" className="flex flex-wrap items-center gap-4 text-sm">
+            <Link href="/kitchen" className="hover:text-earth">
+              Kitchen
+            </Link>
+            <Link href="/admin/orders" className="hover:text-earth">
+              Orders
+            </Link>
             <Link href="/admin/menu" className="hover:text-earth">
               Meals
             </Link>

@@ -2,7 +2,7 @@
 
 Trusted Next.js Route Handlers. Provider credentials never appear in responses.
 
-Phase 3 adds guest checkout and a zone-based delivery quote. Payments remain Phase 5.
+Phase 4 adds the kitchen board, persisted order transitions, and print tickets. Guest checkout remains from Phase 3. Payments remain Phase 5.
 
 ## Customer
 
@@ -30,9 +30,11 @@ All admin routes require a verified ID token and `AuthorizationService`.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/api/admin/orders` | Paginated, filtered |
-| PATCH | `/api/admin/orders/:id` | Validated status transition |
-| POST | `/api/admin/orders/:id/print` | Enqueue print job |
+| GET | `/api/admin/orders` | Kitchen/admin order list |
+| GET | `/api/admin/orders/:id` | Staff order detail |
+| PATCH | `/api/admin/orders/:id` | `send_to_kitchen` or validated status transition |
+| POST | `/api/admin/orders/:id/print` | Enqueue / reprint kitchen ticket |
+| POST | `/api/admin/media/cleanup` | Purge `PENDING_DELETE` photograph objects |
 | POST | `/api/admin/orders/:id/refund` | Full or partial refund |
 | GET | `/api/admin/menu` | Meals, categories, modifier groups |
 | POST | `/api/admin/menu` | Create/update meal (metadata) |

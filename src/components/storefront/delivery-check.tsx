@@ -48,7 +48,7 @@ export function DeliveryCheck() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
+    <form onSubmit={onSubmit} className="grid gap-4 bg-background p-6 shadow-[0_18px_50px_-32px_rgba(40,28,16,0.5)] ring-1 ring-foreground/8 sm:p-8">
       <Field
         id="postal-code"
         label="Postcode"
@@ -65,7 +65,7 @@ export function DeliveryCheck() {
           required
         />
       </Field>
-      <Button size="touch" type="submit" disabled={pending}>
+      <Button size="touch" variant="gold" type="submit" disabled={pending}>
         {pending ? "Checking…" : "Check delivery"}
       </Button>
       {result?.ok ? (

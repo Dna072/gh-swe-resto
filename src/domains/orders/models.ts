@@ -89,6 +89,7 @@ export interface Order extends Timestamped {
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   deliveryStatus: DeliveryStatus;
+  fulfillment?: "DELIVERY" | "PICKUP";
   deliveryProvider?: string;
   deliveryId?: string;
   trackingUrl?: string;

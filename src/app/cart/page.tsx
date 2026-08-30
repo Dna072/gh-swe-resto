@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CustomerShell } from "@/components/brand/customer-shell";
-import { SectionHeading } from "@/components/brand/section-heading";
+import { PageBanner } from "@/components/brand/page-banner";
 import { CartView } from "@/components/storefront/cart-view";
 
 export const metadata: Metadata = {
@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 export default function CartPage() {
   return (
     <CustomerShell>
-      <main id="main" className="mx-auto w-full max-w-5xl px-4 py-10">
-        <SectionHeading
-          eyebrow="Cart"
-          title="Your order"
+      <main id="main">
+        <PageBanner
+          eyebrow="Your table"
+          title="Cart"
           description="Line totals come from a server quote. Delivery is added at checkout."
         />
-        <div className="mt-8">
+        <div className="mx-auto w-full max-w-5xl px-4 py-12">
           <CartView />
         </div>
       </main>

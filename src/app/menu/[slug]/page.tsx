@@ -79,8 +79,8 @@ export default async function MealPage({ params }: PageProps) {
     <CustomerShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackView name="item_viewed" properties={{ slug: item.slug, menuItemId: item.id }} />
-      <main id="main" className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-8 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-secondary lg:sticky lg:top-20 lg:self-start">
+      <main id="main" className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-10 lg:grid-cols-2 lg:py-16">
+        <div className="relative aspect-[4/5] overflow-hidden bg-secondary lg:sticky lg:top-24 lg:self-start lg:aspect-[4/5]">
           <FoodPhoto
             src={item.imageUrl}
             alt={item.imageAlt}
@@ -88,18 +88,17 @@ export default async function MealPage({ params }: PageProps) {
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
             objectPosition={item.imagePosition}
+            placeholderTone="ink"
             className="size-full"
           />
         </div>
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-earth">
-              {item.categoryName}
-            </p>
-            <h1 className="font-heading text-4xl">{item.name}</h1>
-            <p className="text-lg text-muted-foreground">{item.description}</p>
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <p className="font-script text-4xl text-gold">{item.categoryName}</p>
+            <h1 className="font-heading text-5xl sm:text-6xl">{item.name}</h1>
+            <p className="text-lg leading-relaxed text-muted-foreground">{item.description}</p>
             <div className="flex flex-wrap items-center gap-2">
-              <Price ore={item.displayPriceOre} size="lg" />
+              <Price ore={item.displayPriceOre} size="lg" className="text-gold" />
               {unavailable ? <Badge variant="secondary">Sold out</Badge> : null}
               {stock ? <Badge variant="earth">{stock}</Badge> : null}
               {item.dietaryTags.map((tag) => (
