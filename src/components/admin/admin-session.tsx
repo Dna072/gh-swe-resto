@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
@@ -11,9 +11,31 @@ export function AdminSession() {
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => Boolean(getAdminToken()));
   const [error, setError] = useState<string | null>(null);
   const passwordLogin = staffPasswordLoginAvailable();
+
+  useEffect(() => {
+    if (getAdminToken()) {
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/admin/local-session")
+      .then(async (response) => {
+        const body = (await response.json()) as { local?: boolean; token?: string };
+        if (cancelled || !body.local || !body.token) {
+          return;
+        }
+        setAdminToken(body.token);
+        setSaved(true);
+      })
+      .catch(() => {
+        /* Local bootstrap is optional; staff can still paste a token. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="border-b border-border bg-secondary/60">

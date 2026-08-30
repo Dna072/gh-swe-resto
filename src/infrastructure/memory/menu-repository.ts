@@ -5,7 +5,10 @@ import { normalizePageLimit, type Page } from "@/lib/pagination";
 import type { MemoryState } from "./state";
 
 export class InMemoryMenuRepository implements MenuWriteRepository {
-  constructor(private readonly state: MemoryState) {}
+  constructor(
+    private readonly state: MemoryState,
+    private readonly onWrite?: () => void,
+  ) {}
 
   async getCategory(restaurantId: string, categoryId: string): Promise<MenuCategory | null> {
     return this.state.categories.find((item) => item.restaurantId === restaurantId && item.id === categoryId) ?? null;
@@ -72,6 +75,7 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
     } else {
       this.state.items.push(item);
     }
+    this.onWrite?.();
     return item;
   }
 
@@ -81,6 +85,7 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
 
   async saveHomepage(content: HomepageContent): Promise<HomepageContent> {
     this.state.homepage = content;
+    this.onWrite?.();
     return content;
   }
 }

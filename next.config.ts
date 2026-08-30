@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   images: {
     formats: ["image/avif", "image/webp"],
+    localPatterns: [
+      { pathname: "/api/media/**" },
+      { pathname: "/uploads/**" },
+    ],
     remotePatterns: [
       { protocol: "https", hostname: "storage.googleapis.com" },
     ],
