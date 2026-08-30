@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SeedCatalogButton } from "@/components/admin/seed-catalog-button";
 import { Button } from "@/components/ui/button";
 
 export default function AdminHomePage() {
@@ -28,6 +29,7 @@ export default function AdminHomePage() {
           <Link href="/admin/homepage">Homepage</Link>
         </Button>
       </div>
+      <SeedCatalogButton />
     </main>
   );
 }

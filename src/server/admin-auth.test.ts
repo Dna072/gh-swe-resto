@@ -15,6 +15,17 @@ describe("requireAdmin", () => {
     expect(actor.role).toBe("OWNER");
   });
 
+  it("accepts X-Admin-Token so Cloud Run does not intercept Authorization", async () => {
+    resetEnvCache();
+    const actor = await requireAdmin(
+      new Request("http://localhost/api/admin/menu", {
+        headers: { "X-Admin-Token": "dev-admin-token" },
+      }),
+      "menu:write",
+    );
+    expect(actor.uid).toBe("admin-dev");
+  });
+
   it("rejects a missing bearer token", async () => {
     await expect(requireAdmin(new Request("http://localhost/api/admin/menu"), "menu:read")).rejects.toMatchObject({
       code: "UNAUTHORIZED",

@@ -158,10 +158,17 @@ gcloud run services update "${SERVICE}" \
   --quiet
 
 echo "Seeding the demo menu into Firestore…"
+# Do not send Authorization here. Cloud Run treats that header as a Google
+# identity token and returns HTML 401 before Next.js can read ADMIN_DEV_TOKEN.
 SEED_STATUS="$(curl -sS -o /tmp/seed.json -w '%{http_code}' \
   -X POST "${URL}/api/admin/seed" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" || true)"
+  -H "X-Admin-Token: ${ADMIN_TOKEN}" || true)"
 echo "Seed HTTP ${SEED_STATUS}: $(cat /tmp/seed.json 2>/dev/null || true)"
+if [[ "${SEED_STATUS}" != "200" ]]; then
+  echo "Automatic seed did not finish. After this revision is serving, either:" >&2
+  echo "  curl -X POST ${URL}/api/admin/seed -H 'X-Admin-Token: ${ADMIN_TOKEN}'" >&2
+  echo "or open ${URL}/admin, paste the token, and click Seed demo menu." >&2
+fi
 
 echo
 echo "Showcase URL: ${URL}"

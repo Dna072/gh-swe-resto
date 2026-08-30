@@ -7,9 +7,17 @@ import { AppError } from "@/lib/errors";
 import { getEnv } from "@/lib/env";
 import type { Permission } from "@/lib/security/rbac";
 
-export async function requireAdmin(request: Request, permission: Permission): Promise<Actor> {
+export function adminTokenFromRequest(request: Request): string {
+  const dedicated = request.headers.get("x-admin-token")?.trim() ?? "";
+  if (dedicated) {
+    return dedicated;
+  }
   const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  return header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+}
+
+export async function requireAdmin(request: Request, permission: Permission): Promise<Actor> {
+  const token = adminTokenFromRequest(request);
   if (!token) {
     throw new AppError("UNAUTHORIZED", "Admin sign-in is required.");
   }
