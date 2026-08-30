@@ -7,7 +7,8 @@ on:
         description: Target environment
         required: true
         type: choice
-        options: [staging, production]
+        options: [showcase, staging, production]
+        default: showcase
   push:
     branches: [main]
     paths:
@@ -32,21 +33,49 @@ jobs:
           service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Build and deploy
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
+          TARGET: ${{ inputs.environment }}
+          ADMIN_DEV_TOKEN: ${{ secrets.ADMIN_DEV_TOKEN }}
+          REPOSITORY: ${{ vars.ARTIFACT_REPO }}
         run: |
-          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          REGION="${{ vars.GCP_REGION || 'europe-north1' }}"
-          SERVICE="ghana-restaurant-${{ inputs.environment }}"
-          IMAGE="europe-north1-docker.pkg.dev/${PROJECT_ID}/apps/${SERVICE}:${GITHUB_SHA}"
-          gcloud builds submit --tag "$IMAGE"
-          gcloud run deploy "$SERVICE" \
-            --image "$IMAGE" \
-            --region "$REGION" \
+          set -euo pipefail
+          REGION="${REGION:-europe-north1}"
+          REPOSITORY="${REPOSITORY:-apps}"
+          SERVICE="ghana-restaurant-${TARGET}"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:${GITHUB_SHA}"
+          APP_ENV="staging"
+          MAX_INSTANCES=1
+          if [[ "${TARGET}" == "production" ]]; then
+            APP_ENV="production"
+            MAX_INSTANCES=5
+          fi
+          if ! gcloud artifacts repositories describe "${REPOSITORY}" --location="${REGION}" >/dev/null 2>&1; then
+            gcloud artifacts repositories create "${REPOSITORY}" \
+              --repository-format=docker \
+              --location="${REGION}" \
+              --description="Ghana Restaurant container images"
+          fi
+          gcloud builds submit --config cloudbuild.yaml --substitutions="_IMAGE=${IMAGE}"
+          ENV_VARS="NODE_ENV=production,APP_ENV=${APP_ENV},PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,DEFAULT_RESTAURANT_ID=uppsala-main"
+          if [[ -n "${ADMIN_DEV_TOKEN}" && "${APP_ENV}" != "production" ]]; then
+            ENV_VARS="${ENV_VARS},ADMIN_DEV_TOKEN=${ADMIN_DEV_TOKEN}"
+          fi
+          gcloud run deploy "${SERVICE}" \
+            --image "${IMAGE}" \
+            --region "${REGION}" \
             --platform managed \
-            --max-instances 5 \
+            --max-instances "${MAX_INSTANCES}" \
             --min-instances 0 \
             --concurrency 80 \
             --cpu 1 \
             --memory 512Mi \
             --timeout 60 \
             --port 8080 \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}"
+          URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --format='value(status.url)')"
+          gcloud run services update "${SERVICE}" --region "${REGION}" --update-env-vars "APP_BASE_URL=${URL}"
+          echo "url=${URL}" >> "${GITHUB_OUTPUT}"
+          echo "Deployed ${SERVICE} at ${URL}"

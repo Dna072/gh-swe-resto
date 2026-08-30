@@ -1,0 +1,15 @@
+# Used by `gcloud builds submit` and the GitHub deploy workflow.
+substitutions:
+  _IMAGE: europe-north1-docker.pkg.dev/PROJECT/apps/ghana-restaurant-showcase:latest
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+
+images:
+  - "${_IMAGE}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

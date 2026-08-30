@@ -37,6 +37,17 @@ npm run dev
 
 Never point local development at a production Firebase project.
 
+## GCP showcase
+
+The same app runs on Cloud Run for a team demo (in-memory catalog, mock payments). You need a GCP project with billing enabled, then:
+
+```bash
+gcloud auth login
+GCP_PROJECT_ID=your-project-id ./scripts/gcp-showcase-deploy.sh
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for what we need from you and for GitHub Actions deploy.
+
 Useful commands:
 
 ```bash
