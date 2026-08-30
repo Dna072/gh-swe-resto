@@ -2,6 +2,7 @@ import type { HomepageContent } from "@/domains/content/models";
 import type { MenuWriteRepository } from "@/domains/menu/write-repository";
 import type { MenuCategory, MenuItem, ModifierGroup } from "@/domains/menu/models";
 import { normalizePageLimit, type Page } from "@/lib/pagination";
+import { refreshPersistedCatalog } from "./persist";
 import type { MemoryState } from "./state";
 
 export class InMemoryMenuRepository implements MenuWriteRepository {
@@ -9,6 +10,10 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
     private readonly state: MemoryState,
     private readonly onWrite?: () => void,
   ) {}
+
+  private refresh(): void {
+    refreshPersistedCatalog(this.state);
+  }
 
   async getCategory(restaurantId: string, categoryId: string): Promise<MenuCategory | null> {
     return this.state.categories.find((item) => item.restaurantId === restaurantId && item.id === categoryId) ?? null;
@@ -21,10 +26,12 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
   }
 
   async getItem(restaurantId: string, itemId: string): Promise<MenuItem | null> {
+    this.refresh();
     return this.state.items.find((item) => item.restaurantId === restaurantId && item.id === itemId) ?? null;
   }
 
   async getItemBySlug(restaurantId: string, slug: string): Promise<MenuItem | null> {
+    this.refresh();
     return this.state.items.find((item) => item.restaurantId === restaurantId && item.slug === slug) ?? null;
   }
 
@@ -32,6 +39,7 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
     restaurantId: string,
     request: { cursor?: string; limit?: number; categoryId?: string; includeArchived?: boolean },
   ): Promise<Page<MenuItem>> {
+    this.refresh();
     const limit = normalizePageLimit(request.limit);
     let items = this.state.items
       .filter((item) => item.restaurantId === restaurantId)
@@ -51,6 +59,7 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
   }
 
   async listFeatured(restaurantId: string, limit = 8): Promise<MenuItem[]> {
+    this.refresh();
     return this.state.items
       .filter((item) => item.restaurantId === restaurantId && item.isFeatured && !item.archivedAt)
       .slice(0, limit);
@@ -80,6 +89,7 @@ export class InMemoryMenuRepository implements MenuWriteRepository {
   }
 
   async getHomepage(restaurantId: string): Promise<HomepageContent | null> {
+    this.refresh();
     return this.state.homepage?.restaurantId === restaurantId ? this.state.homepage : null;
   }
 

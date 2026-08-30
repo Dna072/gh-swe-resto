@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { HomepageContent } from "@/domains/content/models";
 import type { MenuItem } from "@/domains/menu/models";
@@ -45,6 +45,35 @@ export function applyPersistedCatalog(state: MemoryState, persisted: PersistedCa
   }
 }
 
+let lastLoadedMtime = 0;
+
+export function resetPersistCache(): void {
+  lastLoadedMtime = 0;
+}
+
+export function refreshPersistedCatalog(
+  state: MemoryState,
+  options?: { filePath?: string; force?: boolean },
+): void {
+  if (!options?.force && !shouldPersistLocalCatalog()) {
+    return;
+  }
+  const filePath = options?.filePath ?? catalogPersistPath();
+  if (!existsSync(filePath)) {
+    return;
+  }
+  const mtime = statSync(filePath).mtimeMs;
+  if (mtime === lastLoadedMtime) {
+    return;
+  }
+  const persisted = loadPersistedCatalog(filePath);
+  if (!persisted) {
+    return;
+  }
+  applyPersistedCatalog(state, persisted);
+  lastLoadedMtime = mtime;
+}
+
 export function persistCatalog(state: MemoryState, filePath = catalogPersistPath()): void {
   const dest = path.dirname(filePath);
   mkdirSync(dest, { recursive: true });
@@ -53,4 +82,5 @@ export function persistCatalog(state: MemoryState, filePath = catalogPersistPath
     homepage: state.homepage,
   };
   writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`);
+  lastLoadedMtime = statSync(filePath).mtimeMs;
 }

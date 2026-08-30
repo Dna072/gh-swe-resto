@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultHomepageContent } from "@/domains/content/defaults";
 import type { MenuItem } from "@/domains/menu/models";
-import { applyPersistedCatalog, persistCatalog } from "./persist";
+import { applyPersistedCatalog, persistCatalog, refreshPersistedCatalog, resetPersistCache } from "./persist";
 import { createMemoryState } from "./state";
 
 const tempDirs: string[] = [];
@@ -73,5 +73,17 @@ describe("local catalog persist", () => {
 
     applyPersistedCatalog(state, { items: [uploaded] });
     expect(state.items[0]?.images[0]?.url).toContain("jollof/photo-card.webp");
+  });
+
+  it("reloads a newer persist file into an empty worker state", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "catalog-"));
+    tempDirs.push(dir);
+    const filePath = path.join(dir, "local-catalog.json");
+    persistCatalog(createMemoryState({ items: [sampleItem("jollof", "Jollof Rice")] }), filePath);
+    const empty = createMemoryState({ items: [sampleItem("jollof", "Jollof Rice")] });
+    empty.items[0]!.images = [];
+    resetPersistCache();
+    refreshPersistedCatalog(empty, { filePath, force: true });
+    expect(empty.items[0]?.images[0]?.url).toContain("/api/media/");
   });
 });
