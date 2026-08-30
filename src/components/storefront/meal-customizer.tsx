@@ -13,7 +13,9 @@ import { useCart } from "@/components/cart/cart-provider";
 import { localizePublicItem } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartModifierSelection } from "@/lib/cart/types";
+import { SpiceLevelBadge } from "@/components/brand/spice-level-badge";
 import { soldOut } from "@/lib/menu/display";
+import { spiceLevelOf } from "@/lib/menu/spice-level";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
 import { addOre, formatSek, multiplyOre } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -137,25 +139,37 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
                 onValueChange={(value) => setSelected((current) => ({ ...current, [group.id]: [value] }))}
                 className="gap-3"
               >
-                {group.options.map((option) => (
-                  <label
-                    key={option.id}
-                    className={cn(
-                      "flex min-h-14 items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10",
-                    )}
-                  >
-                    <span className="flex items-center gap-3">
-                      <RadioGroupItem value={option.id} />
-                      <span>{option.name}</span>
-                    </span>
-                    <span className="text-sm text-muted-foreground">{option.priceLabel}</span>
-                  </label>
-                ))}
+                {group.options.map((option) => {
+                  const heat = spiceLevelOf(option);
+                  return (
+                    <label
+                      key={option.id}
+                      className={cn(
+                        "flex min-h-14 items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10",
+                      )}
+                    >
+                      <span className="flex items-center gap-3">
+                        <RadioGroupItem value={option.id} />
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span>{option.name}</span>
+                          {heat ? (
+                            <SpiceLevelBadge
+                              level={heat}
+                              label={t("menu.spiceRating", { level: heat, max: 3 })}
+                            />
+                          ) : null}
+                        </span>
+                      </span>
+                      <span className="text-sm text-muted-foreground">{option.priceLabel}</span>
+                    </label>
+                  );
+                })}
               </RadioGroup>
             ) : (
               <div className="grid gap-3">
                 {group.options.map((option) => {
                   const checked = (selected[group.id] ?? []).includes(option.id);
+                  const heat = spiceLevelOf(option);
                   return (
                     <div
                       key={option.id}
@@ -166,7 +180,15 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
                           checked={checked}
                           onCheckedChange={(value) => toggleMulti(group, option.id, value === true)}
                         />
-                        <span>{option.name}</span>
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span>{option.name}</span>
+                          {heat ? (
+                            <SpiceLevelBadge
+                              level={heat}
+                              label={t("menu.spiceRating", { level: heat, max: 3 })}
+                            />
+                          ) : null}
+                        </span>
                       </label>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-muted-foreground">{option.priceLabel}</span>

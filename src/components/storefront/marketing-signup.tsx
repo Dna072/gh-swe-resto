@@ -6,11 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/brand/field";
-import { useT } from "@/components/i18n/locale-provider";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { customerErrorMessage } from "@/lib/i18n/api-errors";
+import { rememberMarketingSignup } from "@/lib/marketing/local";
+import { track } from "@/lib/analytics/client";
 
-export function MarketingSignup() {
+export function MarketingSignup({
+  source = "homepage",
+  onSuccess,
+}: {
+  source?: string;
+  onSuccess?: () => void;
+}) {
   const t = useT();
+  const { locale } = useLocale();
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
@@ -26,7 +35,7 @@ export function MarketingSignup() {
       const response = await fetch("/api/marketing/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, consent: true, source: "homepage" }),
+        body: JSON.stringify({ email, consent: true, source, locale }),
       });
       if (!response.ok) {
         const body = (await response.json()) as { message?: string; code?: string };
@@ -35,7 +44,10 @@ export function MarketingSignup() {
       }
       setEmail("");
       setConsent(false);
+      rememberMarketingSignup();
+      track("marketing_signup", { source });
       toast.success(t("signup.success"));
+      onSuccess?.();
     } catch {
       toast.error(t("signup.failed"));
     } finally {

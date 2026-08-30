@@ -42,6 +42,7 @@ export const en = {
   "menu.add": "Add",
   "menu.order": "Order",
   "menu.required": "Required",
+  "menu.spiceRating": "{level} of {max} chillies",
   "menu.optional": "Optional",
   "menu.kitchenNotes": "Kitchen notes",
   "menu.kitchenNotesPlaceholder": "No extra shito on the side, please.",
@@ -137,6 +138,9 @@ export const en = {
   "signup.needConsent": "Please confirm you want to hear from us.",
   "signup.failed": "Could not save your email.",
   "signup.success": "You are on the list.",
+  "signup.inviteTitle": "Stay for a discount",
+  "signup.inviteBody": "Leave your email for occasional menus and offers. Unsubscribe any time.",
+  "signup.dismiss": "Not now",
   "menuPage.eyebrow": "Our menu",
   "menuPage.title": "Today's plates",
   "menuPage.description":
@@ -309,7 +313,7 @@ export const en = {
     "Guest orders can be cancelled while they are still waiting for the kitchen. After the kitchen accepts an order, cancellations go through the restaurant. Card refunds arrive with Phase 5 payments.",
   "legal.privacy.title": "Privacy",
   "legal.privacy.p1":
-    "This demo stores a guest cart in your browser and can save a marketing email if you consent. No payment data is collected in Phase 2.",
+    "This demo stores a guest cart in your browser and can save a marketing email if you consent. We record city-level visit analytics (page, action, city and country — not your IP) to improve the restaurant. No payment card data is collected while payments are mocked.",
   "legal.privacy.p2":
     "A full GDPR notice — controller, processors, retention, and your rights — will be published before launch. Do not submit real personal data to this preview.",
 } as const;
@@ -358,6 +362,7 @@ export const sv: Record<MessageKey, string> = {
   "menu.add": "Lägg till",
   "menu.order": "Beställ",
   "menu.required": "Obligatoriskt",
+  "menu.spiceRating": "{level} av {max} chilies",
   "menu.optional": "Valfritt",
   "menu.kitchenNotes": "Meddelande till köket",
   "menu.kitchenNotesPlaceholder": "Ingen extra shito vid sidan, tack.",
@@ -453,6 +458,9 @@ export const sv: Record<MessageKey, string> = {
   "signup.needConsent": "Bekräfta att du vill höra från oss.",
   "signup.failed": "Kunde inte spara din e-post.",
   "signup.success": "Du är med på listan.",
+  "signup.inviteTitle": "Stanna för en rabatt",
+  "signup.inviteBody": "Lämna din e-post för enstaka menyer och erbjudanden. Avsluta när du vill.",
+  "signup.dismiss": "Inte nu",
   "menuPage.eyebrow": "Vår meny",
   "menuPage.title": "Dagens rätter",
   "menuPage.description":
@@ -625,7 +633,7 @@ export const sv: Record<MessageKey, string> = {
     "Gästordrar kan avbrytas medan de väntar på köket. När köket har tagit emot en order går avbokningar via restaurangen. Kortåterbetalningar kommer med fas 5-betalningar.",
   "legal.privacy.title": "Integritet",
   "legal.privacy.p1":
-    "Den här demon sparar en gästkorg i din webbläsare och kan spara en marknadsmejl om du samtycker. Ingen betaldata samlas in i fas 2.",
+    "Den här demon sparar en gästkorg i din webbläsare och kan spara en marknadsmejl om du samtycker. Vi sparar besöksanalys på stadsnivå (sida, åtgärd, stad och land — inte din IP) för att förbättra restaurangen. Ingen kortbetaldata samlas in medan betalningar är mockade.",
   "legal.privacy.p2":
     "Ett fullständigt GDPR-meddelande — personuppgiftsansvarig, biträden, lagring och dina rättigheter — publiceras före lansering. Skicka inte riktiga personuppgifter till den här förhandsvisningen.",
 };

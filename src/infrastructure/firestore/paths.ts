@@ -13,6 +13,8 @@ export const collections = {
   idempotencyKeys: "idempotencyKeys",
   memberships: "memberships",
   webhookEvents: "webhookEvents",
+  analyticsEvents: "analyticsEvents",
+  marketingSignups: "marketingSignups",
 } as const;
 
 export const restaurantSub = {

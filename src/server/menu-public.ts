@@ -27,6 +27,7 @@ function mapGroups(groups: ModifierGroup[]): PublicModifierGroup[] {
             option.priceOre === 0 ? "Included" : `+${formatSek(option.priceOre)}`,
           allowsQuantity: option.allowsQuantity,
           maxQuantity: option.maxQuantity,
+          spiceLevel: option.spiceLevel,
         })),
     }));
 }

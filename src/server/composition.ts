@@ -18,6 +18,10 @@ import { PromotionService } from "@/domains/promotions/service";
 import type { PromotionRepository } from "@/domains/promotions/repository";
 import type { TransactionRunner } from "@/domains/shared/transaction";
 import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
+import { InMemoryAnalyticsRepository, InMemoryMarketingSignupRepository } from "@/infrastructure/analytics/memory-repository";
+import { FirestoreAnalyticsRepository, FirestoreMarketingSignupRepository } from "@/infrastructure/firestore/analytics-repository";
+import { ReportsService } from "@/domains/reports/service";
+import type { AnalyticsRecord, MarketingSignup } from "@/domains/analytics/models";
 import type { MapsPort } from "@/domains/delivery/maps-port";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
 import { createGoogleMapsPort } from "@/infrastructure/maps/google-maps";
@@ -190,9 +194,39 @@ export const printingService = new PrintingService(
   lazyProxy(() => getPorts().printJobs),
   new BrowserPrintProvider(),
 );
-export const analyticsService = new AnalyticsService(new LoggingAnalyticsSink());
+const memoryAnalyticsEvents: AnalyticsRecord[] = [];
+const memoryMarketingSignups: MarketingSignup[] = [];
 
-export const marketingSignups: Array<{ email: string; consentedAt: string; source?: string }> = [];
+function createAnalyticsRepository() {
+  if (firestoreEnabled) {
+    try {
+      return new FirestoreAnalyticsRepository(getAdminFirestore());
+    } catch {
+      return new InMemoryAnalyticsRepository(memoryAnalyticsEvents);
+    }
+  }
+  return new InMemoryAnalyticsRepository(memoryAnalyticsEvents);
+}
+
+function createMarketingSignupRepository() {
+  if (firestoreEnabled) {
+    try {
+      return new FirestoreMarketingSignupRepository(getAdminFirestore());
+    } catch {
+      return new InMemoryMarketingSignupRepository(memoryMarketingSignups);
+    }
+  }
+  return new InMemoryMarketingSignupRepository(memoryMarketingSignups);
+}
+
+export const analyticsRecords = lazyProxy(() => createAnalyticsRepository());
+export const marketingSignupRepository = lazyProxy(() => createMarketingSignupRepository());
+export const analyticsService = new AnalyticsService(new LoggingAnalyticsSink(), analyticsRecords);
+export const reportsService = new ReportsService(
+  analyticsRecords,
+  marketingSignupRepository,
+  lazyProxy(() => getPorts().orderRepository),
+);
 
 /** Replay tokens for idempotent checkout. Hashes stay on the order. */
 const guestAccessTokens = new Map<string, string>();
