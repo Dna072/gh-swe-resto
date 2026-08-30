@@ -24,7 +24,16 @@ fi
 gcloud config set project "${PROJECT_ID}"
 ACCOUNT="$(gcloud config get-value account 2>/dev/null || true)"
 if [[ -z "${ACCOUNT}" || "${ACCOUNT}" == "(unset)" ]]; then
-  echo "Run: gcloud auth login" >&2
+  ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n 1 || true)"
+  if [[ -n "${ACCOUNT}" ]]; then
+    gcloud config set account "${ACCOUNT}"
+  fi
+fi
+if ! gcloud auth print-access-token >/dev/null 2>&1; then
+  echo "gcloud has no usable credentials (config account is ${ACCOUNT:-(unset)})." >&2
+  echo "Cloud Shell sessions expire. Sign in again, then re-run the script:" >&2
+  echo "  gcloud auth login" >&2
+  echo "  GCP_PROJECT_ID=${PROJECT_ID} ./scripts/gcp-showcase-deploy.sh" >&2
   exit 1
 fi
 
