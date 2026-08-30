@@ -26,7 +26,10 @@ export type StaffOrder = {
   actions: KitchenAction[];
 };
 
-export function fulfillmentOf(order: Pick<Order, "deliveryStatus">): "DELIVERY" | "PICKUP" {
+export function fulfillmentOf(order: Pick<Order, "deliveryStatus" | "fulfillment">): "DELIVERY" | "PICKUP" {
+  if (order.fulfillment) {
+    return order.fulfillment;
+  }
   return order.deliveryStatus === "NOT_REQUESTED" ? "PICKUP" : "DELIVERY";
 }
 

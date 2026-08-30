@@ -125,6 +125,7 @@ export class OrderService {
         paymentStatus: "PENDING",
         orderStatus: "PENDING_PAYMENT",
         deliveryStatus: request.fulfillment === "PICKUP" ? "NOT_REQUESTED" : "QUOTED",
+        fulfillment: request.fulfillment === "PICKUP" ? "PICKUP" : "DELIVERY",
         deliveryProvider: request.fulfillment === "PICKUP" ? undefined : request.deliveryProvider,
         deliveryId: request.deliveryQuoteId,
         deliveryAddressSnapshot: request.deliveryAddress,

@@ -23,6 +23,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   }
 }
 
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  return PATCH(request, context);
+}
+
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const actor = await requireAdmin(request, "orders:transition");

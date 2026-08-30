@@ -66,7 +66,7 @@ export function applyOrderTransition(order: Order, to: OrderStatus, at = new Dat
   if (to === "OUT_FOR_DELIVERY") {
     next.deliveryStatus = "IN_TRANSIT";
   }
-  if (to === "DELIVERED") {
+  if (to === "DELIVERED" && order.deliveryStatus !== "NOT_REQUESTED") {
     next.deliveryStatus = "DELIVERED";
   }
   if (to === "DELIVERY_FAILED") {

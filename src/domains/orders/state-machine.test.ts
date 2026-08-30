@@ -52,6 +52,15 @@ describe("OrderStateMachine", () => {
     expect(next.dispatchedAt).toBeTruthy();
   });
 
+  it("does not rewrite pickup delivery status when the guest collects", () => {
+    const pickup = applyOrderTransition(
+      { ...order("READY"), deliveryStatus: "NOT_REQUESTED" },
+      "DELIVERED",
+    );
+    expect(pickup.orderStatus).toBe("DELIVERED");
+    expect(pickup.deliveryStatus).toBe("NOT_REQUESTED");
+  });
+
   it("marks delivery failures as attention required", () => {
     const next = applyOrderTransition(order("OUT_FOR_DELIVERY"), "DELIVERY_FAILED");
     expect(next.deliveryStatus).toBe("ATTENTION_REQUIRED");

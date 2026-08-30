@@ -6,6 +6,9 @@ import { formatSek } from "@/lib/money";
 import type { PublicOrder } from "@/lib/orders/public";
 
 function fulfillmentOf(order: Order): "DELIVERY" | "PICKUP" {
+  if (order.fulfillment) {
+    return order.fulfillment;
+  }
   return order.deliveryStatus === "NOT_REQUESTED" ? "PICKUP" : "DELIVERY";
 }
 

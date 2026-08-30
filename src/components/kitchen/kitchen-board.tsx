@@ -43,7 +43,7 @@ export function KitchenBoard() {
       if (action.to === "SEND_TO_KITCHEN") {
         const result = await adminFetch<{ order: StaffOrder; job?: { payload: Record<string, unknown> } }>(
           `/api/admin/orders/${order.id}`,
-          { method: "PATCH", body: JSON.stringify({ action: "send_to_kitchen" }) },
+          { method: "POST", body: JSON.stringify({ action: "send_to_kitchen" }) },
         );
         setOrders((current) => current.map((entry) => (entry.id === order.id ? result.order : entry)));
         if (result.job?.payload) {
@@ -52,7 +52,7 @@ export function KitchenBoard() {
         return;
       }
       const result = await adminFetch<{ order: StaffOrder }>(`/api/admin/orders/${order.id}`, {
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify({ action: "transition", to: action.to }),
       });
       setOrders((current) => current.map((entry) => (entry.id === order.id ? result.order : entry)));
