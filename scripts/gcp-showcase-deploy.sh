@@ -125,8 +125,12 @@ if ! gcloud builds submit \
   --project "${PROJECT_ID}" \
   --config cloudbuild.yaml \
   --substitutions="_IMAGE=${IMAGE}"; then
-  echo "Image build failed. Pull the latest deploy fixes, then re-run:" >&2
-  echo "  git pull && GCP_PROJECT_ID=${PROJECT_ID} ./scripts/gcp-showcase-deploy.sh" >&2
+  echo "Image build failed. The one-line Docker error is not the cause." >&2
+  echo "Print the compiler output:" >&2
+  echo "  gcloud builds log --project=${PROJECT_ID} \$(gcloud builds list --project=${PROJECT_ID} --limit=1 --format='value(id)')" >&2
+  echo "Then pull this branch and re-run:" >&2
+  echo "  git fetch origin && git checkout cursor/fix-cloud-build-oom-9f70 && git pull" >&2
+  echo "  GCP_PROJECT_ID=${PROJECT_ID} ./scripts/gcp-showcase-deploy.sh" >&2
   exit 1
 fi
 
