@@ -42,7 +42,10 @@ export async function adminFetch<T>(path: string, init: RequestInit = {}): Promi
     throw new Error("Paste the admin token at the top and click Use token first.");
   }
   const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
+  // Cloud Run treats Authorization as a Google identity token. A showcase
+  // admin secret there gets a Google 401 before Next.js runs. Use a custom header.
+  headers.set("X-Admin-Token", token);
+  headers.delete("Authorization");
   if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }

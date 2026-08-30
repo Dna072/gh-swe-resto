@@ -56,4 +56,24 @@ describe("admin token store", () => {
   it("refuses admin requests until a token is saved", async () => {
     await expect(adminFetch("/api/admin/menu")).rejects.toThrow(/Use token/i);
   });
+
+  it("sends X-Admin-Token instead of Authorization", async () => {
+    mockSessionStorage();
+    setAdminToken("showcase-admin-token");
+    const seen: string[] = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      seen.push(headers.get("X-Admin-Token") ?? "");
+      seen.push(headers.get("Authorization") ?? "");
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }) as typeof fetch;
+    try {
+      await adminFetch("/api/admin/menu");
+      expect(seen).toEqual(["showcase-admin-token", ""]);
+    } finally {
+      globalThis.fetch = originalFetch;
+      clearAdminToken();
+    }
+  });
 });

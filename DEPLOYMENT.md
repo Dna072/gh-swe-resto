@@ -69,7 +69,13 @@ After it finishes you get:
 | Min instances | 0 | Scale to zero overnight |
 | CPU / memory | 1 / 512Mi | Cost-safe default |
 
-The script creates a Firestore Native database, a photo bucket (`{project}-resto-assets`), deploys rules when Firebase CLI can, and seeds the demo menu via `POST /api/admin/seed`.
+The script creates a Firestore Native database, a photo bucket (`{project}-resto-assets`), deploys rules when Firebase CLI can, and seeds the demo menu via `POST /api/admin/seed` with `X-Admin-Token` (not `Authorization` — Cloud Run would treat that as a Google identity token and return HTML 401).
+
+If the service is up but the menu is empty, paste the admin token on `/admin` and click **Seed demo menu**, or:
+
+```bash
+curl -X POST "$SHOWCASE_URL/api/admin/seed" -H "X-Admin-Token: showcase-admin-token"
+```
 
 ## Cloud Run settings (later environments)
 
