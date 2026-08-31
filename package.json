@@ -4,6 +4,9 @@
   "private": true,
   "description": "Production-grade Ghanaian restaurant ordering and operations platform for Uppsala",
   "scripts": {
+    "copy-maplibre-worker": "node ./scripts/copy-maplibre-worker.mjs",
+    "predev": "node ./scripts/copy-maplibre-worker.mjs",
+    "prebuild": "node ./scripts/copy-maplibre-worker.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

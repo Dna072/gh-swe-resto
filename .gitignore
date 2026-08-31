@@ -47,6 +47,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Generated MapLibre worker (copied in predev/prebuild)
+/public/maplibre/
+
 # Local photograph uploads (Cloud Storage in production)
 /public/uploads/*
 !/public/uploads/.gitignore

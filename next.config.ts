@@ -1,5 +1,17 @@
 import type { NextConfig } from "next";
 
+/** Tile/style hosts used by MapLibre (MapTiler, OpenFreeMap, OSM raster fallback). */
+const MAP_ORIGINS = [
+  "https://tiles.openfreemap.org",
+  "https://*.openfreemap.org",
+  "https://openfreemap.org",
+  "https://api.maptiler.com",
+  "https://*.maptiler.com",
+  "https://cdn.maptiler.com",
+  "https://tile.openstreetmap.org",
+  "https://*.tile.openstreetmap.org",
+].join(" ");
+
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
@@ -73,12 +85,12 @@ const nextConfig: NextConfig = {
                 ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://apis.google.com"
                 : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://apis.google.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://storage.googleapis.com https://tiles.openfreemap.org https://*.openfreemap.org",
+              `img-src 'self' data: blob: https://storage.googleapis.com ${MAP_ORIGINS}`,
               development
                 ? "connect-src 'self' ws: wss: http: https:"
-                : "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com https://tiles.openfreemap.org https://*.openfreemap.org wss://*.firebaseio.com",
+                : `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com ${MAP_ORIGINS} wss://*.firebaseio.com`,
               "frame-src https://js.stripe.com https://hooks.stripe.com",
-              "font-src 'self' data:",
+              `font-src 'self' data: ${MAP_ORIGINS}`,
               "worker-src 'self' blob:",
               "child-src 'self' blob:",
               "object-src 'none'",

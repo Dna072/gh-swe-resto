@@ -3,7 +3,10 @@
 import { useEffect, useRef } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { cn } from "@/lib/utils";
-import { mapStyleUrl } from "@/lib/maps/style";
+import { osmRasterStyle } from "@/lib/maps/style";
+import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
+import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
+import { bindMapLibreWorker } from "@/lib/maps/worker";
 
 export function LocationMap({
   lat,
@@ -31,18 +34,48 @@ export function LocationMap({
     let cancelled = false;
     let map: import("maplibre-gl").Map | undefined;
     let marker: import("maplibre-gl").Marker | undefined;
+    let detachDiagnostics: (() => void) | undefined;
 
-    void import("maplibre-gl").then((maplibregl) => {
+    void import("maplibre-gl").then(async (maplibregl) => {
       if (cancelled || !container.current) {
         return;
       }
-      map = new maplibregl.Map({
-        container: container.current,
-        style: mapStyleUrl(),
-        center: [lng, lat],
-        zoom: 16,
-        attributionControl: { compact: true },
-      });
+      bindMapLibreWorker(maplibregl);
+      const loaded = await loadBrowserMapStyle();
+      if (cancelled || !container.current) {
+        return;
+      }
+      try {
+        map = new maplibregl.Map({
+          container: container.current,
+          style: loaded.style,
+          center: [lng, lat],
+          zoom: 16,
+          attributionControl: { compact: true },
+          transformRequest: mapLibreTransformLogger(),
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Map failed to start.";
+        logMapError("map_constructor_failed", { component: "location-map", message });
+        return;
+      }
+      let usedRasterFallback = loaded.usedFallback;
+      detachDiagnostics = attachMapDiagnostics(
+        map,
+        {
+          component: "location-map",
+          provider: loaded.config.provider,
+          styleUrl: loaded.config.styleUrl,
+        },
+        (message, sourceId) => {
+          if (usedRasterFallback || !map || !isTileNetworkError(message, sourceId)) {
+            return;
+          }
+          usedRasterFallback = true;
+          logMapWarn("vector_tiles_failed_using_osm_raster", { component: "location-map", message });
+          map.setStyle(osmRasterStyle());
+        },
+      );
       marker = new maplibregl.Marker({
         draggable: Boolean(onMoveRef.current),
         color: "#8B5A2B",
@@ -59,6 +92,7 @@ export function LocationMap({
 
     return () => {
       cancelled = true;
+      detachDiagnostics?.();
       marker?.remove();
       map?.remove();
     };
