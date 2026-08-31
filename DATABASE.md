@@ -32,7 +32,7 @@ restaurants/{restaurantId}
   menuCategories/{categoryId}
   menuItems/{itemId}
   modifierGroups/{groupId}          options embedded (bounded)
-  deliveryZones/{zoneId}          admin Delivery areas page (postcodes)
+  deliveryZones/{zoneId}          admin Delivery areas (map polygons)
   promotions/{promotionId}
   inventory/{sku}
   counters/orders                   { value: number }

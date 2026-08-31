@@ -46,7 +46,7 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | GET / PUT | `/api/admin/restaurant-settings` | Pause or resume ordering |
 | GET / PUT | `/api/admin/promotions` | List and save promotion codes |
 | GET / PUT | `/api/admin/delivery-settings` | Last-mile providers and customer delivery pricing |
-| GET / PUT | `/api/admin/delivery-zones` | Delivery areas (postcodes guests can order from) |
+| GET / PUT | `/api/admin/delivery-zones` | Delivery areas (map polygons guests can order from) |
 | GET | `/api/admin/menu` | Meals, categories, modifier groups |
 | POST | `/api/admin/menu` | Create/update meal (metadata) |
 | GET | `/api/admin/menu/:id` | One meal including image metadata |

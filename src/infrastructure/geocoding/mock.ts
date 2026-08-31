@@ -85,6 +85,16 @@ export class MockGeocodingService implements GeocodingService, MapsPort {
           addressComponents: [],
         };
       }
+      const postal = address.postalCode.replace(/\s+/g, "");
+      if (postal && postal !== "00000" && !postal.startsWith("75")) {
+        return {
+          formattedAddress: [address.line1, address.postalCode, address.city].join(", "),
+          lat: 59.3293,
+          lng: 18.0686,
+          types: [],
+          addressComponents: [],
+        };
+      }
       return {
         formattedAddress: [address.line1, address.postalCode, address.city].join(", "),
         lat: 59.8586,

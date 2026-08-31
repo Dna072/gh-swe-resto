@@ -12,8 +12,8 @@ export default function AdminHomePage() {
         <h1 className="mt-2 font-heading text-4xl">Kitchen, visitors, and sales</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Watch who visits the storefront, where they come from, and what they do —
-          then follow paid sales. Set delivery postcodes under Delivery so guests in
-          those areas can order. Upload real kitchen photographs only.
+          then follow paid sales. Draw delivery areas on the map under Delivery so
+          guests in those areas can order. Upload real kitchen photographs only.
         </p>
       </div>
       <FirstOwnerSetup />
