@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/button";
-import { mapStyleUrl } from "@/lib/maps/style";
+import { resolveMapStyle } from "@/lib/maps/style";
 import { isValidPolygon, toGeoJsonRing, uniqueVertices, type LatLng } from "@/lib/geo/polygon";
 
 const UPPSALA: LatLng = { lat: 59.8586, lng: 17.6389 };
@@ -59,17 +59,27 @@ export function DeliveryZoneMap({
     let cancelled = false;
     let map: import("maplibre-gl").Map | undefined;
 
-    void import("maplibre-gl").then((maplibregl) => {
+    void import("maplibre-gl").then(async (maplibregl) => {
       if (cancelled || !container.current) {
         return;
       }
-      map = new maplibregl.Map({
-        container: container.current,
-        style: mapStyleUrl(),
-        center: [UPPSALA.lng, UPPSALA.lat],
-        zoom: 12,
-        attributionControl: { compact: true },
-      });
+      const style = await resolveMapStyle();
+      if (cancelled || !container.current) {
+        return;
+      }
+      try {
+        map = new maplibregl.Map({
+          container: container.current,
+          style,
+          center: [UPPSALA.lng, UPPSALA.lat],
+          zoom: 12,
+          attributionControl: { compact: true },
+        });
+      } catch {
+        container.current.textContent = "This browser cannot show the map. Try Chrome or Safari.";
+        container.current.classList.add("grid", "place-items-center", "p-6", "text-sm", "text-muted-foreground");
+        return;
+      }
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
       map.on("load", () => {
         if (!map) {

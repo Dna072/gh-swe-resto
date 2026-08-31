@@ -12,3 +12,36 @@ export function mapStyleUrl(): string {
   }
   return OPENFREEMAP;
 }
+
+/** Raster OSM fallback when a vector style URL cannot be loaded. */
+export function osmRasterStyle(): {
+  version: 8;
+  sources: Record<string, { type: "raster"; tiles: string[]; tileSize: number; attribution: string }>;
+  layers: Array<{ id: string; type: "raster"; source: string }>;
+} {
+  return {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        attribution: "© OpenStreetMap contributors",
+      },
+    },
+    layers: [{ id: "osm", type: "raster", source: "osm" }],
+  };
+}
+
+export async function resolveMapStyle(): Promise<string | ReturnType<typeof osmRasterStyle>> {
+  const url = mapStyleUrl();
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (response.ok) {
+      return url;
+    }
+  } catch {
+    /* use raster tiles */
+  }
+  return osmRasterStyle();
+}
