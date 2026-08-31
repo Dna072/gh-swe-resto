@@ -140,14 +140,18 @@ Path routes (`/admin`, `/kitchen`) still work on the Cloud Run URL.
 
 ### First admin
 
-Create the first OWNER in Firebase Authentication, set custom claims `{ "role": "OWNER", "restaurantId": "uppsala-main" }`, and add a `users/{uid}` document. That owner invites everyone else from `/admin/staff`. Kitchen staff sign in on `kitchen.mfcuisine.se`. Local development still accepts `ADMIN_DEV_TOKEN` when `APP_ENV` is not production.
+Set `ADMIN_DEV_TOKEN` in Secret Manager (showcase/staging/production). Open `/admin`, paste that token, and use **Add the first admin** once. That creates the OWNER, emails a branded set-password link, and locks the form.
+
+After the first owner signs in, they invite everyone else from `/admin/staff`. Kitchen staff sign in on `kitchen.mfcuisine.se`. You can remove `ADMIN_DEV_TOKEN` after that — production APIs reject it except for this one-time setup.
+
+Local development still auto-applies `dev-admin-token` when `APP_ENV` is not production, and still accepts it for ordinary admin APIs.
 
 ### Amazon SES
 
 1. Verify `mfcuisine.se` (and `orders@mfcuisine.se`) in SES in `eu-north-1`.
 2. Leave sandbox or request production access.
 3. Set `EMAIL_PROVIDER=ses`, `SES_FROM_EMAIL=orders@mfcuisine.se`, and AWS keys in Secret Manager.
-4. In Firebase Authentication, disable the default “Email address verification” and “Password reset” templates so guests only receive the branded Meridian letters.
+4. Firebase’s built-in verification and reset templates **cannot** use the restaurant HTML theme. This app never calls the client `sendEmailVerification` / `sendPasswordResetEmail` APIs — welcome and reset letters go through SES. Leave those Firebase templates unused (or untouched) so guests only receive the branded letters.
 
 ## CI
 

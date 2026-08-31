@@ -65,6 +65,9 @@ import type { CustomerRepository } from "@/domains/customers/repository";
 import { ReviewService } from "@/domains/reviews/service";
 import type { ReviewRepository } from "@/domains/reviews/repository";
 import { StaffService } from "@/domains/staff/service";
+import { AdminBootstrapService } from "@/domains/staff/bootstrap";
+import { FirestoreAdminBootstrapStore } from "@/infrastructure/firestore/admin-bootstrap";
+import { InMemoryAdminBootstrapStore } from "@/infrastructure/memory/admin-bootstrap";
 import type { StaffUserRepository } from "@/domains/staff/repository";
 import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
 import { InMemoryTransactionRunner } from "@/infrastructure/memory/transaction-runner";
@@ -404,6 +407,23 @@ export const staffUserRepository = lazyProxy(() => getPorts().staffUserRepositor
 export const customerService = new CustomerService(customerRepository, authAdmin, notificationService);
 export const reviewService = new ReviewService(reviewRepository);
 export const staffService = new StaffService(staffUserRepository, authAdmin, notificationService, restaurantId);
+const memoryBootstrapStore = new InMemoryAdminBootstrapStore(restaurantId);
+export const adminBootstrapStore = lazyProxy(() => {
+  if (firestoreEnabled) {
+    try {
+      return new FirestoreAdminBootstrapStore(getAdminFirestore(), restaurantId);
+    } catch {
+      return memoryBootstrapStore;
+    }
+  }
+  return memoryBootstrapStore;
+});
+export const adminBootstrapService = new AdminBootstrapService(
+  staffService,
+  staffUserRepository,
+  adminBootstrapStore,
+  restaurantId,
+);
 export const promotionRepository = lazyProxy(() => getPorts().promotionRepository);
 export const printingService = new PrintingService(
   lazyProxy(() => getPorts().printJobs),

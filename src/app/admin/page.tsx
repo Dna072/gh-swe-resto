@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AnalyticsDashboard } from "@/components/admin/analytics-dashboard";
+import { FirstOwnerSetup } from "@/components/admin/first-owner-setup";
 import { SeedCatalogButton } from "@/components/admin/seed-catalog-button";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +16,7 @@ export default function AdminHomePage() {
           those areas can order. Upload real kitchen photographs only.
         </p>
       </div>
+      <FirstOwnerSetup />
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button size="touch" asChild>
           <Link href="/kitchen">Kitchen board</Link>
