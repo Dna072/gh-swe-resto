@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { GeoJSONSource } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/button";
-import { osmRasterStyle } from "@/lib/maps/style";
-import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
-import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
-import { bindMapLibreWorker } from "@/lib/maps/worker";
-import { isValidPolygon, toGeoJsonRing, uniqueVertices, type LatLng } from "@/lib/geo/polygon";
+import { logMap, logMapError } from "@/lib/maps/diagnostics";
+import { loadGoogleMaps } from "@/lib/maps/load-google";
+import { isValidPolygon, uniqueVertices, type LatLng } from "@/lib/geo/polygon";
 
 const UPPSALA: LatLng = { lat: 59.8586, lng: 17.6389 };
-const SOURCE = "delivery-zones";
-const DRAFT = "delivery-draft";
+const SELECTED_FILL = "#C4A35A";
+const MUTED_FILL = "#8A7A6A";
+const SELECTED_STROKE = "#8B5A2B";
 
 export type ZoneMapItem = {
   key: string;
@@ -33,8 +30,10 @@ export function DeliveryZoneMap({
   onPolygonChange: (key: string, polygon: LatLng[]) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<import("maplibre-gl").Map | null>(null);
-  const markersRef = useRef<import("maplibre-gl").Marker[]>([]);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const polygonsRef = useRef<Map<string, google.maps.Polygon>>(new Map());
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const draftRef = useRef<google.maps.Polyline | null>(null);
   const zonesRef = useRef(zones);
   const selectedRef = useRef(selectedKey);
   const drawingRef = useRef(false);
@@ -61,139 +60,91 @@ export function DeliveryZoneMap({
       return;
     }
     let cancelled = false;
-    let map: import("maplibre-gl").Map | undefined;
-    let detachDiagnostics: (() => void) | undefined;
+    let map: google.maps.Map | undefined;
+    const listeners: google.maps.MapsEventListener[] = [];
+    const polygons = polygonsRef.current;
 
-    void import("maplibre-gl").then(async (maplibregl) => {
-      if (cancelled || !container.current) {
-        return;
-      }
-      bindMapLibreWorker(maplibregl);
-      const loaded = await loadBrowserMapStyle();
-      if (cancelled || !container.current) {
-        return;
-      }
-      setMapNote(loaded.note);
-      try {
-        map = new maplibregl.Map({
-          container: container.current,
-          style: loaded.style,
-          center: [UPPSALA.lng, UPPSALA.lat],
+    void loadGoogleMaps()
+      .then(({ source, hint }) => {
+        if (cancelled || !container.current || typeof google === "undefined") {
+          return;
+        }
+        setMapNote(`google · ${source}${hint ? ` · ${hint}` : ""}`);
+        map = new google.maps.Map(container.current, {
+          center: { lat: UPPSALA.lat, lng: UPPSALA.lng },
           zoom: 12,
-          attributionControl: { compact: true },
-          transformRequest: mapLibreTransformLogger(),
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          rotateControl: false,
+          scaleControl: false,
+          clickableIcons: false,
+          gestureHandling: "greedy",
+          keyboardShortcuts: false,
         });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Map failed to start.";
-        logMapError("map_constructor_failed", { component: "delivery-zone-map", message });
-        container.current.textContent = "This browser cannot show the map. Try Chrome or Safari.";
-        container.current.classList.add("grid", "place-items-center", "p-6", "text-sm", "text-muted-foreground");
-        setMapNote(`constructor failed · ${message}`);
-        return;
-      }
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-      let usedRasterFallback = loaded.usedFallback;
-      detachDiagnostics = attachMapDiagnostics(
-        map,
-        {
-          component: "delivery-zone-map",
-          provider: loaded.config.provider,
-          styleUrl: loaded.config.styleUrl,
-        },
-        (message, sourceId) => {
-          if (usedRasterFallback || !map || !isTileNetworkError(message, sourceId)) {
-            setMapNote((current) => `${current ?? loaded.note} · ${message}`);
-            return;
-          }
-          usedRasterFallback = true;
-          logMapWarn("vector_tiles_failed_using_osm_raster", { message });
-          setMapNote(`${loaded.note} · tile error, OSM raster fallback · ${message}`);
-          map.setStyle(osmRasterStyle());
-        },
-      );
-      const ensureLayers = () => {
-        if (!map) {
-          return;
-        }
-        if (!map.getSource(SOURCE)) {
-          map.addSource(SOURCE, { type: "geojson", data: emptyCollection() });
-          map.addLayer({
-            id: `${SOURCE}-fill`,
-            type: "fill",
-            source: SOURCE,
-            paint: {
-              "fill-color": ["case", ["get", "selected"], "#C4A35A", "#8A7A6A"],
-              "fill-opacity": ["case", ["get", "selected"], 0.38, 0.16],
-            },
-          });
-          map.addLayer({
-            id: `${SOURCE}-line`,
-            type: "line",
-            source: SOURCE,
-            paint: {
-              "line-color": ["case", ["get", "selected"], "#8B5A2B", "#8A7A6A"],
-              "line-width": ["case", ["get", "selected"], 2.5, 1.5],
-            },
-          });
-        }
-        if (!map.getSource(DRAFT)) {
-          map.addSource(DRAFT, { type: "geojson", data: emptyCollection() });
-          map.addLayer({
-            id: `${DRAFT}-line`,
-            type: "line",
-            source: DRAFT,
-            paint: {
-              "line-color": "#C4A35A",
-              "line-width": 2,
-              "line-dasharray": [1.4, 1.2],
-            },
-          });
-        }
-        const source = map.getSource(SOURCE) as GeoJSONSource | undefined;
-        source?.setData(zonesToCollection(zonesRef.current, selectedRef.current));
         mapRef.current = map;
+        listeners.push(
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            if (!cancelled && map) {
+              fitToZones(map, zonesRef.current);
+            }
+          }),
+        );
+        listeners.push(
+          map.addListener("click", (event: google.maps.MapMouseEvent) => {
+            if (!drawingRef.current || !event.latLng) {
+              return;
+            }
+            const current = zonesRef.current.find((zone) => zone.key === selectedRef.current);
+            const next = uniqueVertices([
+              ...(current?.polygon ?? []),
+              { lat: event.latLng.lat(), lng: event.latLng.lng() },
+            ]);
+            onPolygonChangeRef.current(selectedRef.current, next);
+          }),
+        );
+        listeners.push(
+          map.addListener("dblclick", (event: google.maps.MapMouseEvent) => {
+            if (!drawingRef.current) {
+              return;
+            }
+            event.stop();
+            const current = zonesRef.current.find((zone) => zone.key === selectedRef.current);
+            if (isValidPolygon(current?.polygon)) {
+              drawingRef.current = false;
+              setDrawing(false);
+            }
+          }),
+        );
         setReady(true);
-        fitToZones(map, maplibregl, zonesRef.current);
-      };
-      map.on("load", ensureLayers);
-      map.on("style.load", ensureLayers);
-      map.on("click", (event) => {
-        if (drawingRef.current) {
-          const current = zonesRef.current.find((zone) => zone.key === selectedRef.current);
-          const next = uniqueVertices([
-            ...(current?.polygon ?? []),
-            { lat: event.lngLat.lat, lng: event.lngLat.lng },
-          ]);
-          onPolygonChangeRef.current(selectedRef.current, next);
+        logMap("google_map_ready", { component: "delivery-zone-map", source });
+      })
+      .catch((error: unknown) => {
+        if (cancelled || !container.current) {
           return;
         }
-        const hits = map?.queryRenderedFeatures(event.point, { layers: [`${SOURCE}-fill`] }) ?? [];
-        const key = hits[0]?.properties?.key;
-        if (typeof key === "string") {
-          onSelectRef.current(key);
-        }
+        const message = error instanceof Error ? error.message : "Google Maps failed to start.";
+        logMapError("google_map_failed", { component: "delivery-zone-map", message });
+        container.current.textContent = message;
+        container.current.classList.add("grid", "place-items-center", "p-6", "text-sm", "text-muted-foreground");
+        setMapNote(`failed · ${message}`);
       });
-      map.on("dblclick", (event) => {
-        if (!drawingRef.current) {
-          return;
-        }
-        event.preventDefault();
-        const current = zonesRef.current.find((zone) => zone.key === selectedRef.current);
-        if (isValidPolygon(current?.polygon)) {
-          drawingRef.current = false;
-          setDrawing(false);
-        }
-      });
-    });
 
     return () => {
       cancelled = true;
-      detachDiagnostics?.();
+      for (const listener of listeners) {
+        listener.remove();
+      }
       for (const marker of markersRef.current) {
-        marker.remove();
+        marker.setMap(null);
       }
       markersRef.current = [];
-      map?.remove();
+      draftRef.current?.setMap(null);
+      draftRef.current = null;
+      for (const polygon of polygons.values()) {
+        polygon.setMap(null);
+      }
+      polygons.clear();
       mapRef.current = null;
       setReady(false);
     };
@@ -201,49 +152,118 @@ export function DeliveryZoneMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) {
+    if (!map || !ready || typeof google === "undefined") {
       return;
     }
-    const source = map.getSource(SOURCE) as GeoJSONSource | undefined;
-    source?.setData(zonesToCollection(zones, selectedKey));
-    const draft = map.getSource(DRAFT) as GeoJSONSource | undefined;
-    draft?.setData(draftCollection(drawing ? vertices : []));
-    map.getCanvas().style.cursor = drawing ? "crosshair" : "";
-    if (drawing) {
-      map.doubleClickZoom.disable();
-    } else {
-      map.doubleClickZoom.enable();
+    const keep = new Set(zones.map((zone) => zone.key));
+    for (const [key, polygon] of polygonsRef.current) {
+      if (!keep.has(key)) {
+        polygon.setMap(null);
+        polygonsRef.current.delete(key);
+      }
     }
+    for (const zone of zones) {
+      const path = uniqueVertices(zone.polygon).map((point) => ({ lat: point.lat, lng: point.lng }));
+      const selected = zone.key === selectedKey;
+      let polygon = polygonsRef.current.get(zone.key);
+      if (!polygon) {
+        polygon = new google.maps.Polygon({
+          map,
+          paths: path,
+          strokeWeight: selected ? 2.5 : 1.5,
+          strokeColor: selected ? SELECTED_STROKE : MUTED_FILL,
+          fillColor: selected ? SELECTED_FILL : MUTED_FILL,
+          fillOpacity: selected ? 0.38 : 0.16,
+          clickable: !drawing,
+          zIndex: selected ? 2 : 1,
+        });
+        polygon.addListener("click", () => {
+          if (drawingRef.current) {
+            return;
+          }
+          onSelectRef.current(zone.key);
+        });
+        polygonsRef.current.set(zone.key, polygon);
+      } else {
+        polygon.setPaths(path);
+        polygon.setOptions({
+          strokeWeight: selected ? 2.5 : 1.5,
+          strokeColor: selected ? SELECTED_STROKE : MUTED_FILL,
+          fillColor: selected ? SELECTED_FILL : MUTED_FILL,
+          fillOpacity: selected ? 0.38 : 0.16,
+          clickable: !drawing,
+          zIndex: selected ? 2 : 1,
+        });
+      }
+    }
+
+    const draftPath = drawing ? vertices.map((point) => ({ lat: point.lat, lng: point.lng })) : [];
+    if (draftPath.length >= 2) {
+      if (!draftRef.current) {
+        draftRef.current = new google.maps.Polyline({
+          map,
+          path: draftPath,
+          strokeColor: SELECTED_FILL,
+          strokeWeight: 2,
+          clickable: false,
+        });
+      } else {
+        draftRef.current.setPath(draftPath);
+        draftRef.current.setMap(map);
+      }
+    } else {
+      draftRef.current?.setMap(null);
+    }
+
+    map.setOptions({
+      draggableCursor: drawing ? "crosshair" : undefined,
+      disableDoubleClickZoom: drawing,
+    });
   }, [zones, selectedKey, drawing, vertices, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || drawing) {
+    if (!map || !ready || drawing || typeof google === "undefined") {
+      for (const marker of markersRef.current) {
+        marker.setMap(null);
+      }
+      markersRef.current = [];
       return;
     }
-    let cancelled = false;
-    void import("maplibre-gl").then((maplibregl) => {
-      if (cancelled || mapRef.current !== map) {
-        return;
-      }
-      for (const marker of markersRef.current) {
-        marker.remove();
-      }
-      markersRef.current = vertices.map((point, index) => {
-        const marker = new maplibregl.Marker({ color: "#C4A35A", draggable: true })
-          .setLngLat([point.lng, point.lat])
-          .addTo(map);
-        marker.on("dragend", () => {
-          const position = marker.getLngLat();
-          const next = uniqueVertices(zonesRef.current.find((zone) => zone.key === selectedRef.current)?.polygon ?? []);
-          next[index] = { lat: position.lat, lng: position.lng };
-          onPolygonChangeRef.current(selectedRef.current, uniqueVertices(next));
-        });
-        return marker;
+    for (const marker of markersRef.current) {
+      marker.setMap(null);
+    }
+    markersRef.current = vertices.map((point, index) => {
+      const marker = new google.maps.Marker({
+        map,
+        position: { lat: point.lat, lng: point.lng },
+        draggable: true,
+        cursor: "grab",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: SELECTED_FILL,
+          fillOpacity: 1,
+          strokeColor: SELECTED_STROKE,
+          strokeWeight: 2,
+        },
       });
+      marker.addListener("dragend", () => {
+        const position = marker.getPosition();
+        if (!position) {
+          return;
+        }
+        const next = uniqueVertices(zonesRef.current.find((zone) => zone.key === selectedRef.current)?.polygon ?? []);
+        next[index] = { lat: position.lat(), lng: position.lng() };
+        onPolygonChangeRef.current(selectedRef.current, uniqueVertices(next));
+      });
+      return marker;
     });
     return () => {
-      cancelled = true;
+      for (const marker of markersRef.current) {
+        marker.setMap(null);
+      }
+      markersRef.current = [];
     };
   }, [vertices, selectedKey, drawing, ready]);
 
@@ -302,65 +322,19 @@ export function DeliveryZoneMap({
   );
 }
 
-function emptyCollection(): GeoJSON.FeatureCollection {
-  return { type: "FeatureCollection", features: [] };
-}
-
-function zonesToCollection(zones: ZoneMapItem[], selectedKey: string): GeoJSON.FeatureCollection {
-  return {
-    type: "FeatureCollection",
-    features: zones.flatMap((zone) => {
-      const ring = toGeoJsonRing(zone.polygon);
-      if (ring.length < 4) {
-        return [];
-      }
-      return [
-        {
-          type: "Feature",
-          properties: { key: zone.key, name: zone.name, selected: zone.key === selectedKey, active: zone.active },
-          geometry: { type: "Polygon", coordinates: [ring] },
-        },
-      ];
-    }),
-  };
-}
-
-function draftCollection(points: LatLng[]): GeoJSON.FeatureCollection {
-  if (points.length < 2) {
-    return emptyCollection();
-  }
-  return {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: points.map((point) => [point.lng, point.lat]),
-        },
-      },
-    ],
-  };
-}
-
-function fitToZones(
-  map: import("maplibre-gl").Map,
-  maplibregl: typeof import("maplibre-gl"),
-  zones: ZoneMapItem[],
-) {
-  const bounds = new maplibregl.LngLatBounds();
+function fitToZones(map: google.maps.Map, zones: ZoneMapItem[]) {
+  const bounds = new google.maps.LatLngBounds();
   let count = 0;
   for (const zone of zones) {
     for (const point of uniqueVertices(zone.polygon)) {
-      bounds.extend([point.lng, point.lat]);
+      bounds.extend({ lat: point.lat, lng: point.lng });
       count += 1;
     }
   }
   if (count < 2) {
-    map.setCenter([UPPSALA.lng, UPPSALA.lat]);
+    map.setCenter({ lat: UPPSALA.lat, lng: UPPSALA.lng });
     map.setZoom(12);
     return;
   }
-  map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
+  map.fitBounds(bounds, 48);
 }
