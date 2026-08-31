@@ -24,6 +24,7 @@ export interface CartQuoteRequest {
   guestSessionId?: string;
   isMember?: boolean;
   isFirstOrder?: boolean;
+  orderingPaused?: boolean;
   at?: Date;
 }
 

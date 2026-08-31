@@ -62,6 +62,29 @@ export function OrderConfirmation({
     return () => controller.abort();
   }, [orderId, tokenFromUrl, t]);
 
+  const orderStatus = order?.orderStatus;
+
+  useEffect(() => {
+    const token = tokenFromUrl || guestTokenFor(orderId);
+    if (!token || !orderStatus) {
+      return;
+    }
+    if (isTerminalStatus(orderStatus)) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void fetch(`/api/orders/${orderId}?token=${encodeURIComponent(token)}`)
+        .then(async (response) => {
+          const body = (await response.json()) as PublicOrder & { message?: string; code?: string };
+          if (response.ok) {
+            setOrder(body);
+          }
+        })
+        .catch(() => undefined);
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [orderStatus, orderId, tokenFromUrl]);
+
   async function pay() {
     const token = tokenFromUrl || guestTokenFor(orderId);
     if (!token) {
@@ -213,6 +236,14 @@ export function OrderConfirmation({
             <Price ore={order.deliveryFeeOre} size="sm" />
           </dd>
         </div>
+        {order.discountTotalOre > 0 ? (
+          <div className="flex justify-between gap-3">
+            <dt>{t("order.discount")}</dt>
+            <dd>
+              −<Price ore={order.discountTotalOre} size="sm" />
+            </dd>
+          </div>
+        ) : null}
         <div className="flex justify-between gap-3 font-medium">
           <dt>{t("order.total")}</dt>
           <dd>
@@ -264,12 +295,18 @@ export function OrderConfirmation({
   );
 }
 
+function isTerminalStatus(status: string): boolean {
+  return status === "DELIVERED" || status === "CANCELLED" || status === "REFUNDED" || status === "PAYMENT_FAILED";
+}
+
 function statusLabel(status: string, t: Translator): string {
   const key = `order.status.${status}` as MessageKey;
   return key in {
     "order.status.PENDING_PAYMENT": true,
+    "order.status.PAID": true,
     "order.status.CONFIRMED": true,
     "order.status.PREPARING": true,
+    "order.status.PACKING": true,
     "order.status.READY": true,
     "order.status.COURIER_ASSIGNED": true,
     "order.status.OUT_FOR_DELIVERY": true,

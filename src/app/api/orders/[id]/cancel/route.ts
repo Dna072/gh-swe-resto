@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { orderService } from "@/server/composition";
 import { errorResponse } from "@/server/http";
+import { notifyOrder } from "@/server/order-events";
 import { toPublicOrder } from "@/server/public-order";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -8,6 +9,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { id } = await context.params;
     const token = new URL(request.url).searchParams.get("token") ?? undefined;
     const order = await orderService.cancel(id, token);
+    await notifyOrder(order);
     return NextResponse.json(toPublicOrder(order));
   } catch (error) {
     return errorResponse(error);

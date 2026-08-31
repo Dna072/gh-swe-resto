@@ -4,7 +4,7 @@ Production-grade online ordering and operations platform for Meridian Fusion Cui
 
 This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phase 5 guest payment. Guests can pay after checkout (mock provider locally; Stripe when keys are set). Kitchen board, print tickets, and admin photography remain from earlier phases.
+**Current status:** Phases 7–9. Guests can track live order status, apply promotion codes, and see when the kitchen has paused ordering. Staff can pause the storefront, manage promotions, refund paid orders, and follow courier tracking links. Status emails are queued through the notification service (mock email locally).
 
 Meal photographs must be real kitchen photos uploaded by an admin. The storefront never ships AI-generated food. Until a photograph is uploaded, customers see a branded “Photo coming soon” treatment.
 
@@ -78,11 +78,11 @@ npm run build
 2. Customer menu and cart UI
 3. Delivery and checkout
 4. Orders, kitchen, printing
-5. Payments — **this release**
+5. Payments
 6. Live delivery providers
-7. Tracking
-8. Admin CMS
-9. Notifications
+7. Tracking — **this release**
+8. Admin CMS — **this release**
+9. Notifications — **this release**
 10. Analytics and hardening
 
-The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`). Admins can edit meals, homepage copy, and photographs at `/admin`. Local development applies `ADMIN_DEV_TOKEN` automatically (`dev-admin-token` unless you set another). Uploaded photographs persist in `data/local-catalog.json` and are served from `/api/media`. Full operations CMS remains Phase 8.
+The public catalog is a demo seed (`src/infrastructure/seed/ghana-menu.ts`). Admins can edit meals, homepage copy, photographs, delivery pricing, promotions, and pause ordering at `/admin`. Local development applies `ADMIN_DEV_TOKEN` automatically (`dev-admin-token` unless you set another). Uploaded photographs persist in `data/local-catalog.json` and are served from `/api/media`.

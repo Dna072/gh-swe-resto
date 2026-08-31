@@ -13,7 +13,9 @@ const BY_CODE: Record<string, MessageKey> = {
   INTERNAL: "errors.generic",
   IDEMPOTENCY_CONFLICT: "checkout.placeError",
   INVALID_TRANSITION: "order.cancelError",
-  PROMOTION_INVALID: "errors.validation",
+  PROMOTION_INVALID: "errors.promo",
+  ORDERING_PAUSED: "errors.paused",
+  RATE_LIMITED: "errors.rateLimited",
 };
 
 export function customerErrorMessage(

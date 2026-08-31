@@ -5,6 +5,7 @@ import { LocalizedPageBanner } from "@/components/brand/localized-page-banner";
 import { Reveal, RevealGroup } from "@/components/brand/reveal";
 import { LocalizedCategoryDescription, LocalizedCategoryName } from "@/components/storefront/localized-category";
 import { TrackView } from "@/components/storefront/track-view";
+import { OrderingPausedBanner } from "@/components/storefront/ordering-paused-banner";
 import { localizeCatalog } from "@/lib/i18n/catalog";
 import { getLocale, getTranslator } from "@/lib/i18n/server";
 import { soldOut } from "@/lib/menu/display";
@@ -34,6 +35,11 @@ export default async function MenuPage() {
           titleKey="menuPage.title"
           descriptionKey="menuPage.description"
         />
+        {catalog.orderingPaused ? (
+          <div className="mx-auto max-w-4xl px-4">
+            <OrderingPausedBanner />
+          </div>
+        ) : null}
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-20 px-4 py-16 sm:py-24">
           {catalog.categories.map((category) => {
             const items = catalog.items.filter((item) => item.categoryId === category.id);

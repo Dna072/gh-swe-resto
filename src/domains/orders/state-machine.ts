@@ -25,6 +25,7 @@ const STATUS_TIMESTAMPS: Partial<Record<OrderStatus, keyof Order>> = {
   COURIER_ASSIGNED: "dispatchedAt",
   DELIVERED: "deliveredAt",
   CANCELLED: "cancelledAt",
+  REFUNDED: "refundedAt",
 };
 
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {

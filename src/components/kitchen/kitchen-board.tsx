@@ -153,6 +153,23 @@ export function KitchenBoard() {
                     {order.specialInstructions ? (
                       <p className="mt-2 text-sm text-earth">{order.specialInstructions}</p>
                     ) : null}
+                    {order.fulfillment !== "PICKUP" ? (
+                      <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                        Delivery: {order.deliveryStatus.replaceAll("_", " ").toLowerCase()}
+                      </p>
+                    ) : null}
+                    {order.trackingUrl ? (
+                      <p className="mt-2">
+                        <a
+                          href={order.trackingUrl}
+                          className="text-sm text-earth underline-offset-4 hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Track courier
+                        </a>
+                      </p>
+                    ) : null}
                     <div className="mt-3 flex items-center justify-between">
                       <Price ore={order.totalOre} />
                       <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">

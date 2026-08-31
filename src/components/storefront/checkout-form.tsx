@@ -56,7 +56,13 @@ type CartQuoteResult = {
   error: string | null;
 };
 
-export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
+export function CheckoutForm({
+  restaurantId,
+  orderingPaused = false,
+}: {
+  restaurantId: string;
+  orderingPaused?: boolean;
+}) {
   const t = useT();
   const { locale } = useLocale();
   const cart = useCart();
@@ -88,6 +94,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
   const [showMap, setShowMap] = useState(false);
   const [cartResult, setCartResult] = useState<CartQuoteResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoCode, setPromoCode] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -226,7 +234,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     [cart.lines],
   );
 
-  const cartKey = `${deliveryFeeOre}:${JSON.stringify(linesPayload)}`;
+  const cartKey = `${deliveryFeeOre}:${promoCode}:${JSON.stringify(linesPayload)}`;
   const canQuoteCart = cart.lines.length > 0 && Boolean(selectedOption);
 
   useEffect(() => {
@@ -238,12 +246,13 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     void fetch("/api/cart/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        restaurantId,
-        lines: linesPayload,
-        deliveryFeeOre,
-        guestSessionId: analyticsSessionId(),
-      }),
+        body: JSON.stringify({
+          restaurantId,
+          lines: linesPayload,
+          deliveryFeeOre,
+          guestSessionId: analyticsSessionId(),
+          promotionCode: promoCode || undefined,
+        }),
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -265,7 +274,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
         setCartResult({ key: requestKey, quote: null, error: t("cart.priceError") });
       });
     return () => controller.abort();
-  }, [canQuoteCart, cartKey, deliveryFeeOre, linesPayload, restaurantId, t]);
+  }, [canQuoteCart, cartKey, deliveryFeeOre, linesPayload, promoCode, restaurantId, t]);
 
   const cartQuote = canQuoteCart && cartResult?.key === cartKey ? cartResult.quote : null;
   const quoteError = canQuoteCart && cartResult?.key === cartKey ? cartResult.error : null;
@@ -329,6 +338,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
           },
           deliveryProvider: selectedOption.provider,
           specialInstructions: values.specialInstructions?.trim() || undefined,
+          promotionCode: promoCode || undefined,
           guestSessionId: analyticsSessionId(),
         }),
       });
@@ -358,7 +368,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     }
   }
 
-  const canPlace = !submitting && Boolean(cartQuote) && Boolean(selectedOption) && Boolean(scheduledFor);
+  const canPlace =
+    !submitting && !orderingPaused && Boolean(cartQuote) && Boolean(selectedOption) && Boolean(scheduledFor);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-[1fr_20rem]">
@@ -507,6 +518,27 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
         <Field id="notes" label={t("checkout.notes")}>
           <Textarea id="notes" maxLength={300} {...form.register("specialInstructions")} />
         </Field>
+
+        <fieldset className="grid gap-3">
+          <legend className="font-heading text-2xl">{t("checkout.promo")}</legend>
+          <p className="text-sm text-muted-foreground">{t("checkout.promoHint")}</p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              id="promo"
+              value={promoInput}
+              onChange={(event) => setPromoInput(event.target.value.toUpperCase())}
+              autoComplete="off"
+            />
+            <Button
+              type="button"
+              size="touch"
+              variant="outline"
+              onClick={() => setPromoCode(promoInput.trim().toUpperCase())}
+            >
+              {t("checkout.promoApply")}
+            </Button>
+          </div>
+        </fieldset>
       </div>
 
       <aside className="h-fit rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
@@ -532,6 +564,18 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
                 <Price ore={cartQuote.deliveryFeeOre} size="sm" />
               </dd>
             </div>
+            {cartQuote.discountTotalOre > 0 ? (
+              <div className="flex justify-between gap-3 text-earth">
+                <dt>
+                  {cartQuote.promotionCode
+                    ? t("checkout.promoApplied", { code: cartQuote.promotionCode })
+                    : t("cart.discount")}
+                </dt>
+                <dd>
+                  −<Price ore={cartQuote.discountTotalOre} size="sm" />
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between gap-3 font-medium">
               <dt>{t("cart.total")}</dt>
               <dd>
@@ -540,6 +584,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
             </div>
           </dl>
         ) : null}
+        {orderingPaused ? <p className="mt-4 text-sm text-earth">{t("checkout.paused")}</p> : null}
         <Button size="touch" className="mt-6 w-full" type="submit" disabled={!canPlace}>
           {submitting ? t("checkout.placing") : t("checkout.place")}
         </Button>

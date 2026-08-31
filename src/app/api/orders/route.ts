@@ -4,6 +4,7 @@ import { createOrderSchema } from "@/lib/validation/checkout";
 import { quoteDelivery, resolveAdvanceDeliverySlot } from "@/server/checkout";
 import {
   getDeliverySettings,
+  ensureRestaurantSettings,
   orderService,
   recallGuestToken,
   rememberGuestToken,
@@ -11,9 +12,11 @@ import {
 } from "@/server/composition";
 import { errorResponse } from "@/server/http";
 import { toPublicOrder } from "@/server/public-order";
+import { assertRateLimit, rateLimitKey } from "@/server/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    assertRateLimit(rateLimitKey(request, "orders"), 20, 10 * 60 * 1000);
     const idempotencyKey = request.headers.get("Idempotency-Key")?.trim() ?? "";
     if (!idempotencyKey) {
       throw new AppError("VALIDATION", "An idempotency key is required.");
@@ -42,6 +45,7 @@ export async function POST(request: Request) {
       municipality: body.deliveryAddress.municipality ?? quote.address?.municipality,
     };
     const settings = getDeliverySettings();
+    const restaurant = await ensureRestaurantSettings();
 
     const created = await orderService.create({
       restaurantId: body.restaurantId,
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
       deliveryQuoteId: quote.quoteId,
       estimatedDeliveryTime: scheduledFor,
       scheduledFor,
+      orderingPaused: restaurant.orderingPaused,
       deliveryPricing: {
         provider: quote.provider,
         providerQuoteId: quote.quoteId,

@@ -34,6 +34,12 @@ export default function AdminHomePage() {
         <Button size="touch" variant="outline" asChild>
           <Link href="/admin/delivery">Delivery</Link>
         </Button>
+        <Button size="touch" variant="outline" asChild>
+          <Link href="/admin/promotions">Promotions</Link>
+        </Button>
+        <Button size="touch" variant="outline" asChild>
+          <Link href="/admin/settings">Settings</Link>
+        </Button>
       </div>
       <AnalyticsDashboard />
       <SeedCatalogButton />

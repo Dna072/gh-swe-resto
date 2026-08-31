@@ -71,6 +71,31 @@ export class FirestorePromotionRepository implements PromotionRepository {
       .get();
     return snap.exists ? (snap.data() as PromotionUsage) : null;
   }
+
+  async list(restaurantId: string): Promise<Promotion[]> {
+    const snap = await this.db
+      .doc(restaurantPath(restaurantId))
+      .collection(restaurantSub.promotions)
+      .withConverter(typedConverter<Promotion>())
+      .limit(100)
+      .get();
+    return snap.docs.map((doc) => doc.data());
+  }
+
+  async save(promotion: Promotion): Promise<Promotion> {
+    const next: Promotion = {
+      ...promotion,
+      code: promotion.code.trim().toUpperCase(),
+      updatedAt: new Date().toISOString(),
+    };
+    await this.db
+      .doc(restaurantPath(next.restaurantId))
+      .collection(restaurantSub.promotions)
+      .withConverter(typedConverter<Promotion>())
+      .doc(next.id)
+      .set(next, { merge: true });
+    return next;
+  }
 }
 
 export class FirestoreCustomerRepository implements CustomerRepository {

@@ -57,3 +57,7 @@ export function homepageContentPath(restaurantId: string): string {
 export function deliverySettingsPath(restaurantId: string): string {
   return `${restaurantPath(restaurantId)}/${restaurantSub.content}/deliverySettings`;
 }
+
+export function restaurantSettingsPath(restaurantId: string): string {
+  return `${restaurantPath(restaurantId)}/${restaurantSub.content}/restaurantSettings`;
+}

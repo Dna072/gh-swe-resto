@@ -37,6 +37,7 @@ export function toPublicMenuItem(
   categoryName: string,
   groups: ModifierGroup[],
   at = new Date(),
+  paused = false,
 ): PublicMenuItem {
   const displayPriceOre = pricingService.resolveItemPrice(item, at, seedPricingCalendar);
   const photo = primaryImage(item.images);
@@ -54,7 +55,7 @@ export function toPublicMenuItem(
     hasPhotograph: Boolean(photo),
     displayPriceOre,
     displayPriceLabel: formatSek(displayPriceOre),
-    availability: availabilityStatus(item),
+    availability: availabilityStatus(item, paused),
     remainingPortions: item.inventoryTracked ? (item.availableQuantity ?? 0) : null,
     featured: item.isFeatured,
     popular: item.isPopular,

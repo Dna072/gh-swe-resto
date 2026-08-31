@@ -22,6 +22,9 @@ export class CartService {
     if (request.lines.length === 0) {
       throw new AppError("VALIDATION", "Your cart is empty.");
     }
+    if (request.orderingPaused) {
+      throw new AppError("ORDERING_PAUSED", "The kitchen is not taking orders right now.");
+    }
     const at = request.at ?? new Date();
     const pricedLines = [];
     for (const line of request.lines) {

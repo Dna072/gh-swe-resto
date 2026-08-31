@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { orderService, paymentProvider, paymentService } from "@/server/composition";
 import { errorResponse } from "@/server/http";
+import { notifyOrder } from "@/server/order-events";
 import { toPublicOrder } from "@/server/public-order";
+import { assertRateLimit, rateLimitKey } from "@/server/rate-limit";
 import { getEnv } from "@/lib/env";
 import { MockPaymentProvider } from "@/infrastructure/payments/mock-provider";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    assertRateLimit(rateLimitKey(request, "pay"), 20, 10 * 60 * 1000);
     const { id } = await context.params;
     const token = new URL(request.url).searchParams.get("token") ?? undefined;
     if (!token) {
@@ -23,7 +26,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     });
     if (session.provider === "mock" && paymentProvider instanceof MockPaymentProvider) {
       paymentProvider.succeed(session.providerPaymentId);
-      const paid = await orderService.markPaid(id, token);
+      const paid = await orderService.markPaid(id, token, { providerPaymentId: session.providerPaymentId });
+      await notifyOrder(paid);
       return NextResponse.json({ order: toPublicOrder(paid), payment: { ...session, status: "succeeded" } });
     }
     return NextResponse.json({ order: toPublicOrder(order), payment: session });
