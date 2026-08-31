@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import "maplibre-gl/dist/maplibre-gl.css";
 import { cn } from "@/lib/utils";
-import { osmRasterStyle } from "@/lib/maps/style";
-import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
-import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
-import { bindMapLibreWorker } from "@/lib/maps/worker";
+import { logMapError } from "@/lib/maps/diagnostics";
+import { loadGoogleMaps } from "@/lib/maps/load-google";
 
 export function LocationMap({
   lat,
@@ -32,69 +29,58 @@ export function LocationMap({
       return;
     }
     let cancelled = false;
-    let map: import("maplibre-gl").Map | undefined;
-    let marker: import("maplibre-gl").Marker | undefined;
-    let detachDiagnostics: (() => void) | undefined;
+    let map: google.maps.Map | undefined;
+    let marker: google.maps.Marker | undefined;
 
-    void import("maplibre-gl").then(async (maplibregl) => {
-      if (cancelled || !container.current) {
-        return;
-      }
-      bindMapLibreWorker(maplibregl);
-      const loaded = await loadBrowserMapStyle();
-      if (cancelled || !container.current) {
-        return;
-      }
-      try {
-        map = new maplibregl.Map({
-          container: container.current,
-          style: loaded.style,
-          center: [lng, lat],
-          zoom: 16,
-          attributionControl: { compact: true },
-          transformRequest: mapLibreTransformLogger(),
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Map failed to start.";
-        logMapError("map_constructor_failed", { component: "location-map", message });
-        return;
-      }
-      let usedRasterFallback = loaded.usedFallback;
-      detachDiagnostics = attachMapDiagnostics(
-        map,
-        {
-          component: "location-map",
-          provider: loaded.config.provider,
-          styleUrl: loaded.config.styleUrl,
-        },
-        (message, sourceId) => {
-          if (usedRasterFallback || !map || !isTileNetworkError(message, sourceId)) {
-            return;
-          }
-          usedRasterFallback = true;
-          logMapWarn("vector_tiles_failed_using_osm_raster", { component: "location-map", message });
-          map.setStyle(osmRasterStyle());
-        },
-      );
-      marker = new maplibregl.Marker({
-        draggable: Boolean(onMoveRef.current),
-        color: "#8B5A2B",
-      })
-        .setLngLat([lng, lat])
-        .addTo(map);
-      marker.on("dragend", () => {
-        const position = marker?.getLngLat();
-        if (position) {
-          onMoveRef.current?.(position.lat, position.lng);
+    void loadGoogleMaps()
+      .then(() => {
+        if (cancelled || !container.current || typeof google === "undefined") {
+          return;
         }
+        map = new google.maps.Map(container.current, {
+          center: { lat, lng },
+          zoom: 16,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          rotateControl: false,
+          clickableIcons: false,
+          gestureHandling: "greedy",
+          keyboardShortcuts: false,
+        });
+        marker = new google.maps.Marker({
+          map,
+          position: { lat, lng },
+          draggable: Boolean(onMoveRef.current),
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#8B5A2B",
+            fillOpacity: 1,
+            strokeColor: "#C4A35A",
+            strokeWeight: 2,
+          },
+        });
+        marker.addListener("dragend", () => {
+          const position = marker?.getPosition();
+          if (position) {
+            onMoveRef.current?.(position.lat(), position.lng());
+          }
+        });
+      })
+      .catch((error: unknown) => {
+        if (cancelled || !container.current) {
+          return;
+        }
+        const message = error instanceof Error ? error.message : "Google Maps failed to start.";
+        logMapError("google_map_failed", { component: "location-map", message });
+        container.current.textContent = message;
+        container.current.classList.add("grid", "place-items-center", "p-6", "text-sm", "text-muted-foreground");
       });
-    });
 
     return () => {
       cancelled = true;
-      detachDiagnostics?.();
-      marker?.remove();
-      map?.remove();
+      marker?.setMap(null);
     };
     // Recreate only when the selected place changes; parent should remount with a place key.
     // eslint-disable-next-line react-hooks/exhaustive-deps

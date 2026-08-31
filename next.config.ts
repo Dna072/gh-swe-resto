@@ -1,15 +1,14 @@
 import type { NextConfig } from "next";
 
-/** Tile/style hosts used by MapLibre (MapTiler, OpenFreeMap, OSM raster fallback). */
-const MAP_ORIGINS = [
-  "https://tiles.openfreemap.org",
-  "https://*.openfreemap.org",
-  "https://openfreemap.org",
-  "https://api.maptiler.com",
-  "https://*.maptiler.com",
-  "https://cdn.maptiler.com",
-  "https://tile.openstreetmap.org",
-  "https://*.tile.openstreetmap.org",
+/** Hosts used by the Google Maps JavaScript API (tiles, scripts, sprites). */
+const GOOGLE_MAP_ORIGINS = [
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
+  "https://*.googleapis.com",
+  "https://*.gstatic.com",
+  "https://*.ggpht.com",
+  "https://*.google.com",
+  "https://*.googleusercontent.com",
 ].join(" ");
 
 const nextConfig: NextConfig = {
@@ -82,15 +81,15 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               development
-                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://apis.google.com"
-                : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://apis.google.com",
-              "style-src 'self' 'unsafe-inline'",
-              `img-src 'self' data: blob: https://storage.googleapis.com ${MAP_ORIGINS}`,
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://apis.google.com https://maps.googleapis.com https://maps.gstatic.com"
+                : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://apis.google.com https://maps.googleapis.com https://maps.gstatic.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              `img-src 'self' data: blob: https://storage.googleapis.com ${GOOGLE_MAP_ORIGINS}`,
               development
                 ? "connect-src 'self' ws: wss: http: https:"
-                : `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com ${MAP_ORIGINS} wss://*.firebaseio.com`,
+                : `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://api.stripe.com https://maps.gstatic.com wss://*.firebaseio.com`,
               "frame-src https://js.stripe.com https://hooks.stripe.com",
-              `font-src 'self' data: ${MAP_ORIGINS}`,
+              `font-src 'self' data: https://fonts.gstatic.com ${GOOGLE_MAP_ORIGINS}`,
               "worker-src 'self' blob:",
               "child-src 'self' blob:",
               "object-src 'none'",

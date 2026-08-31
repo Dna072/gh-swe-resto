@@ -17,8 +17,8 @@ The storefront, checkout, kitchen board, and admin run as **one Cloud Run servic
 | `npx firebase-tools login` if rules deploy fails | Maybe | Deploys `firestore.rules`, indexes, and `storage.rules` |
 | A token the team will paste on `/admin` | Optional | Defaults to `showcase-admin-token` |
 | Stripe / Wolt | **No** | Still mocked. We will wire them when you have sandbox keys |
-| Google Maps API key | Optional | Address search. Not required for drawing delivery areas |
-| MapTiler key | Optional | `MAPTILER_API_KEY` (geocoding + browser tiles via `/api/maps/config`) and/or `NEXT_PUBLIC_MAPTILER_KEY`. Cloud Run reads these at request time — you do not need to rebuild. Google Maps keys are for address search, not the drawing map. Without MapTiler, the map uses OpenFreeMap, then OSM raster if that fails. |
+| Google Maps API key | **Yes for the drawing map** | Enable **Maps JavaScript API** on `GOOGLE_MAPS_API_KEY` (or `GOOGLE_MAPS_SERVER_KEY`). Also used for address search. Restrict HTTP referrers to your Cloud Run URL and `mfcuisine.se`. |
+| MapTiler key | Optional | `MAPTILER_API_KEY` for server geocoding only. The drawing map uses Google Maps. |
 
 The agent cannot create a GCP project, enable billing, or accept Firebase terms on your account. After you have a project id, run the script (or share the id and we can retry if this environment has `gcloud` auth).
 
@@ -106,14 +106,12 @@ Mount from Secret Manager when you leave the mock providers:
 - `STRIPE_WEBHOOK_SECRET`
 - `WOLT_DRIVE_API_KEY`
 - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (SES only)
-- `GOOGLE_MAPS_SERVER_KEY` (Places Autocomplete, Geocoding, Distance Matrix — restrict the key to those APIs)
-- `MAPTILER_API_KEY` (geocoding and MapLibre tiles; the tile style URL is exposed to the browser)
+- `GOOGLE_MAPS_SERVER_KEY` / `GOOGLE_MAPS_API_KEY` (Maps JavaScript API for the drawing map, plus Places/Geocoding if you use Google for addresses — restrict HTTP referrers)
+- `MAPTILER_API_KEY` (optional server geocoding only)
 
-`NEXT_PUBLIC_*` values compiled into the client are frozen at **image build** time. Map tiles do **not** depend on that: `GET /api/maps/config` reads `MAPTILER_API_KEY` / `NEXT_PUBLIC_MAPTILER_KEY` / `NEXT_PUBLIC_MAP_STYLE_URL` from the Cloud Run service env on each request.
+`GET /api/maps/config` reads the Google Maps browser key from Cloud Run env at request time (`NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, then `GOOGLE_MAPS_API_KEY`, then `GOOGLE_MAPS_SERVER_KEY`). You do not need to rebuild the image when the key changes.
 
-MapLibre v6 needs `/maplibre/maplibre-gl-worker.mjs` next to `maplibre-gl-shared.mjs`. `npm run dev` and `npm run build` copy those from `node_modules` (`predev` / `prebuild`). Without them the map chrome loads but streets never appear.
-
-Production CSP allows MapTiler (`api.maptiler.com`), OpenFreeMap, and OpenStreetMap raster tiles. If the vector style still fails, the admin map falls back to OSM raster so the drawing canvas is not a blank grey panel.
+Production CSP allows `maps.googleapis.com` and `maps.gstatic.com` so the Maps JavaScript API can load.
 
 Public Firebase web config may be `NEXT_PUBLIC_*`. Do not put admin credentials in `NEXT_PUBLIC_*`.
 
