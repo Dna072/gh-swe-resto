@@ -31,6 +31,9 @@ export default function AdminHomePage() {
         <Button size="touch" variant="outline" asChild>
           <Link href="/admin/analytics">Full analytics</Link>
         </Button>
+        <Button size="touch" variant="outline" asChild>
+          <Link href="/admin/delivery">Delivery</Link>
+        </Button>
       </div>
       <AnalyticsDashboard />
       <SeedCatalogButton />

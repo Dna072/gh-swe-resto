@@ -44,3 +44,11 @@ export function multiplyOre(unit: Ore, quantity: number): Ore {
 export function clampNonNegativeOre(value: Ore): Ore {
   return Math.max(0, assertOre(value));
 }
+
+/** `percent` is 20 for 20%. Rounds to the nearest öre. */
+export function percentOfOre(amount: Ore, percent: number): Ore {
+  if (!Number.isFinite(percent)) {
+    throw new Error("percent must be finite");
+  }
+  return Math.round((assertOre(amount) * percent) / 100);
+}

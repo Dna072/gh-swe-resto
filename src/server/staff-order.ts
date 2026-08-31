@@ -27,6 +27,7 @@ export function toStaffOrder(order: Order): StaffOrder {
     estimatedDeliveryTime: order.estimatedDeliveryTime,
     scheduledFor: order.scheduledFor,
     createdAt: order.createdAt,
+    trackingUrl: order.trackingUrl,
     actions: kitchenActions(order),
   };
 }

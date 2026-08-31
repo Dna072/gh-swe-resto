@@ -26,6 +26,7 @@ export interface CreateOrderRequest extends CartQuoteRequest {
   estimatedDeliveryTime?: string;
   scheduledFor?: string;
   deliveryQuoteId?: string;
+  deliveryPricing?: import("@/domains/delivery/models").DeliveryPricingSnapshot;
 }
 
 export type ReorderLine = {
@@ -129,6 +130,7 @@ export class OrderService {
         fulfillment: request.fulfillment === "PICKUP" ? "PICKUP" : "DELIVERY",
         deliveryProvider: request.fulfillment === "PICKUP" ? undefined : request.deliveryProvider,
         deliveryId: request.deliveryQuoteId,
+        deliveryPricing: request.deliveryPricing,
         deliveryAddressSnapshot: request.deliveryAddress,
         customerSnapshot: request.customer,
         estimatedDeliveryTime: request.estimatedDeliveryTime ?? request.scheduledFor,

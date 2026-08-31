@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { createOrderSchema } from "@/lib/validation/checkout";
 import { quoteDelivery, resolveAdvanceDeliverySlot } from "@/server/checkout";
 import {
+  getDeliverySettings,
   orderService,
   recallGuestToken,
   rememberGuestToken,
@@ -33,8 +34,14 @@ export async function POST(request: Request) {
     }
 
     const scheduledFor = resolveAdvanceDeliverySlot(body.scheduledFor);
-    const quote = await quoteDelivery(body.deliveryAddress, 0);
-    const deliveryAddress = quote.address ?? body.deliveryAddress;
+    const quote = await quoteDelivery(body.deliveryAddress, 0, body.deliveryProvider);
+    const deliveryAddress = {
+      ...(quote.address ?? body.deliveryAddress),
+      apartment: body.deliveryAddress.apartment,
+      line2: body.deliveryAddress.line2,
+      municipality: body.deliveryAddress.municipality ?? quote.address?.municipality,
+    };
+    const settings = getDeliverySettings();
 
     const created = await orderService.create({
       restaurantId: body.restaurantId,
@@ -46,7 +53,7 @@ export async function POST(request: Request) {
         guestSessionId: body.guestSessionId,
       },
       deliveryAddress,
-      deliveryFeeOre: quote.feeOre,
+      deliveryFeeOre: quote.customerDeliveryFeeOre,
       promotionCode: body.promotionCode,
       guestSessionId: body.guestSessionId,
       idempotencyKey,
@@ -56,6 +63,20 @@ export async function POST(request: Request) {
       deliveryQuoteId: quote.quoteId,
       estimatedDeliveryTime: scheduledFor,
       scheduledFor,
+      deliveryPricing: {
+        provider: quote.provider,
+        providerQuoteId: quote.quoteId,
+        providerDeliveryCostOre: quote.providerDeliveryCostOre,
+        customerDeliveryFeeOre: quote.customerDeliveryFeeOre,
+        restaurantMarkupOre: quote.restaurantMarkupOre,
+        restaurantSubsidyOre: quote.restaurantSubsidyOre,
+        pricingStrategy: quote.pricingStrategy,
+        ceilingTriggered: quote.ceilingTriggered,
+        quotedAt: quote.quotedAt,
+        quoteExpiresAt: quote.expiresAt,
+        estimatedDeliveryMinutes: quote.etaMinutes,
+        markupCeilingOre: settings.pricing.markupCeilingOre,
+      },
     });
 
     rememberGuestToken(created.order.id, idempotencyKey, created.accessToken);

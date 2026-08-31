@@ -24,6 +24,7 @@ export type StaffOrder = {
   estimatedDeliveryTime?: string;
   scheduledFor?: string;
   createdAt: string;
+  trackingUrl?: string;
   actions: KitchenAction[];
 };
 

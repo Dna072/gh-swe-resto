@@ -235,6 +235,13 @@ export function OrderConfirmation({
           </>
         )}
       </p>
+      {order.trackingUrl ? (
+        <p>
+          <a href={order.trackingUrl} className="text-earth underline-offset-4 hover:underline" target="_blank" rel="noreferrer">
+            {t("order.track")}
+          </a>
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row">
         {order.payable ? (
           <Button size="touch" disabled={busy} onClick={() => void pay()}>

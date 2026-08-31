@@ -22,7 +22,7 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     delivery: {
       eyebrow: "Delivery",
       title: "Do we reach your door?",
-      body: "Enter an Uppsala address or postcode. We will tell you if we deliver there, the fee, and an estimated time.",
+      body: "We cook in Uppsala today and are expanding. Search your address to see if we deliver there.",
     },
     promotional: {
       eyebrow: "The list",

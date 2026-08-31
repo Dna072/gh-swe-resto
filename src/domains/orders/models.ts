@@ -1,5 +1,6 @@
 import type { AddressSnapshot, CustomerSnapshot, RestaurantId, Timestamped } from "@/domains/shared/types";
 import type { Ore } from "@/lib/money";
+import type { DeliveryPricingSnapshot } from "@/domains/delivery/models";
 
 export const ORDER_STATUSES = [
   "PENDING_PAYMENT",
@@ -93,6 +94,8 @@ export interface Order extends Timestamped {
   deliveryProvider?: string;
   deliveryId?: string;
   trackingUrl?: string;
+  deliveryPricing?: DeliveryPricingSnapshot;
+  providerDeliveryId?: string;
   deliveryAddressSnapshot: AddressSnapshot;
   customerSnapshot: CustomerSnapshot;
   estimatedPreparationTime?: string;

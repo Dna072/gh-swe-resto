@@ -53,3 +53,7 @@ export function promotionUsagePath(promotionId: string, customerKey: string): st
 export function homepageContentPath(restaurantId: string): string {
   return `${restaurantPath(restaurantId)}/${restaurantSub.content}/homepage`;
 }
+
+export function deliverySettingsPath(restaurantId: string): string {
+  return `${restaurantPath(restaurantId)}/${restaurantSub.content}/deliverySettings`;
+}

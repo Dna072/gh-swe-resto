@@ -199,12 +199,47 @@ export async function placeDetails(
   };
 }
 
+export async function reverseGeocodeAddress(lat: number, lng: number, language = "sv"): Promise<AddressSnapshot | null> {
+  const url = new URL(GEOCODE_URL);
+  url.searchParams.set("latlng", `${lat},${lng}`);
+  url.searchParams.set("language", language);
+  url.searchParams.set("region", "se");
+  url.searchParams.set("key", requireKey());
+  const body = await mapsGet(url);
+  if (body.status !== "OK" || !Array.isArray(body.results) || body.results.length === 0) {
+    return null;
+  }
+  const first = body.results[0] as {
+    formatted_address?: string;
+    address_components?: unknown;
+    geometry?: unknown;
+  };
+  const geometry = readGeometry(first.geometry);
+  const addressComponents = readComponents(first.address_components);
+  const value = (type: string) => addressComponents.find((entry) => entry.types.includes(type))?.longName ?? "";
+  const line1 =
+    [value("route"), value("street_number")].filter(Boolean).join(" ") || first.formatted_address || "";
+  return {
+    line1,
+    line2: value("subpremise") || undefined,
+    postalCode: value("postal_code").replace(/\s+/g, ""),
+    city: value("postal_town") || value("locality") || "",
+    country: "SE",
+    lat: geometry?.lat ?? lat,
+    lng: geometry?.lng ?? lng,
+    formatted: first.formatted_address,
+    apartment: value("subpremise") || undefined,
+    municipality: value("administrative_area_level_2") || undefined,
+  };
+}
+
 export function createGoogleMapsPort(): MapsPort | null {
   if (!googleMapsServerKey()) {
     return null;
   }
   return {
     geocode: geocodeAddress,
+    reverseGeocode: reverseGeocodeAddress,
     routeStatus: distanceMatrixStatus,
     autocomplete: autocompletePlaces,
     placeDetails,

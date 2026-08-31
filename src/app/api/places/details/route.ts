@@ -13,9 +13,6 @@ export async function POST(request: Request) {
   try {
     const body = bodySchema.parse(await request.json());
     const maps = mapsPort();
-    if (!maps) {
-      return NextResponse.json({ address: null, mapsConfigured: false });
-    }
     const locale = await getLocale();
     const address = await maps.placeDetails(body.placeId, {
       language: locale,

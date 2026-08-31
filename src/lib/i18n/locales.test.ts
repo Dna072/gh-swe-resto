@@ -25,9 +25,7 @@ describe("detectLocaleFromAcceptLanguage", () => {
 describe("translator", () => {
   it("interpolates Swedish copy", () => {
     const t = createTranslator("sv");
-    expect(t("delivery.yes", { zone: "Uppsala centrum", fee: "49,00 kr", eta: 35 })).toContain(
-      "Uppsala centrum",
-    );
+    expect(t("delivery.yes", { name: "Wolt", fee: "79,00 kr", eta: 35 })).toContain("Wolt");
     expect(t("home.hero.title")).toMatch(/Meridian Fusion/i);
     expect(t("home.hero.subtitle")).not.toMatch(/boka bord/i);
     expect(t("cart.eyebrow")).toBe("Din order");

@@ -21,6 +21,7 @@ export type RouteStatus = "ok" | "out_of_zone" | "unavailable";
 
 export interface MapsPort {
   geocode(address: AddressSnapshot): Promise<GeocodedPlace | null>;
+  reverseGeocode?(lat: number, lng: number, language?: string): Promise<AddressSnapshot | null>;
   routeStatus(origin: AddressSnapshot, destination: { lat: number; lng: number }): Promise<RouteStatus>;
   autocomplete(
     input: string,
