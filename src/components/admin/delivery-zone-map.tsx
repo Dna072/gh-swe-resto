@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/button";
-import { resolveMapStyle } from "@/lib/maps/style";
+import { osmRasterStyle } from "@/lib/maps/style";
+import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
+import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
 import { isValidPolygon, toGeoJsonRing, uniqueVertices, type LatLng } from "@/lib/geo/polygon";
 
 const UPPSALA: LatLng = { lat: 59.8586, lng: 17.6389 };
@@ -39,6 +41,7 @@ export function DeliveryZoneMap({
   const onPolygonChangeRef = useRef(onPolygonChange);
   const [drawing, setDrawing] = useState(false);
   const [ready, setReady] = useState(false);
+  const [mapNote, setMapNote] = useState<string | null>(null);
 
   useEffect(() => {
     zonesRef.current = zones;
@@ -58,67 +61,100 @@ export function DeliveryZoneMap({
     }
     let cancelled = false;
     let map: import("maplibre-gl").Map | undefined;
+    let detachDiagnostics: (() => void) | undefined;
 
     void import("maplibre-gl").then(async (maplibregl) => {
       if (cancelled || !container.current) {
         return;
       }
-      const style = await resolveMapStyle();
+      const loaded = await loadBrowserMapStyle();
       if (cancelled || !container.current) {
         return;
       }
+      setMapNote(loaded.note);
       try {
         map = new maplibregl.Map({
           container: container.current,
-          style,
+          style: loaded.style,
           center: [UPPSALA.lng, UPPSALA.lat],
           zoom: 12,
           attributionControl: { compact: true },
+          transformRequest: mapLibreTransformLogger(),
         });
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Map failed to start.";
+        logMapError("map_constructor_failed", { component: "delivery-zone-map", message });
         container.current.textContent = "This browser cannot show the map. Try Chrome or Safari.";
         container.current.classList.add("grid", "place-items-center", "p-6", "text-sm", "text-muted-foreground");
+        setMapNote(`constructor failed · ${message}`);
         return;
       }
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-      map.on("load", () => {
+      let usedRasterFallback = loaded.usedFallback;
+      detachDiagnostics = attachMapDiagnostics(
+        map,
+        {
+          component: "delivery-zone-map",
+          provider: loaded.config.provider,
+          styleUrl: loaded.config.styleUrl,
+        },
+        (message, sourceId) => {
+          if (usedRasterFallback || !map || !isTileNetworkError(message, sourceId)) {
+            setMapNote((current) => `${current ?? loaded.note} · ${message}`);
+            return;
+          }
+          usedRasterFallback = true;
+          logMapWarn("vector_tiles_failed_using_osm_raster", { message });
+          setMapNote(`${loaded.note} · tile error, OSM raster fallback · ${message}`);
+          map.setStyle(osmRasterStyle());
+        },
+      );
+      const ensureLayers = () => {
         if (!map) {
           return;
         }
-        map.addSource(SOURCE, { type: "geojson", data: emptyCollection() });
-        map.addLayer({
-          id: `${SOURCE}-fill`,
-          type: "fill",
-          source: SOURCE,
-          paint: {
-            "fill-color": ["case", ["get", "selected"], "#C4A35A", "#8A7A6A"],
-            "fill-opacity": ["case", ["get", "selected"], 0.38, 0.16],
-          },
-        });
-        map.addLayer({
-          id: `${SOURCE}-line`,
-          type: "line",
-          source: SOURCE,
-          paint: {
-            "line-color": ["case", ["get", "selected"], "#8B5A2B", "#8A7A6A"],
-            "line-width": ["case", ["get", "selected"], 2.5, 1.5],
-          },
-        });
-        map.addSource(DRAFT, { type: "geojson", data: emptyCollection() });
-        map.addLayer({
-          id: `${DRAFT}-line`,
-          type: "line",
-          source: DRAFT,
-          paint: {
-            "line-color": "#C4A35A",
-            "line-width": 2,
-            "line-dasharray": [1.4, 1.2],
-          },
-        });
+        if (!map.getSource(SOURCE)) {
+          map.addSource(SOURCE, { type: "geojson", data: emptyCollection() });
+          map.addLayer({
+            id: `${SOURCE}-fill`,
+            type: "fill",
+            source: SOURCE,
+            paint: {
+              "fill-color": ["case", ["get", "selected"], "#C4A35A", "#8A7A6A"],
+              "fill-opacity": ["case", ["get", "selected"], 0.38, 0.16],
+            },
+          });
+          map.addLayer({
+            id: `${SOURCE}-line`,
+            type: "line",
+            source: SOURCE,
+            paint: {
+              "line-color": ["case", ["get", "selected"], "#8B5A2B", "#8A7A6A"],
+              "line-width": ["case", ["get", "selected"], 2.5, 1.5],
+            },
+          });
+        }
+        if (!map.getSource(DRAFT)) {
+          map.addSource(DRAFT, { type: "geojson", data: emptyCollection() });
+          map.addLayer({
+            id: `${DRAFT}-line`,
+            type: "line",
+            source: DRAFT,
+            paint: {
+              "line-color": "#C4A35A",
+              "line-width": 2,
+              "line-dasharray": [1.4, 1.2],
+            },
+          });
+        }
+        const source = map.getSource(SOURCE) as GeoJSONSource | undefined;
+        source?.setData(zonesToCollection(zonesRef.current, selectedRef.current));
         mapRef.current = map;
         setReady(true);
         fitToZones(map, maplibregl, zonesRef.current);
-      });
+      };
+      map.on("load", ensureLayers);
+      map.on("style.load", ensureLayers);
       map.on("click", (event) => {
         if (drawingRef.current) {
           const current = zonesRef.current.find((zone) => zone.key === selectedRef.current);
@@ -150,6 +186,7 @@ export function DeliveryZoneMap({
 
     return () => {
       cancelled = true;
+      detachDiagnostics?.();
       for (const marker of markersRef.current) {
         marker.remove();
       }
@@ -233,6 +270,11 @@ export function DeliveryZoneMap({
         role="application"
         aria-label="Draw delivery area on the map"
       />
+      {process.env.NODE_ENV !== "production" && mapNote ? (
+        <p data-testid="map-diagnostics" className="font-mono text-xs text-muted-foreground">
+          Map: {mapNote}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {drawing ? (
           <>
