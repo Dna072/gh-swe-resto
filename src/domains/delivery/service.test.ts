@@ -44,6 +44,15 @@ describe("DeliveryService", () => {
     ).toBe("uppsala-south");
   });
 
+  it("ignores inactive areas", () => {
+    const inactive: DeliveryZone = { ...zone, active: false };
+    const service = new DeliveryService([new MockDeliveryProvider()], {
+      preferCheapest: true,
+      preferredProviders: ["wolt_drive"],
+    });
+    expect(() => service.validateZone(address, [inactive])).toThrow(/do not deliver/i);
+  });
+
   it("selects the cheapest valid quote", async () => {
     const service = new DeliveryService([new MockDeliveryProvider()], {
       preferCheapest: true,

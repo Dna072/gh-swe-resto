@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/brand/field";
 import { ActionResultDialog } from "@/components/admin/action-result-dialog";
 import { useActionFeedback } from "@/components/admin/use-action-feedback";
 import { adminFetch } from "@/lib/admin/client";
+import { formatPostalCodes } from "@/lib/geo/postal";
 import { formatSek } from "@/lib/money";
-import type { DeliverySettings } from "@/domains/delivery/models";
+import type { DeliverySettings, DeliveryZone } from "@/domains/delivery/models";
 import type { DeliveryPricingConfig, DeliveryPricingStrategy } from "@/domains/delivery/pricing";
 
 const STRATEGIES: Array<{ id: DeliveryPricingStrategy; label: string }> = [
@@ -22,16 +24,52 @@ const STRATEGIES: Array<{ id: DeliveryPricingStrategy; label: string }> = [
 
 const PREVIEW_COSTS = [8000, 10000, 12000];
 
+type ZoneDraft = {
+  key: string;
+  id?: string;
+  name: string;
+  postalCodesText: string;
+  active: boolean;
+};
+
+function toDraft(zone: DeliveryZone): ZoneDraft {
+  return {
+    key: zone.id,
+    id: zone.id,
+    name: zone.name,
+    postalCodesText: formatPostalCodes(zone.postalCodes),
+    active: zone.active,
+  };
+}
+
+function emptyDraft(): ZoneDraft {
+  return {
+    key: `new-${crypto.randomUUID()}`,
+    name: "",
+    postalCodesText: "",
+    active: true,
+  };
+}
+
 export default function AdminDeliveryPage() {
   const [settings, setSettings] = useState<DeliverySettings | null>(null);
+  const [zones, setZones] = useState<ZoneDraft[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"zones" | "settings" | null>(null);
   const { feedback, succeed, fail, close } = useActionFeedback();
 
   useEffect(() => {
-    adminFetch<{ settings: DeliverySettings }>("/api/admin/delivery-settings")
-      .then((body) => setSettings(body.settings))
-      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Could not load delivery settings."));
+    Promise.all([
+      adminFetch<{ settings: DeliverySettings }>("/api/admin/delivery-settings"),
+      adminFetch<{ zones: DeliveryZone[] }>("/api/admin/delivery-zones"),
+    ])
+      .then(([settingsBody, zonesBody]) => {
+        setSettings(settingsBody.settings);
+        setZones(zonesBody.zones.map(toDraft));
+      })
+      .catch((cause: unknown) =>
+        setError(cause instanceof Error ? cause.message : "Could not load delivery settings."),
+      );
   }, []);
 
   const pricing = settings?.pricing;
@@ -45,11 +83,40 @@ export default function AdminDeliveryPage() {
     }));
   }, [pricing]);
 
-  async function save() {
+  async function saveZones() {
+    if (!zones) {
+      return;
+    }
+    setBusy("zones");
+    try {
+      const saved = await adminFetch<{ zones: DeliveryZone[] }>("/api/admin/delivery-zones", {
+        method: "PUT",
+        body: JSON.stringify({
+          zones: zones.map((zone) => ({
+            id: zone.id,
+            name: zone.name,
+            postalCodes: zone.postalCodesText,
+            active: zone.active,
+          })),
+        }),
+      });
+      setZones(saved.zones.map(toDraft));
+      succeed(
+        "Delivery areas saved",
+        "Guests can order when their postcode is in an active area. Last-mile quotes still come from the enabled providers below.",
+      );
+    } catch (cause) {
+      fail("Areas not saved", cause instanceof Error ? cause.message : "Could not save delivery areas.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function saveSettings() {
     if (!settings) {
       return;
     }
-    setBusy(true);
+    setBusy("settings");
     try {
       const saved = await adminFetch<{ settings: DeliverySettings }>("/api/admin/delivery-settings", {
         method: "PUT",
@@ -66,14 +133,14 @@ export default function AdminDeliveryPage() {
     } catch (cause) {
       fail("Not saved", cause instanceof Error ? cause.message : "Could not save delivery settings.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   if (error) {
     return <main className="mx-auto max-w-3xl px-4 py-10 text-destructive">{error}</main>;
   }
-  if (!settings || !pricing) {
+  if (!settings || !pricing || !zones) {
     return <main className="mx-auto max-w-3xl px-4 py-10 text-muted-foreground">Loading delivery settings…</main>;
   }
 
@@ -81,15 +148,93 @@ export default function AdminDeliveryPage() {
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-earth">Admin</p>
-        <h1 className="mt-2 font-heading text-4xl">Delivery</h1>
+        <h1 className="mt-2 font-heading text-4xl">Delivery areas</h1>
         <p className="mt-3 text-muted-foreground">
-          Enable last-mile providers independently. Availability and quotes come from the selected
-          providers — not from a restaurant polygon. Credentials stay in Secret Manager.
+          Guests can place a delivery order only when their postcode is listed in an active area
+          below. After that, checkout quotes the last-mile providers you enable.
         </p>
       </div>
 
+      <section className="grid gap-4 rounded-2xl bg-card p-5 ring-2 ring-gold/35">
+        <div>
+          <h2 className="font-heading text-2xl">Where we deliver</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Add Swedish five-digit postcodes, one per line or separated by commas. Inactive areas
+            are ignored at checkout. Starting Uppsala postcodes are listed below — add others such
+            as 75424 (Fålhagen) if guests should be able to order there.
+          </p>
+        </div>
+        {zones.map((zone, index) => (
+          <div key={zone.key} className="grid gap-3 rounded-xl bg-background p-4 ring-1 ring-foreground/10">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <Field id={`zone-name-${zone.key}`} label="Area name" className="min-w-[12rem] flex-1">
+                <Input
+                  id={`zone-name-${zone.key}`}
+                  value={zone.name}
+                  onChange={(event) => {
+                    const next = [...zones];
+                    next[index] = { ...zone, name: event.target.value };
+                    setZones(next);
+                  }}
+                  placeholder="Uppsala centrum"
+                />
+              </Field>
+              <label className="mt-7 flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={zone.active}
+                  onCheckedChange={(checked) => {
+                    const next = [...zones];
+                    next[index] = { ...zone, active: checked === true };
+                    setZones(next);
+                  }}
+                />
+                Active
+              </label>
+            </div>
+            <Field
+              id={`zone-postcodes-${zone.key}`}
+              label="Postcodes"
+              hint="Example: 75322, 75324, 75424"
+            >
+              <Textarea
+                id={`zone-postcodes-${zone.key}`}
+                className="min-h-28 bg-card"
+                value={zone.postalCodesText}
+                onChange={(event) => {
+                  const next = [...zones];
+                  next[index] = { ...zone, postalCodesText: event.target.value };
+                  setZones(next);
+                }}
+                placeholder={"75322\n75324\n75424"}
+              />
+            </Field>
+            {zones.length > 1 ? (
+              <button
+                type="button"
+                className="justify-self-start text-sm text-destructive underline-offset-4 hover:underline"
+                onClick={() => setZones(zones.filter((_, current) => current !== index))}
+              >
+                Remove area
+              </button>
+            ) : null}
+          </div>
+        ))}
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button type="button" variant="outline" size="touch" onClick={() => setZones([...zones, emptyDraft()])}>
+            Add area
+          </Button>
+          <Button type="button" size="touch" disabled={busy !== null} onClick={() => void saveZones()}>
+            {busy === "zones" ? "Saving areas…" : "Save delivery areas"}
+          </Button>
+        </div>
+      </section>
+
       <section className="grid gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
         <h2 className="font-heading text-2xl">Enabled providers</h2>
+        <p className="text-sm text-muted-foreground">
+          These partners quote fees and ETAs for addresses already inside an active area.
+          Credentials stay in Secret Manager.
+        </p>
         {settings.providers.map((provider, index) => (
           <label key={provider.id} className="flex items-center gap-3 text-sm">
             <Checkbox
@@ -254,8 +399,8 @@ export default function AdminDeliveryPage() {
         </div>
       </section>
 
-      <Button size="touch" disabled={busy} onClick={() => void save()}>
-        {busy ? "Saving…" : "Save delivery settings"}
+      <Button size="touch" disabled={busy !== null} onClick={() => void saveSettings()}>
+        {busy === "settings" ? "Saving…" : "Save delivery settings"}
       </Button>
       <ActionResultDialog feedback={feedback} onClose={close} />
     </main>

@@ -50,6 +50,6 @@ describe("kitchen actions", () => {
       deliveryStatus: "NOT_REQUESTED",
     } as Order;
     expect(fulfillmentOf(order)).toBe("PICKUP");
-    expect(kitchenActions(order).map((action) => action.to)).toEqual(["DELIVERED", "CANCELLED"]);
+    expect(kitchenActions(order).map((action) => action.to)).toEqual(["CLAIM", "DELIVERED", "CANCELLED"]);
   });
 });

@@ -1,4 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
+import type { StaffUser } from "@/domains/auth/models";
 import type { Customer, CustomerAddress } from "@/domains/customers/models";
 import type { CustomerRepository } from "@/domains/customers/repository";
 import type { InventoryItem } from "@/domains/inventory/models";
@@ -10,6 +11,9 @@ import type { PrintJobRepository } from "@/domains/printing/provider";
 import type { Promotion, PromotionUsage } from "@/domains/promotions/models";
 import type { PromotionRepository } from "@/domains/promotions/repository";
 import type { ProcessedWebhookStore } from "@/domains/payments/service";
+import type { Review } from "@/domains/reviews/models";
+import type { ReviewRepository } from "@/domains/reviews/repository";
+import type { StaffUserRepository } from "@/domains/staff/repository";
 import { collections, restaurantPath, restaurantSub } from "./paths";
 import { typedConverter } from "./converters";
 
@@ -115,6 +119,11 @@ export class FirestoreCustomerRepository implements CustomerRepository {
     const snap = await this.db.collection(collections.customers).doc(customerId).collection("addresses").limit(20).get();
     return snap.docs.map((doc) => doc.data() as CustomerAddress);
   }
+
+  async upsert(customer: Customer): Promise<Customer> {
+    await this.db.collection(collections.customers).doc(customer.id).set(customer, { merge: true });
+    return customer;
+  }
 }
 
 export class FirestoreMembershipRepository implements MembershipRepository {
@@ -163,5 +172,66 @@ export class FirestoreWebhookStore implements ProcessedWebhookStore {
       eventId,
       createdAt: new Date().toISOString(),
     });
+  }
+}
+
+export class FirestoreReviewRepository implements ReviewRepository {
+  constructor(private readonly db: Firestore) {}
+
+  private col() {
+    return this.db.collection(collections.reviews).withConverter(typedConverter<Review>());
+  }
+
+  async getById(reviewId: string): Promise<Review | null> {
+    const snap = await this.col().doc(reviewId).get();
+    return snap.exists ? (snap.data() ?? null) : null;
+  }
+
+  async getByOrder(orderId: string): Promise<Review | null> {
+    const snap = await this.col().where("orderId", "==", orderId).limit(1).get();
+    return snap.docs[0]?.data() ?? null;
+  }
+
+  async listByCustomer(customerId: string): Promise<Review[]> {
+    const snap = await this.col().where("customerId", "==", customerId).limit(50).get();
+    return snap.docs.map((doc) => doc.data());
+  }
+
+  async create(review: Review): Promise<Review> {
+    await this.col().doc(review.id).create(review);
+    return review;
+  }
+
+  async update(review: Review): Promise<Review> {
+    await this.col().doc(review.id).set(review, { merge: true });
+    return review;
+  }
+}
+
+export class FirestoreStaffUserRepository implements StaffUserRepository {
+  constructor(private readonly db: Firestore) {}
+
+  private col() {
+    return this.db.collection(collections.users).withConverter(typedConverter<StaffUser>());
+  }
+
+  async getByUid(uid: string): Promise<StaffUser | null> {
+    const snap = await this.col().doc(uid).get();
+    return snap.exists ? (snap.data() ?? null) : null;
+  }
+
+  async getByEmail(email: string): Promise<StaffUser | null> {
+    const snap = await this.col().where("email", "==", email.trim().toLowerCase()).limit(1).get();
+    return snap.docs[0]?.data() ?? null;
+  }
+
+  async listByRestaurant(restaurantId: string): Promise<StaffUser[]> {
+    const snap = await this.col().where("restaurantId", "==", restaurantId).limit(100).get();
+    return snap.docs.map((doc) => doc.data());
+  }
+
+  async save(user: StaffUser): Promise<StaffUser> {
+    await this.col().doc(user.uid).set(user, { merge: true });
+    return user;
   }
 }

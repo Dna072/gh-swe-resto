@@ -65,6 +65,7 @@ const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
     "deliveries:manage",
     "reports:read",
     "users:read",
+    "users:write",
     "audit:read",
     "settings:read",
     "settings:write",

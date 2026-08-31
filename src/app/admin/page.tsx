@@ -11,8 +11,8 @@ export default function AdminHomePage() {
         <h1 className="mt-2 font-heading text-4xl">Kitchen, visitors, and sales</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Watch who visits the storefront, where they come from, and what they do —
-          then follow paid sales. Guests can join the list for menus and discounts.
-          Upload real kitchen photographs only.
+          then follow paid sales. Set delivery postcodes under Delivery so guests in
+          those areas can order. Upload real kitchen photographs only.
         </p>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -32,7 +32,7 @@ export default function AdminHomePage() {
           <Link href="/admin/analytics">Full analytics</Link>
         </Button>
         <Button size="touch" variant="outline" asChild>
-          <Link href="/admin/delivery">Delivery</Link>
+          <Link href="/admin/delivery">Delivery areas</Link>
         </Button>
         <Button size="touch" variant="outline" asChild>
           <Link href="/admin/promotions">Promotions</Link>

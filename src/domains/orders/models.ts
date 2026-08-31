@@ -115,6 +115,9 @@ export interface Order extends Timestamped {
   deliveredAt?: string;
   cancelledAt?: string;
   refundedAt?: string;
+  assignedKitchenStaffId?: string;
+  assignedKitchenStaffName?: string;
+  assignedAt?: string;
 }
 
 export interface OrderListFilters {

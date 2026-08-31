@@ -2,7 +2,7 @@ import type { Order, OrderStatus } from "@/domains/orders/models";
 import { ORDER_TRANSITIONS } from "@/domains/orders/state-machine";
 
 export type KitchenAction = {
-  to: OrderStatus | "SEND_TO_KITCHEN";
+  to: OrderStatus | "SEND_TO_KITCHEN" | "CLAIM";
   label: string;
 };
 
@@ -26,6 +26,8 @@ export type StaffOrder = {
   createdAt: string;
   trackingUrl?: string;
   refundable: boolean;
+  assignedKitchenStaffId?: string;
+  assignedKitchenStaffName?: string;
   actions: KitchenAction[];
 };
 
@@ -57,7 +59,7 @@ export function kitchenActions(order: Order): KitchenAction[] {
     DELIVERY_FAILED: "Delivery failed",
     CANCELLED: "Cancel",
   };
-  return ORDER_TRANSITIONS[order.orderStatus]
+  const actions: KitchenAction[] = ORDER_TRANSITIONS[order.orderStatus]
     .filter((status) => {
       if (status === "COURIER_ASSIGNED" && fulfillment === "PICKUP") {
         return false;
@@ -68,4 +70,11 @@ export function kitchenActions(order: Order): KitchenAction[] {
       return Boolean(labels[status]);
     })
     .map((status) => ({ to: status, label: labels[status] ?? status }));
+  if (["CONFIRMED", "PREPARING", "PACKING", "READY"].includes(order.orderStatus)) {
+    actions.unshift({
+      to: "CLAIM",
+      label: order.assignedKitchenStaffId ? "I'll take this" : "I'm working on this",
+    });
+  }
+  return actions;
 }

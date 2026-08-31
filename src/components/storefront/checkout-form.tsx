@@ -26,6 +26,7 @@ import { localizeMenuName } from "@/lib/i18n/catalog";
 import { analyticsSessionId, track } from "@/lib/analytics/client";
 import type { CartQuote } from "@/domains/cart/models";
 import { rememberGuestOrder } from "@/lib/orders/guest-orders";
+import { customerAuthHeaders, customerFetch } from "@/lib/account/client";
 
 type FormValues = {
   name: string;
@@ -118,6 +119,24 @@ export function CheckoutForm({
   const city = form.watch("city");
   const lat = form.watch("lat");
   const lng = form.watch("lng");
+
+  useEffect(() => {
+    void customerFetch<{ customer: { name: string; email: string; phone?: string } }>("/api/account/me")
+      .then((payload) => {
+        if (!form.getValues("name")) {
+          form.setValue("name", payload.customer.name);
+        }
+        if (!form.getValues("email")) {
+          form.setValue("email", payload.customer.email);
+        }
+        if (payload.customer.phone && !form.getValues("phone")) {
+          form.setValue("phone", payload.customer.phone);
+        }
+      })
+      .catch(() => {
+        /* Guest checkout stays available without an account. */
+      });
+  }, [form]);
   const scheduledFor = form.watch("scheduledFor");
   const apartment = form.watch("apartment");
   const line2 = form.watch("line2");
@@ -313,6 +332,7 @@ export function CheckoutForm({
         headers: {
           "Content-Type": "application/json",
           "Idempotency-Key": idempotencyKey.current,
+          ...customerAuthHeaders(),
         },
         body: JSON.stringify({
           restaurantId,

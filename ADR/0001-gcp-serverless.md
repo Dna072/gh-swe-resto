@@ -10,7 +10,9 @@ The restaurant needs a production ordering platform with low fixed cost and no K
 
 ## Decision
 
-Host the system on Google Cloud: Cloud Run, Firestore, Cloud Storage, Secret Manager, Cloud Tasks, Pub/Sub, Cloud Logging, Cloud Monitoring. Do not use AWS, Azure, Neon, Supabase, Cloud SQL, or GKE in V1.
+Host the system on Google Cloud: Cloud Run, Firestore, Cloud Storage, Secret Manager, Cloud Tasks, Pub/Sub, Cloud Logging, Cloud Monitoring. Do not use Azure, Neon, Supabase, Cloud SQL, or GKE in V1.
+
+Amazon SES is the **only** AWS exception: transactional email (account, password reset, staff invite, and order status). Application data and hosting stay on GCP.
 
 ## Consequences
 

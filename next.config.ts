@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     "@google-cloud/storage",
     "google-auth-library",
     "google-gax",
+    "@aws-sdk/client-sesv2",
   ],
   typescript: {
     tsconfigPath: "tsconfig.build.json",
@@ -22,6 +23,7 @@ const nextConfig: NextConfig = {
       "node_modules/gtoken/**",
       "node_modules/@google-cloud/firestore/**",
       "node_modules/@google-cloud/storage/**",
+      "node_modules/@aws-sdk/client-sesv2/**",
     ],
   },
   outputFileTracingExcludes: {

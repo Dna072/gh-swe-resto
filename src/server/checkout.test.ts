@@ -97,6 +97,35 @@ describe("Phase 3 checkout", () => {
     expect(afterChange?.deliveryPricing?.pricingStrategy).toBe("PASS_THROUGH");
   });
 
+  it("extracts a typed postcode and rejects addresses outside the configured areas", async () => {
+    const quoted = await quoteDeliveryOptions({
+      line1: "Svartbäcksgatan 1, 75322, Uppsala",
+      postalCode: "00000",
+      city: "Uppsala",
+      country: "SE",
+    });
+    expect(quoted.deliverable).toBe(true);
+    expect(quoted.address.postalCode).toBe("75322");
+
+    const east = await quoteDeliveryOptions({
+      line1: "Kantorsgatan 80, 75424, Uppsala",
+      postalCode: "00000",
+      city: "Uppsala",
+      country: "SE",
+    });
+    expect(east.deliverable).toBe(true);
+    expect(east.address.postalCode).toBe("75424");
+
+    await expect(
+      quoteDeliveryOptions({
+        line1: "Testgatan 1",
+        postalCode: "11122",
+        city: "Stockholm",
+        country: "SE",
+      }),
+    ).rejects.toMatchObject({ code: "DELIVERY_UNAVAILABLE" });
+  });
+
   it("defaults to the cheaper sandbox provider when none is selected", async () => {
     const quote = await quoteDelivery(uppsalaAddress);
     expect(quote.provider).toBe("foodora");

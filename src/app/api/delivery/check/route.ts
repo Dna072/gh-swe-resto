@@ -10,6 +10,7 @@ const checkSchema = z.union([
     postalCode: z.string().min(3).max(12),
     city: z.string().max(80).optional(),
     line1: z.string().max(200).optional(),
+    formatted: z.string().max(300).optional(),
     lat: z.number().optional(),
     lng: z.number().optional(),
   }),
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       country: "SE",
       lat: "lat" in body ? body.lat : undefined,
       lng: "lng" in body ? body.lng : undefined,
+      formatted: "formatted" in body ? body.formatted : undefined,
     });
     return NextResponse.json(publicDeliveryPayload(quoted));
   } catch (error) {

@@ -41,6 +41,7 @@ export function toPublicOrder(order: Order): PublicOrder {
     paymentDeferred: false,
     payable: order.orderStatus === "PENDING_PAYMENT" && order.paymentStatus !== "PAID",
     cancellable: order.orderStatus === "PENDING_PAYMENT",
+    reviewEligible: order.orderStatus === "DELIVERED",
     trackingUrl: order.trackingUrl,
     deliveryProviderName: order.deliveryProvider,
     tracking: terminal

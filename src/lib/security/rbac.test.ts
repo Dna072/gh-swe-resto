@@ -10,6 +10,8 @@ describe("RBAC", () => {
     expect(hasPermission("KITCHEN", "orders:refund")).toBe(false);
     expect(hasPermission("FINANCE", "orders:refund")).toBe(true);
     expect(hasPermission("OWNER", "users:write")).toBe(true);
+    expect(hasPermission("MANAGER", "users:write")).toBe(true);
+    expect(hasPermission("KITCHEN", "users:write")).toBe(false);
   });
 
   it("blocks guests from staff actions", () => {

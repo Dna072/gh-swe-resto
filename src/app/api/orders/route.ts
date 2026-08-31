@@ -10,6 +10,7 @@ import {
   rememberGuestToken,
   restaurantIdFromEnv,
 } from "@/server/composition";
+import { optionalSession } from "@/server/customer-auth";
 import { errorResponse } from "@/server/http";
 import { toPublicOrder } from "@/server/public-order";
 import { assertRateLimit, rateLimitKey } from "@/server/rate-limit";
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       line2: body.deliveryAddress.line2,
       municipality: body.deliveryAddress.municipality ?? quote.address?.municipality,
     };
+    const session = await optionalSession(request);
     const settings = getDeliverySettings();
     const restaurant = await ensureRestaurantSettings();
 
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
         email: body.customer.email,
         phone: body.customer.phone,
         guestSessionId: body.guestSessionId,
+        customerId: session?.uid,
       },
       deliveryAddress,
       deliveryFeeOre: quote.customerDeliveryFeeOre,

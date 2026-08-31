@@ -24,6 +24,7 @@ export type PublicOrder = {
   paymentDeferred: boolean;
   payable: boolean;
   cancellable: boolean;
+  reviewEligible: boolean;
   trackingUrl?: string;
   deliveryProviderName?: string;
   tracking: Array<{ status: string; label: string; done: boolean; current: boolean }>;
