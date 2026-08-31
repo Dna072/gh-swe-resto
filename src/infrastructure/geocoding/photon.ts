@@ -6,6 +6,11 @@ const PHOTON_API = "https://photon.komoot.io";
 const USER_AGENT = "MeridianFusionCuisine/1.0 (restaurant-address-search)";
 const UPPSALA = { lat: 59.8586, lng: 17.6389 };
 
+/** Photon only accepts default, de, en, fr — Swedish `sv` returns HTTP 400. */
+export function photonLanguage(language?: string): "en" | "default" {
+  return language === "en" ? "en" : "default";
+}
+
 type PhotonFeature = {
   geometry?: { coordinates?: [number, number] };
   properties?: {
@@ -88,7 +93,7 @@ export class PhotonGeocodingService implements GeocodingService, MapsPort {
   async searchAddress(query: string, options: { language: string }): Promise<PlacePrediction[]> {
     const features = await photonGet("/api/", {
       q: query,
-      lang: options.language === "en" ? "en" : "sv",
+      lang: photonLanguage(options.language),
       limit: "8",
       lat: String(UPPSALA.lat),
       lon: String(UPPSALA.lng),
@@ -110,7 +115,13 @@ export class PhotonGeocodingService implements GeocodingService, MapsPort {
 
   async geocodeAddress(address: AddressSnapshot): Promise<GeocodedPlace | null> {
     const query = address.formatted ?? [address.line1, address.postalCode, address.city].filter(Boolean).join(" ");
-    const features = await photonGet("/api/", { q: query, limit: "1", lang: "sv" });
+    const features = await photonGet("/api/", {
+      q: query,
+      limit: "1",
+      lang: photonLanguage(),
+      lat: String(UPPSALA.lat),
+      lon: String(UPPSALA.lng),
+    });
     const mapped = features[0] ? toAddress(features[0]) : null;
     if (!mapped?.lat || !mapped.lng) {
       return null;
@@ -128,7 +139,7 @@ export class PhotonGeocodingService implements GeocodingService, MapsPort {
     const features = await photonGet("/reverse", {
       lat: String(lat),
       lon: String(lng),
-      lang: language === "en" ? "en" : "sv",
+      lang: photonLanguage(language),
     });
     const mapped = features[0] ? toAddress(features[0]) : null;
     if (!mapped) {
