@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { osmRasterStyle } from "@/lib/maps/style";
 import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
 import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
+import { bindMapLibreWorker } from "@/lib/maps/worker";
 
 export function LocationMap({
   lat,
@@ -39,6 +40,7 @@ export function LocationMap({
       if (cancelled || !container.current) {
         return;
       }
+      bindMapLibreWorker(maplibregl);
       const loaded = await loadBrowserMapStyle();
       if (cancelled || !container.current) {
         return;

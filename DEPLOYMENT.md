@@ -111,6 +111,8 @@ Mount from Secret Manager when you leave the mock providers:
 
 `NEXT_PUBLIC_*` values compiled into the client are frozen at **image build** time. Map tiles do **not** depend on that: `GET /api/maps/config` reads `MAPTILER_API_KEY` / `NEXT_PUBLIC_MAPTILER_KEY` / `NEXT_PUBLIC_MAP_STYLE_URL` from the Cloud Run service env on each request.
 
+MapLibre v6 needs `/maplibre/maplibre-gl-worker.mjs` next to `maplibre-gl-shared.mjs`. `npm run dev` and `npm run build` copy those from `node_modules` (`predev` / `prebuild`). Without them the map chrome loads but streets never appear.
+
 Production CSP allows MapTiler (`api.maptiler.com`), OpenFreeMap, and OpenStreetMap raster tiles. If the vector style still fails, the admin map falls back to OSM raster so the drawing canvas is not a blank grey panel.
 
 Public Firebase web config may be `NEXT_PUBLIC_*`. Do not put admin credentials in `NEXT_PUBLIC_*`.

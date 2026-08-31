@@ -3,6 +3,7 @@ import {
   logMapWarn,
   describeWebGl,
 } from "@/lib/maps/diagnostics";
+import { probeMapLibreWorker } from "@/lib/maps/worker";
 import {
   mapRuntimeConfig,
   redactMapUrl,
@@ -63,8 +64,13 @@ export async function loadBrowserMapStyle(): Promise<BrowserMapStyle> {
     bakedStyleUrl: redactMapUrl(fallbackConfig().styleUrl),
   });
 
-  let config = fallbackConfig();
+  const worker = await probeMapLibreWorker();
   let hint: string | undefined;
+  if (!worker.ok) {
+    hint = `MapLibre worker missing (${worker.status ?? "unreachable"} ${worker.contentType ?? "no content-type"}). Tiles will not paint.`;
+  }
+
+  let config = fallbackConfig();
   try {
     const response = await fetch("/api/maps/config", { cache: "no-store" });
     if (response.ok) {
@@ -74,7 +80,7 @@ export async function loadBrowserMapStyle(): Promise<BrowserMapStyle> {
         styleUrl: body.styleUrl,
         source: body.source,
       };
-      hint = body.diagnostics?.hint;
+      hint = hint ?? body.diagnostics?.hint;
       logMap("runtime_config", {
         provider: config.provider,
         source: config.source,

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { osmRasterStyle } from "@/lib/maps/style";
 import { attachMapDiagnostics, isTileNetworkError, logMapError, logMapWarn, mapLibreTransformLogger } from "@/lib/maps/diagnostics";
 import { loadBrowserMapStyle } from "@/lib/maps/load-browser-style";
+import { bindMapLibreWorker } from "@/lib/maps/worker";
 import { isValidPolygon, toGeoJsonRing, uniqueVertices, type LatLng } from "@/lib/geo/polygon";
 
 const UPPSALA: LatLng = { lat: 59.8586, lng: 17.6389 };
@@ -67,6 +68,7 @@ export function DeliveryZoneMap({
       if (cancelled || !container.current) {
         return;
       }
+      bindMapLibreWorker(maplibregl);
       const loaded = await loadBrowserMapStyle();
       if (cancelled || !container.current) {
         return;
