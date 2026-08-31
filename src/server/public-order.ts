@@ -41,6 +41,8 @@ export function toPublicOrder(order: Order): PublicOrder {
     paymentDeferred: false,
     payable: order.orderStatus === "PENDING_PAYMENT" && order.paymentStatus !== "PAID",
     cancellable: order.orderStatus === "PENDING_PAYMENT",
+    trackingUrl: order.trackingUrl,
+    deliveryProviderName: order.deliveryProvider,
     tracking: terminal
       ? []
       : steps.map((step, index) => ({

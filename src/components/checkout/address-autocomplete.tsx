@@ -6,8 +6,11 @@ import { useT } from "@/components/i18n/locale-provider";
 
 export type AddressFields = {
   line1: string;
+  line2?: string;
+  apartment?: string;
   postalCode: string;
   city: string;
+  municipality?: string;
   lat?: number;
   lng?: number;
   formatted?: string;
@@ -86,8 +89,11 @@ export function AddressAutocomplete({
       }
       onChange({
         line1: body.address.line1,
+        line2: body.address.line2,
+        apartment: body.address.apartment,
         postalCode: body.address.postalCode,
         city: body.address.city || "Uppsala",
+        municipality: body.address.municipality,
         lat: body.address.lat,
         lng: body.address.lng,
         formatted: body.address.formatted,

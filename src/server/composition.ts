@@ -23,11 +23,20 @@ import { FirestoreAnalyticsRepository, FirestoreMarketingSignupRepository } from
 import { ReportsService } from "@/domains/reports/service";
 import type { AnalyticsRecord, MarketingSignup } from "@/domains/analytics/models";
 import type { MapsPort } from "@/domains/delivery/maps-port";
+import { DeliveryProviderSelector } from "@/domains/delivery/selector";
+import { DeliveryPricingService } from "@/domains/delivery/pricing";
+import { DeliveryDispatchService } from "@/domains/delivery/dispatch";
+import { DeliveryWebhookProcessor } from "@/domains/delivery/webhook-processor";
+import { defaultDeliverySettings, type DeliverySettings } from "@/domains/delivery/models";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
-import { createGoogleMapsPort } from "@/infrastructure/maps/google-maps";
+import { SandboxDeliveryProvider, SANDBOX_PROFILES } from "@/infrastructure/delivery/sandbox-provider";
+import { WoltDriveProvider } from "@/infrastructure/delivery/wolt-drive-provider";
+import { FoodoraProvider } from "@/infrastructure/delivery/foodora-provider";
+import { createGeocodingPort } from "@/infrastructure/geocoding/create";
 import { getAdminFirestore } from "@/infrastructure/firebase/admin";
 import { FirestoreMenuRepository } from "@/infrastructure/firestore/menu-repository";
 import { FirestoreOrderRepository } from "@/infrastructure/firestore/order-repository";
+import { readDeliverySettings, writeDeliverySettings } from "@/infrastructure/firestore/delivery-settings";
 import { FirestorePrintJobRepository, FirestorePromotionRepository, FirestoreWebhookStore } from "@/infrastructure/firestore/supporting-repositories";
 import { FirestoreTransactionRunner } from "@/infrastructure/firestore/transaction-runner";
 import { InMemoryMenuRepository } from "@/infrastructure/memory/menu-repository";
@@ -151,7 +160,62 @@ function getPorts(): ReturnType<typeof createDataPorts> {
 }
 
 export const menuRepository = lazyProxy(() => getPorts().menuRepository);
-const mockDelivery = new MockDeliveryProvider(() => catalog.deliveryZones);
+const env = getEnv();
+const woltLive = Boolean(env.WOLT_DRIVE_API_KEY && (env.WOLT_DRIVE_VENUE_ID || env.WOLT_DRIVE_MERCHANT_ID) && env.WOLT_DRIVE_API_BASE_URL);
+const woltProvider = woltLive
+  ? new WoltDriveProvider({
+      apiBaseUrl: env.WOLT_DRIVE_API_BASE_URL!,
+      venueId: env.WOLT_DRIVE_VENUE_ID || env.WOLT_DRIVE_MERCHANT_ID!,
+      apiKey: env.WOLT_DRIVE_API_KEY!,
+      webhookSecret: env.WOLT_WEBHOOK_SECRET,
+    })
+  : new SandboxDeliveryProvider(SANDBOX_PROFILES.wolt_drive);
+const foodoraLive = Boolean(env.FOODORA_API_KEY && env.FOODORA_API_BASE_URL);
+const foodoraProvider = foodoraLive
+  ? new FoodoraProvider(env.FOODORA_API_KEY, env.FOODORA_WEBHOOK_SECRET)
+  : new SandboxDeliveryProvider(SANDBOX_PROFILES.foodora);
+
+let deliverySettingsState: DeliverySettings = defaultDeliverySettings(restaurantId);
+let deliverySettingsLoaded = false;
+
+export function getDeliverySettings(): DeliverySettings {
+  return deliverySettingsState;
+}
+
+export async function ensureDeliverySettings(): Promise<DeliverySettings> {
+  if (deliverySettingsLoaded) {
+    return deliverySettingsState;
+  }
+  if (firestoreEnabled) {
+    try {
+      const stored = await readDeliverySettings(getAdminFirestore(), restaurantId);
+      if (stored?.pricing && stored.providers) {
+        deliverySettingsState = stored;
+      }
+    } catch (error) {
+      logger.info("delivery_settings_load_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  deliverySettingsLoaded = true;
+  return deliverySettingsState;
+}
+
+export async function saveDeliverySettings(next: DeliverySettings): Promise<DeliverySettings> {
+  deliverySettingsState = next;
+  deliverySettingsLoaded = true;
+  if (firestoreEnabled) {
+    try {
+      await writeDeliverySettings(getAdminFirestore(), next);
+    } catch (error) {
+      logger.info("delivery_settings_save_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  return deliverySettingsState;
+}
 
 export const objectStorage = lazyProxy(() => createObjectStorage());
 export const mediaService = new MediaService(objectStorage);
@@ -166,15 +230,28 @@ export const cartService = new CartService(
   lazyProxy(() => getPorts().promotionRepository),
   seedPricingCalendar,
 );
-export const deliveryService = new DeliveryService([mockDelivery], {
+export const deliveryPricingService = new DeliveryPricingService();
+export const lastMileProviders = [woltProvider, foodoraProvider];
+export const deliveryService = new DeliveryService([new MockDeliveryProvider(() => catalog.deliveryZones), woltProvider, foodoraProvider], {
   preferCheapest: true,
-  preferredProviders: ["mock"],
+  preferredProviders: ["wolt_drive", "foodora"],
 });
+export const deliverySelector = new DeliveryProviderSelector(lastMileProviders, getDeliverySettings, deliveryPricingService);
 export const orderService = new OrderService(
   lazyProxy(() => getPorts().orderRepository),
   cartService,
   lazyProxy(() => getPorts().transactions),
   menuRepository,
+);
+export const deliveryDispatch = new DeliveryDispatchService(
+  lastMileProviders,
+  lazyProxy(() => getPorts().orderRepository),
+  () => ({ ...seedRestaurant.pickup, country: "SE" as const, lat: 59.8581, lng: 17.646 }),
+);
+export const deliveryWebhookProcessor = new DeliveryWebhookProcessor(
+  lastMileProviders,
+  lazyProxy(() => getPorts().orderRepository),
+  lazyProxy(() => getPorts().webhookStore),
 );
 
 function createPaymentProvider() {
@@ -251,8 +328,8 @@ export function deliveryZones() {
   return catalog.deliveryZones;
 }
 
-export function mapsPort(): MapsPort | null {
-  return createGoogleMapsPort();
+export function mapsPort(): MapsPort {
+  return createGeocodingPort();
 }
 
 export function restaurantSettings() {

@@ -2,7 +2,8 @@ import type { MessageKey, Translator } from "./messages";
 
 const BY_CODE: Record<string, MessageKey> = {
   DELIVERY_UNAVAILABLE: "delivery.no",
-  OUT_OF_ZONE: "checkout.uppsalaOnly",
+  QUOTE_FAILED: "delivery.quoteFail",
+  OUT_OF_ZONE: "delivery.no",
   SLOT_UNAVAILABLE: "checkout.needSlot",
   NOT_FOUND: "errors.notFound",
   VALIDATION: "errors.validation",

@@ -10,8 +10,32 @@ export async function POST(request: Request) {
     if (body.restaurantId !== restaurantIdFromEnv()) {
       return NextResponse.json({ code: "VALIDATION", message: "Unknown restaurant." }, { status: 400 });
     }
-    const quote = await quoteDelivery(body.address, body.orderValueOre ?? 0);
-    return NextResponse.json(quote);
+    const quote = await quoteDelivery(body.address, body.orderValueOre ?? 0, body.provider);
+    return NextResponse.json({
+      deliverable: quote.deliverable,
+      feeOre: quote.feeOre,
+      feeLabel: quote.feeLabel,
+      etaMinutes: quote.etaMinutes,
+      provider: quote.provider,
+      displayName: quote.displayName,
+      quoteId: quote.quoteId,
+      expiresAt: quote.expiresAt,
+      lat: quote.lat,
+      lng: quote.lng,
+      formattedAddress: quote.formattedAddress,
+      customerCanSelect: quote.customerCanSelect,
+      options: quote.options,
+      selected: {
+        provider: quote.provider,
+        displayName: quote.displayName,
+        estimatedDeliveryMinutes: quote.etaMinutes,
+        customerDeliveryFeeOre: quote.customerDeliveryFeeOre,
+        feeLabel: quote.feeLabel,
+        quoteId: quote.quoteId,
+        expiresAt: quote.expiresAt,
+        currency: "SEK",
+      },
+    });
   } catch (error) {
     return errorResponse(error);
   }

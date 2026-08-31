@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AppError } from "@/lib/errors";
 import { ORDER_STATUSES } from "@/domains/orders/models";
-import { orderService, printingService, restaurantSettings } from "@/server/composition";
+import { deliveryDispatch, orderService, printingService, restaurantSettings } from "@/server/composition";
 import { requireAdmin } from "@/server/admin-auth";
 import { errorResponse } from "@/server/http";
 import { toStaffOrder } from "@/server/staff-order";
@@ -45,10 +45,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (!body.to) {
       throw new AppError("VALIDATION", "A target status is required.");
     }
-    const order =
+    let order =
       body.to === "CANCELLED"
         ? await orderService.cancel(id, undefined, actor)
         : await orderService.transition(actor, id, body.to);
+    if (body.to === "CANCELLED") {
+      await deliveryDispatch.cancelIfCreated(order);
+    } else if (body.to === "READY" || body.to === "COURIER_ASSIGNED") {
+      order = await deliveryDispatch.dispatchIfReady(order);
+    }
     return NextResponse.json({ order: toStaffOrder(order) });
   } catch (error) {
     return errorResponse(error);

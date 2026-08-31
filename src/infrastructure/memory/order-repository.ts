@@ -18,6 +18,13 @@ export class InMemoryOrderRepository implements OrderWriteRepository {
     );
   }
 
+  async getByProviderDeliveryId(providerDeliveryId: string): Promise<Order | null> {
+    if (!providerDeliveryId) {
+      return null;
+    }
+    return this.state.orders.find((order) => order.providerDeliveryId === providerDeliveryId) ?? null;
+  }
+
   async list(filters: OrderListFilters, page: PageRequest): Promise<Page<Order>> {
     const limit = normalizePageLimit(page.limit);
     let items = this.state.orders.filter((order) => order.restaurantId === filters.restaurantId);

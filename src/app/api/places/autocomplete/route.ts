@@ -13,9 +13,6 @@ export async function POST(request: Request) {
   try {
     const body = bodySchema.parse(await request.json());
     const maps = mapsPort();
-    if (!maps) {
-      return NextResponse.json({ predictions: [], mapsConfigured: false });
-    }
     const locale = await getLocale();
     const predictions = await maps.autocomplete(body.input, {
       language: locale,

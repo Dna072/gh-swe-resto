@@ -7,6 +7,7 @@ export const deliveryQuoteSchema = z.object({
   restaurantId: z.string().min(1),
   address: addressSchema,
   orderValueOre: z.number().int().nonnegative().optional(),
+  provider: z.string().max(40).optional(),
 });
 
 export const createOrderSchema = z.object({
@@ -15,6 +16,7 @@ export const createOrderSchema = z.object({
   lines: z.array(cartLineSchema).min(1).max(30),
   customer: contactSchema,
   deliveryAddress: addressSchema.optional(),
+  deliveryProvider: z.string().max(40).optional(),
   scheduledFor: z.string().min(10).max(40).optional(),
   specialInstructions: z.string().max(300).optional(),
   promotionCode: z.string().max(40).optional(),

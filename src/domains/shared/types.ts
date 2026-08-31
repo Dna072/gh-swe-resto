@@ -18,8 +18,10 @@ export interface MoneySnapshot {
 export interface AddressSnapshot {
   line1: string;
   line2?: string;
+  apartment?: string;
   postalCode: string;
   city: string;
+  municipality?: string;
   country: string;
   lat?: number;
   lng?: number;

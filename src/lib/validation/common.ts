@@ -5,12 +5,14 @@ export const oreSchema = z.number().int();
 export const addressSchema = z.object({
   line1: z.string().min(1).max(200),
   line2: z.string().max(200).optional(),
+  apartment: z.string().max(40).optional(),
   postalCode: z
     .string()
     .min(3)
     .max(12)
     .transform((value) => value.replace(/\s+/g, "")),
   city: z.string().min(1).max(80),
+  municipality: z.string().max(80).optional(),
   country: z.string().length(2).optional().default("SE"),
   lat: z.number().optional(),
   lng: z.number().optional(),

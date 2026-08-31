@@ -43,14 +43,14 @@ export class DeliveryService {
     }
     const quotes: DeliveryQuote[] = [];
     for (const provider of available) {
-      const valid = await provider.validateDelivery(request);
+      const valid = await provider.checkAvailability(request);
       if (!valid) {
         continue;
       }
-      quotes.push(await provider.getDeliveryQuote(request));
+      quotes.push(await provider.getQuote(request));
     }
     if (quotes.length === 0) {
-      throw new AppError("DELIVERY_UNAVAILABLE", "Delivery is temporarily unavailable. Please try again.");
+      throw new AppError("DELIVERY_UNAVAILABLE", "Sorry, we currently can't deliver to this address.");
     }
     return this.selectQuote(quotes);
   }

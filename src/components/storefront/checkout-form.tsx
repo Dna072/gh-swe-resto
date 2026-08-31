@@ -16,7 +16,9 @@ import { Field } from "@/components/brand/field";
 import { Price } from "@/components/brand/price";
 import { Spinner } from "@/components/brand/loading-state";
 import { AddressAutocomplete } from "@/components/checkout/address-autocomplete";
+import { DeliveryOptionsList, type PublicDeliveryChoice } from "@/components/checkout/delivery-options";
 import { DeliverySlotFields } from "@/components/checkout/delivery-slot-fields";
+import { LocationMap } from "@/components/checkout/location-map";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { customerErrorMessage } from "@/lib/i18n/api-errors";
@@ -30,6 +32,8 @@ type FormValues = {
   email: string;
   phone: string;
   line1: string;
+  line2?: string;
+  apartment?: string;
   postalCode: string;
   city: string;
   lat?: number;
@@ -39,17 +43,11 @@ type FormValues = {
   specialInstructions?: string;
 };
 
-type DeliveryQuote = {
+type DeliveryQuoteState = {
   key: string;
-  zoneName: string;
-  feeOre: number;
-  feeLabel: string;
-  etaMinutes: number;
-  quoteId: string;
-  deliveryEstimate: string;
-  lat?: number;
-  lng?: number;
-  formattedAddress?: string;
+  options: PublicDeliveryChoice[];
+  customerCanSelect: boolean;
+  error: string | null;
 };
 
 type CartQuoteResult = {
@@ -70,6 +68,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
         email: z.email(t("checkout.emailError")),
         phone: z.string().min(6, t("checkout.phoneError")),
         line1: z.string().min(1, t("checkout.needAddress")),
+        line2: z.string().max(200).optional(),
+        apartment: z.string().max(40).optional(),
         postalCode: z.string().min(3, t("checkout.needAddress")),
         city: z.string().min(1, t("checkout.needAddress")),
         lat: z.number().optional(),
@@ -83,9 +83,9 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
   const idempotencyKey = useRef(
     typeof crypto !== "undefined" ? crypto.randomUUID() : "checkout-pending",
   );
-  const [deliveryResult, setDeliveryResult] = useState<
-    { key: string; quote: DeliveryQuote | null; error: string | null } | null
-  >(null);
+  const [deliveryResult, setDeliveryResult] = useState<DeliveryQuoteState | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<string | undefined>();
+  const [showMap, setShowMap] = useState(false);
   const [cartResult, setCartResult] = useState<CartQuoteResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -96,6 +96,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
       email: "",
       phone: "",
       line1: "",
+      line2: "",
+      apartment: "",
       postalCode: "",
       city: "Uppsala",
       scheduledFor: "",
@@ -109,6 +111,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
   const lat = form.watch("lat");
   const lng = form.watch("lng");
   const scheduledFor = form.watch("scheduledFor");
+  const apartment = form.watch("apartment");
+  const line2 = form.watch("line2");
 
   useEffect(() => {
     track("checkout_started", { lineCount: cart.lines.length });
@@ -116,7 +120,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
 
   const postal = (postalCode ?? "").replace(/\s+/g, "");
   const deliveryKey = `${line1?.trim() ?? ""}:${postal}:${city?.trim() ?? ""}:${lat ?? ""}:${lng ?? ""}`;
-  const canQuoteDelivery = postal.length >= 5 && Boolean(line1?.trim());
+  const canQuoteDelivery = Boolean(line1?.trim()) && (postal.length >= 5 || (lat != null && lng != null));
 
   useEffect(() => {
     if (!canQuoteDelivery) {
@@ -125,33 +129,41 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     const requestKey = deliveryKey;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      void fetch("/api/delivery/quote", {
+      void fetch("/api/delivery/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           restaurantId,
           address: {
             line1: line1?.trim(),
-            postalCode: postal,
+            postalCode: postal || "00000",
             city: city?.trim() || "Uppsala",
             country: "SE",
             lat,
             lng,
+            formatted: form.getValues("formatted"),
           },
         }),
         signal: controller.signal,
       })
         .then(async (response) => {
-          const body = (await response.json()) as DeliveryQuote & {
+          const body = (await response.json()) as {
+            deliverable?: boolean;
+            options?: PublicDeliveryChoice[];
+            customerCanSelect?: boolean;
+            lat?: number;
+            lng?: number;
+            formattedAddress?: string;
             message?: string;
             code?: string;
-            address?: { lat?: number; lng?: number; formatted?: string };
           };
-          if (!response.ok) {
+          if (!response.ok || !body.deliverable || !body.options?.length) {
+            setSelectedProvider(undefined);
             setDeliveryResult({
               key: requestKey,
-              quote: null,
-              error: customerErrorMessage(body.code, t, "checkout.uppsalaOnly"),
+              options: [],
+              customerCanSelect: true,
+              error: customerErrorMessage(body.code, t, "delivery.no"),
             });
             return;
           }
@@ -164,13 +176,29 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
           if (body.formattedAddress) {
             form.setValue("formatted", body.formattedAddress);
           }
-          setDeliveryResult({ key: requestKey, quote: { ...body, key: requestKey }, error: null });
+          setDeliveryResult({
+            key: requestKey,
+            options: body.options,
+            customerCanSelect: body.customerCanSelect !== false,
+            error: null,
+          });
+          setSelectedProvider((current) => {
+            if (current && body.options?.some((option) => option.provider === current)) {
+              return current;
+            }
+            return body.options?.[0]?.provider;
+          });
         })
         .catch((error: unknown) => {
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
           }
-          setDeliveryResult({ key: requestKey, quote: null, error: t("checkout.quoteDeliveryError") });
+          setDeliveryResult({
+            key: requestKey,
+            options: [],
+            customerCanSelect: true,
+            error: t("delivery.quoteFail"),
+          });
         });
     }, 350);
     return () => {
@@ -181,9 +209,12 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canQuoteDelivery, city, deliveryKey, lat, line1, lng, postal, restaurantId, t]);
 
-  const deliveryQuote = canQuoteDelivery && deliveryResult?.key === deliveryKey ? deliveryResult.quote : null;
+  const deliveryOptions =
+    canQuoteDelivery && deliveryResult?.key === deliveryKey ? deliveryResult.options : [];
   const deliveryError = canQuoteDelivery && deliveryResult?.key === deliveryKey ? deliveryResult.error : null;
-  const deliveryFeeOre = deliveryQuote?.feeOre ?? 0;
+  const selectedOption =
+    deliveryOptions.find((option) => option.provider === selectedProvider) ?? deliveryOptions[0];
+  const deliveryFeeOre = selectedOption?.customerDeliveryFeeOre ?? 0;
   const linesPayload = useMemo(
     () =>
       cart.lines.map((line) => ({
@@ -196,7 +227,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
   );
 
   const cartKey = `${deliveryFeeOre}:${JSON.stringify(linesPayload)}`;
-  const canQuoteCart = cart.lines.length > 0 && Boolean(deliveryQuote);
+  const canQuoteCart = cart.lines.length > 0 && Boolean(selectedOption);
 
   useEffect(() => {
     if (!canQuoteCart) {
@@ -258,7 +289,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
       toast.error(t("checkout.needAddress"));
       return;
     }
-    if (!deliveryQuote) {
+    if (!selectedOption) {
       toast.error(deliveryError ?? t("checkout.waitQuote"));
       return;
     }
@@ -287,6 +318,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
           },
           deliveryAddress: {
             line1: values.line1.trim(),
+            line2: values.line2?.trim() || undefined,
+            apartment: values.apartment?.trim() || undefined,
             postalCode: values.postalCode.replace(/\s+/g, ""),
             city: values.city.trim() || "Uppsala",
             country: "SE",
@@ -294,6 +327,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
             lng: values.lng,
             formatted: values.formatted,
           },
+          deliveryProvider: selectedOption.provider,
           specialInstructions: values.specialInstructions?.trim() || undefined,
           guestSessionId: analyticsSessionId(),
         }),
@@ -324,7 +358,7 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
     }
   }
 
-  const canPlace = !submitting && Boolean(cartQuote) && Boolean(deliveryQuote) && Boolean(scheduledFor);
+  const canPlace = !submitting && Boolean(cartQuote) && Boolean(selectedOption) && Boolean(scheduledFor);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-[1fr_20rem]">
@@ -350,6 +384,8 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
             <AddressAutocomplete
               value={{
                 line1: line1 ?? "",
+                line2,
+                apartment,
                 postalCode: postalCode ?? "",
                 city: city ?? "Uppsala",
                 lat,
@@ -363,9 +399,22 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
                 form.setValue("lat", next.lat);
                 form.setValue("lng", next.lng);
                 form.setValue("formatted", next.formatted);
+                form.setValue("apartment", next.apartment ?? "");
+                form.setValue("line2", next.line2 ?? "");
+                if (next.lat != null && next.lng != null) {
+                  setShowMap(true);
+                }
               }}
             />
           </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="apartment" label={t("checkout.apartment")}>
+              <Input id="apartment" autoComplete="address-line2" {...form.register("apartment")} />
+            </Field>
+            <Field id="line2" label={t("checkout.line2")}>
+              <Input id="line2" {...form.register("line2")} />
+            </Field>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="postalCode" label={t("delivery.postcode")}>
               <Input
@@ -380,14 +429,67 @@ export function CheckoutForm({ restaurantId }: { restaurantId: string }) {
               <Input id="city" autoComplete="address-level2" {...form.register("city")} />
             </Field>
           </div>
-          {deliveryQuote ? (
-            <p role="status" className="text-sm text-forest">
-              {t("checkout.deliveryQuote", {
-                zone: deliveryQuote.zoneName,
-                fee: deliveryQuote.feeLabel,
-                eta: deliveryQuote.etaMinutes,
-              })}
-            </p>
+          {lat != null && lng != null && showMap ? (
+            <div className="grid gap-2">
+              <LocationMap
+                key={form.watch("formatted") ?? line1}
+                lat={lat}
+                lng={lng}
+                onMove={(nextLat, nextLng) => {
+                  form.setValue("lat", nextLat);
+                  form.setValue("lng", nextLng);
+                  void fetch("/api/places/reverse", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lat: nextLat, lng: nextLng }),
+                  })
+                    .then(async (response) => {
+                      const body = (await response.json()) as {
+                        address?: {
+                          line1?: string;
+                          postalCode?: string;
+                          city?: string;
+                          formatted?: string;
+                          apartment?: string;
+                          line2?: string;
+                        } | null;
+                      };
+                      if (!body.address) {
+                        return;
+                      }
+                      form.setValue("line1", body.address.line1 ?? line1 ?? "", { shouldValidate: true });
+                      if (body.address.postalCode) {
+                        form.setValue("postalCode", body.address.postalCode, { shouldValidate: true });
+                      }
+                      if (body.address.city) {
+                        form.setValue("city", body.address.city, { shouldValidate: true });
+                      }
+                      if (body.address.formatted) {
+                        form.setValue("formatted", body.address.formatted);
+                      }
+                    })
+                    .catch(() => undefined);
+                }}
+              />
+              <p className="text-sm text-muted-foreground">{t("delivery.adjustMap")}</p>
+            </div>
+          ) : null}
+          {lat != null && lng != null && !showMap ? (
+            <button
+              type="button"
+              className="text-left text-sm text-earth underline-offset-4 hover:underline"
+              onClick={() => setShowMap(true)}
+            >
+              {t("delivery.showMap")}
+            </button>
+          ) : null}
+          {deliveryOptions.length > 0 ? (
+            <DeliveryOptionsList
+              options={deliveryOptions}
+              selectedProvider={selectedOption?.provider}
+              customerCanSelect={deliveryResult?.customerCanSelect !== false}
+              onSelect={setSelectedProvider}
+            />
           ) : null}
           {deliveryError ? (
             <p role="alert" className="text-sm text-destructive">
