@@ -280,6 +280,8 @@ function normalizePricing(pricing: DeliveryPricingConfig): DeliveryPricingConfig
   }
   return { strategy: pricing.strategy, enabled: true };
 }
+
+function previewCustomerFee(costOre: number, pricing: DeliveryPricingConfig): number {
   if (pricing.strategy === "FREE") {
     return 0;
   }

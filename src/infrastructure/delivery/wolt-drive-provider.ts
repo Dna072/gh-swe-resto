@@ -124,6 +124,7 @@ export class WoltDriveProvider implements DeliveryProvider {
   }
 
   async getDeliveryStatus(providerDeliveryId: string): Promise<DeliveryRecord> {
+    void providerDeliveryId;
     this.assertConfigured();
     throw new AppError("DELIVERY_UNAVAILABLE", "Wolt Drive status is not configured.");
   }

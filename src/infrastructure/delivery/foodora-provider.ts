@@ -36,7 +36,7 @@ export class FoodoraProvider implements DeliveryProvider {
   };
 
   constructor(
-    private readonly apiKey?: string,
+    private readonly _apiKey?: string,
     private readonly webhookSecret?: string,
   ) {}
 
@@ -44,7 +44,8 @@ export class FoodoraProvider implements DeliveryProvider {
     return false;
   }
 
-  async getQuote(_request: DeliveryQuoteRequest): Promise<DeliveryQuote> {
+  async getQuote(request: DeliveryQuoteRequest): Promise<DeliveryQuote> {
+    void request;
     logger.info("foodora quote skipped; last-mile API is not documented for this merchant");
     throw new AppError("DELIVERY_UNAVAILABLE", "Delivery is currently unavailable from this provider.");
   }
@@ -57,7 +58,8 @@ export class FoodoraProvider implements DeliveryProvider {
     return this.getQuote(request);
   }
 
-  async createDelivery(_request: CreateDeliveryRequest): Promise<DeliveryRecord> {
+  async createDelivery(request: CreateDeliveryRequest): Promise<DeliveryRecord> {
+    void request;
     throw new AppError("DELIVERY_UNAVAILABLE", "Delivery is currently unavailable from this provider.");
   }
 

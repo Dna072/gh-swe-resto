@@ -19,7 +19,10 @@ export function LocationMap({
 }) {
   const container = useRef<HTMLDivElement>(null);
   const onMoveRef = useRef(onMove);
-  onMoveRef.current = onMove;
+
+  useEffect(() => {
+    onMoveRef.current = onMove;
+  }, [onMove]);
 
   useEffect(() => {
     const node = container.current;
