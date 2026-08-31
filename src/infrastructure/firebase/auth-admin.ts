@@ -31,10 +31,12 @@ export class FirebaseAuthAdmin implements AuthAdminPort {
   }
 
   async generatePasswordResetLink(email: string, continueUrl: string): Promise<string> {
+    // Link only — Firebase does not send mail. Branded SES templates send it.
     return getAdminAuth().generatePasswordResetLink(email, { url: continueUrl });
   }
 
   async generateEmailVerificationLink(email: string, continueUrl: string): Promise<string> {
+    // Link only — Firebase does not send mail. Branded SES templates send it.
     return getAdminAuth().generateEmailVerificationLink(email, { url: continueUrl });
   }
 

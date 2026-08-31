@@ -39,7 +39,7 @@ Customers have no staff claim. Missing claim is treated as `CUSTOMER`.
 
 Enforced by `AuthorizationService` on every admin API.
 
-Meal and hero photographs are uploaded only through admin APIs. The server checks magic bytes (JPEG/PNG/WebP), size (8 MB), and minimum dimensions. Object paths are generated (`restaurants/{restaurantId}/menu/{menuItemId}/{assetId}-…`) — user filenames are never used. Production binaries go to Cloud Storage; Firestore stores metadata only. `ADMIN_DEV_TOKEN` is rejected when `APP_ENV=production`.
+Meal and hero photographs are uploaded only through admin APIs. The server checks magic bytes (JPEG/PNG/WebP), size (8 MB), and minimum dimensions. Object paths are generated (`restaurants/{id}/menu/{menuItemId}/{assetId}-…`) — user filenames are never used. Production binaries go to Cloud Storage; Firestore stores metadata only. `ADMIN_DEV_TOKEN` is rejected for ordinary admin APIs when `APP_ENV=production`. It is accepted once for `POST /api/admin/bootstrap-owner` to create the first OWNER, then locked.
 
 ## Firestore rules
 

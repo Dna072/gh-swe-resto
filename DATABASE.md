@@ -27,6 +27,7 @@ Unbounded list-all-customers or list-all-orders queries are forbidden.
 
 ```
 _meta/schema
+_meta/adminBootstrap           first owner created (one-time)
 restaurants/{restaurantId}
   menuCategories/{categoryId}
   menuItems/{itemId}

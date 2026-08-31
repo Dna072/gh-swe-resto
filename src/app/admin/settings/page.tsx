@@ -63,6 +63,15 @@ export default function AdminSettingsPage() {
           board.
         </p>
       </div>
+      <section className="grid gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
+        <h2 className="font-heading text-2xl">Guest emails</h2>
+        <p className="text-sm text-muted-foreground">
+          Account welcome, password reset, and staff invites are sent in the restaurant theme through
+          Amazon SES. Firebase Authentication cannot use that theme for its built-in verification
+          and reset letters, so those Firebase templates stay unused — we never trigger them from
+          the storefront.
+        </p>
+      </section>
       <section className="grid gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
         <label className="flex items-center gap-3 text-sm">
           <Checkbox

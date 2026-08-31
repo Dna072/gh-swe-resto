@@ -115,8 +115,8 @@ export function AdminSession() {
           label="Admin token"
           hint={
             passwordLogin
-              ? "Or paste a Firebase ID token. Local ADMIN_DEV_TOKEN works when APP_ENV is not production."
-              : "Local development: paste ADMIN_DEV_TOKEN. Production uses Firebase staff sign-in."
+              ? "Or paste the admin token to add the first owner (once), or a Firebase ID token."
+              : "Paste the admin token to add the first owner (once). After that, staff sign in with email."
           }
           className="flex-1"
         >

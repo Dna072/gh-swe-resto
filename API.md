@@ -42,6 +42,7 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | POST | `/api/admin/orders/:id/print` | Enqueue / reprint kitchen ticket |
 | POST | `/api/admin/orders/:id/refund` | Full refund of a paid order (emails `ORDER_REFUNDED`) |
 | GET / POST | `/api/admin/staff` | List staff; invite OWNER/MANAGER/KITCHEN/… (sends SES invite) |
+| GET / POST | `/api/admin/bootstrap-owner` | One-time first OWNER using `ADMIN_DEV_TOKEN` (locked after success) |
 | GET / PUT | `/api/admin/restaurant-settings` | Pause or resume ordering |
 | GET / PUT | `/api/admin/promotions` | List and save promotion codes |
 | GET / PUT | `/api/admin/delivery-settings` | Last-mile providers and customer delivery pricing |
@@ -58,7 +59,7 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | POST | `/api/admin/homepage/hero-image` | Hero photograph (optional `mobile=true`) |
 | POST | `/api/admin/media/cleanup` | Purge `PENDING_DELETE` photograph objects |
 
-Local development may send `Authorization: Bearer $ADMIN_DEV_TOKEN`. Production requires a Firebase staff token with `menu:write` or `settings:write`. Image binaries go to Cloud Storage (or `public/uploads` in development). Firestore/in-memory records store metadata only.
+Local development may send `Authorization: Bearer $ADMIN_DEV_TOKEN`. Production accepts that token only for `POST /api/admin/bootstrap-owner`, and only until the first owner exists. All other production admin APIs require a Firebase staff token.
 
 ## Errors
 
