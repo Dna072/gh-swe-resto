@@ -483,7 +483,17 @@ export const seedDeliveryZones: DeliveryZone[] = [
     baseFeeOre: 4900,
     etaMinutes: 35,
     active: true,
-    providers: ["mock"],
+    providers: ["wolt_drive", "foodora", "mock"],
+  },
+  {
+    id: "uppsala-east",
+    restaurantId: SEED_RESTAURANT_ID,
+    name: "Östra Uppsala",
+    postalCodes: ["75420", "75421", "75422", "75423", "75424", "75425", "75426", "75427", "75428", "75429", "75430", "75431"],
+    baseFeeOre: 4900,
+    etaMinutes: 40,
+    active: true,
+    providers: ["wolt_drive", "foodora", "mock"],
   },
   {
     id: "uppsala-south",
@@ -493,7 +503,7 @@ export const seedDeliveryZones: DeliveryZone[] = [
     baseFeeOre: 5900,
     etaMinutes: 45,
     active: true,
-    providers: ["mock"],
+    providers: ["wolt_drive", "foodora", "mock"],
   },
 ];
 

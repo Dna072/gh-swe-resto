@@ -11,7 +11,7 @@ Guest checkout, customer accounts, payment, live tracking, promotions, restauran
 | GET | `/api/menu` | Public catalog with server-resolved display prices |
 | GET | `/api/menu/:slug` | One meal plus modifier groups |
 | POST | `/api/cart/quote` | Server-priced cart |
-| POST | `/api/delivery/check` | Postcode against seeded delivery zones |
+| POST | `/api/delivery/check` | Postcode against restaurant delivery areas |
 | POST | `/api/marketing/signup` | Email + required consent (in-memory) |
 | POST | `/api/analytics/track` | Storefront events |
 | POST | `/api/delivery/quote` | Zone + mock-provider quote (fee from seed zones) |
@@ -45,6 +45,7 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | GET / PUT | `/api/admin/restaurant-settings` | Pause or resume ordering |
 | GET / PUT | `/api/admin/promotions` | List and save promotion codes |
 | GET / PUT | `/api/admin/delivery-settings` | Last-mile providers and customer delivery pricing |
+| GET / PUT | `/api/admin/delivery-zones` | Delivery areas (postcodes guests can order from) |
 | GET | `/api/admin/menu` | Meals, categories, modifier groups |
 | POST | `/api/admin/menu` | Create/update meal (metadata) |
 | GET | `/api/admin/menu/:id` | One meal including image metadata |

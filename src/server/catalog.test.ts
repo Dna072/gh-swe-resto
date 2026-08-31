@@ -104,6 +104,12 @@ describe("Phase 2 seeded catalog", () => {
     );
     expect(zone.name).toBe("Uppsala centrum");
     expect(zone.baseFeeOre).toBe(4900);
+    expect(
+      deliveryService.validateZone(
+        { line1: "Kantorsgatan 80", postalCode: "75424", city: "Uppsala", country: "SE" },
+        deliveryZones(),
+      ).name,
+    ).toBe("Östra Uppsala");
     expect(() =>
       new DeliveryService([], { preferCheapest: true, preferredProviders: ["mock"] }).validateZone(
         { line1: "Test", postalCode: "11122", city: "Stockholm", country: "SE" },

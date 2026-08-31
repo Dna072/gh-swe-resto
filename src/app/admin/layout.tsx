@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Analytics
             </Link>
             <Link href="/admin/delivery" className="hover:text-earth">
-              Delivery
+              Delivery areas
             </Link>
             <Link href="/admin/promotions" className="hover:text-earth">
               Promotions

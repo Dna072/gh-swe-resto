@@ -7,36 +7,55 @@ import { resolveAdvanceDeliverySlot } from "@/domains/fulfillment/advance-slot";
 import { toPublicDeliveryOption } from "@/domains/delivery/public";
 import {
   deliverySelector,
+  deliveryService,
   ensureDeliverySettings,
+  ensureDeliveryZones,
   getDeliverySettings,
+  getDeliveryZones,
   mapsPort,
   restaurantIdFromEnv,
   restaurantSettings,
 } from "@/server/composition";
+import { extractPostalCode } from "@/lib/geo/postal";
 
 export { resolveAdvanceDeliverySlot };
 
 export async function resolveDropoff(dropoff: AddressSnapshot): Promise<AddressSnapshot> {
+  const extracted = extractPostalCode(dropoff.line1, dropoff.formatted, dropoff.postalCode);
+  const withPostal =
+    (!dropoff.postalCode || dropoff.postalCode === "00000") && extracted
+      ? { ...dropoff, postalCode: extracted }
+      : dropoff;
   const maps = mapsPort();
-  if (dropoff.lat != null && dropoff.lng != null) {
-    return { ...dropoff, country: dropoff.country || "SE" };
+  if (withPostal.lat != null && withPostal.lng != null) {
+    return {
+      ...withPostal,
+      country: withPostal.country || "SE",
+      postalCode: withPostal.postalCode && withPostal.postalCode !== "00000" ? withPostal.postalCode : extracted ?? withPostal.postalCode,
+    };
   }
-  const place = await maps.geocode(dropoff);
+  const place = await maps.geocode(withPostal);
   if (!place) {
     throw new AppError("VALIDATION", "We couldn't find that address. Please try another search.");
   }
   return {
-    ...dropoff,
-    country: dropoff.country || "SE",
+    ...withPostal,
+    country: withPostal.country || "SE",
     lat: place.lat,
     lng: place.lng,
     formatted: place.formattedAddress,
+    postalCode:
+      (withPostal.postalCode && withPostal.postalCode !== "00000" ? withPostal.postalCode : undefined) ??
+      extractPostalCode(place.formattedAddress, withPostal.line1) ??
+      withPostal.postalCode,
   };
 }
 
 export async function quoteDeliveryOptions(dropoff: AddressSnapshot, orderValueOre = 0, selectedProvider?: string) {
   await ensureDeliverySettings();
+  await ensureDeliveryZones();
   const resolved = await resolveDropoff(dropoff);
+  deliveryService.validateZone(resolved, getDeliveryZones());
   const pickup = {
     ...restaurantSettings().pickup,
     country: "SE" as const,

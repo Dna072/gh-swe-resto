@@ -41,6 +41,13 @@ describe("customer-facing copy", () => {
     }
   });
 
+  it("keeps the delivery search hint short", () => {
+    expect(en["delivery.hint"]).toBe("Street, house number, or postcode.");
+    expect(sv["delivery.hint"]).toBe("Gata, nummer eller postnummer.");
+    expect(en["delivery.hint"]).not.toMatch(/Å|Ä|Ö/);
+    expect(sv["delivery.hint"]).not.toMatch(/Å|Ä|Ö/);
+  });
+
   it("describes signature plates and kitchen hours instead of photo placeholders", () => {
     expect(en["home.featured.description"]).toMatch(/jollof/i);
     expect(en["home.today.description"]).toMatch(/11\.00/);

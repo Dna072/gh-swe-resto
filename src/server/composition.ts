@@ -29,7 +29,7 @@ import { DeliveryProviderSelector } from "@/domains/delivery/selector";
 import { DeliveryPricingService } from "@/domains/delivery/pricing";
 import { DeliveryDispatchService } from "@/domains/delivery/dispatch";
 import { DeliveryWebhookProcessor } from "@/domains/delivery/webhook-processor";
-import { defaultDeliverySettings, type DeliverySettings } from "@/domains/delivery/models";
+import { defaultDeliverySettings, type DeliverySettings, type DeliveryZone } from "@/domains/delivery/models";
 import { defaultRestaurantSettings, type RestaurantSettings } from "@/domains/restaurant/settings";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
 import { SandboxDeliveryProvider, SANDBOX_PROFILES } from "@/infrastructure/delivery/sandbox-provider";
@@ -40,6 +40,7 @@ import { getAdminFirestore } from "@/infrastructure/firebase/admin";
 import { FirestoreMenuRepository } from "@/infrastructure/firestore/menu-repository";
 import { FirestoreOrderRepository } from "@/infrastructure/firestore/order-repository";
 import { readDeliverySettings, writeDeliverySettings } from "@/infrastructure/firestore/delivery-settings";
+import { readDeliveryZones, writeDeliveryZones } from "@/infrastructure/firestore/delivery-zones";
 import { readRestaurantSettings, writeRestaurantSettings } from "@/infrastructure/firestore/restaurant-settings";
 import { FirestorePrintJobRepository, FirestorePromotionRepository, FirestoreWebhookStore, FirestoreCustomerRepository, FirestoreReviewRepository, FirestoreStaffUserRepository } from "@/infrastructure/firestore/supporting-repositories";
 import { FirestoreTransactionRunner } from "@/infrastructure/firestore/transaction-runner";
@@ -210,6 +211,50 @@ export function getDeliverySettings(): DeliverySettings {
   return deliverySettingsState;
 }
 
+let deliveryZonesState: DeliveryZone[] = catalog.deliveryZones;
+let deliveryZonesLoaded = false;
+
+export function getDeliveryZones(): DeliveryZone[] {
+  return deliveryZonesState;
+}
+
+export async function ensureDeliveryZones(): Promise<DeliveryZone[]> {
+  if (deliveryZonesLoaded) {
+    return deliveryZonesState;
+  }
+  if (firestoreEnabled) {
+    try {
+      const stored = await readDeliveryZones(getAdminFirestore(), restaurantId);
+      if (stored.length > 0) {
+        deliveryZonesState = stored;
+        catalog.deliveryZones.splice(0, catalog.deliveryZones.length, ...stored);
+      }
+    } catch (error) {
+      logger.info("delivery_zones_load_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  deliveryZonesLoaded = true;
+  return deliveryZonesState;
+}
+
+export async function saveDeliveryZones(next: DeliveryZone[]): Promise<DeliveryZone[]> {
+  deliveryZonesState = next;
+  deliveryZonesLoaded = true;
+  catalog.deliveryZones.splice(0, catalog.deliveryZones.length, ...next);
+  if (firestoreEnabled) {
+    try {
+      await writeDeliveryZones(getAdminFirestore(), restaurantId, next);
+    } catch (error) {
+      logger.info("delivery_zones_save_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  return deliveryZonesState;
+}
+
 export async function ensureDeliverySettings(): Promise<DeliverySettings> {
   if (deliverySettingsLoaded) {
     return deliverySettingsState;
@@ -302,7 +347,7 @@ export const cartService = new CartService(
 );
 export const deliveryPricingService = new DeliveryPricingService();
 export const lastMileProviders = [woltProvider, foodoraProvider];
-export const deliveryService = new DeliveryService([new MockDeliveryProvider(() => catalog.deliveryZones), woltProvider, foodoraProvider], {
+export const deliveryService = new DeliveryService([new MockDeliveryProvider(() => deliveryZonesState), woltProvider, foodoraProvider], {
   preferCheapest: true,
   preferredProviders: ["wolt_drive", "foodora"],
 });
@@ -418,7 +463,7 @@ export function restaurantIdFromEnv(): string {
 }
 
 export function deliveryZones() {
-  return catalog.deliveryZones;
+  return deliveryZonesState;
 }
 
 export function mapsPort(): MapsPort {

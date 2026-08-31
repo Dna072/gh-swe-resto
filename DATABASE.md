@@ -31,7 +31,7 @@ restaurants/{restaurantId}
   menuCategories/{categoryId}
   menuItems/{itemId}
   modifierGroups/{groupId}          options embedded (bounded)
-  deliveryZones/{zoneId}
+  deliveryZones/{zoneId}          admin Delivery areas page (postcodes)
   promotions/{promotionId}
   inventory/{sku}
   counters/orders                   { value: number }
