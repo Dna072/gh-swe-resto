@@ -15,6 +15,7 @@ import { formatSek } from "@/lib/money";
 import type { MessageKey, Translator } from "@/lib/i18n/messages";
 import { track } from "@/lib/analytics/client";
 import { guestTokenFor } from "@/lib/orders/guest-orders";
+import { customerAuthHeaders, getCustomerToken } from "@/lib/account/client";
 import type { PublicOrder } from "@/lib/orders/public";
 import { formatSlot } from "@/lib/orders/slot-format";
 
@@ -35,15 +36,18 @@ export function OrderConfirmation({
 
   useEffect(() => {
     const token = tokenFromUrl || guestTokenFor(orderId);
-    if (!token) {
+    const signedIn = Boolean(getCustomerToken());
+    if (!token && !signedIn) {
       const timer = window.setTimeout(() => {
         setError(t("order.missingToken"));
       }, 0);
       return () => window.clearTimeout(timer);
     }
     const controller = new AbortController();
-    void fetch(`/api/orders/${orderId}?token=${encodeURIComponent(token)}`, {
+    const query = token ? `?token=${encodeURIComponent(token)}` : "";
+    void fetch(`/api/orders/${orderId}${query}`, {
       signal: controller.signal,
+      headers: customerAuthHeaders(),
     })
       .then(async (response) => {
         const body = (await response.json()) as PublicOrder & { message?: string; code?: string };
@@ -66,14 +70,16 @@ export function OrderConfirmation({
 
   useEffect(() => {
     const token = tokenFromUrl || guestTokenFor(orderId);
-    if (!token || !orderStatus) {
+    const signedIn = Boolean(getCustomerToken());
+    if ((!token && !signedIn) || !orderStatus) {
       return;
     }
     if (isTerminalStatus(orderStatus)) {
       return;
     }
+    const query = token ? `?token=${encodeURIComponent(token)}` : "";
     const timer = window.setInterval(() => {
-      void fetch(`/api/orders/${orderId}?token=${encodeURIComponent(token)}`)
+      void fetch(`/api/orders/${orderId}${query}`, { headers: customerAuthHeaders() })
         .then(async (response) => {
           const body = (await response.json()) as PublicOrder & { message?: string; code?: string };
           if (response.ok) {

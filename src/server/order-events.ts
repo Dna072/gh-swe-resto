@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logging/logger";
 import type { NotificationEvent } from "@/domains/notifications/models";
 import type { Order, OrderStatus } from "@/domains/orders/models";
+import { storefrontOrigin } from "@/lib/brand/hosts";
 import { notificationService } from "@/server/composition";
 
 export function notificationEventForStatus(status: OrderStatus): NotificationEvent | undefined {
@@ -20,6 +21,8 @@ export function notificationEventForStatus(status: OrderStatus): NotificationEve
       return "DELIVERED";
     case "CANCELLED":
       return "ORDER_CANCELLED";
+    case "REFUNDED":
+      return "ORDER_REFUNDED";
     case "PAYMENT_FAILED":
       return "PAYMENT_FAILED";
     default:
@@ -39,6 +42,11 @@ export async function notifyOrder(order: Order, status: OrderStatus = order.orde
       to,
       orderId: order.id,
       idempotencyKey: `notify:${order.id}:${event}`,
+      vars: {
+        guestName: order.customerSnapshot.name,
+        orderNumber: order.publicOrderNumber,
+        ctaUrl: `${storefrontOrigin()}/orders/${order.id}`,
+      },
     });
   } catch (error) {
     logger.warn("order_notification_failed", {

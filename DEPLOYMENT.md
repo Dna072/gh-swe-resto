@@ -104,12 +104,50 @@ Mount from Secret Manager when you leave the mock providers:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `WOLT_DRIVE_API_KEY`
-- SMTP credentials
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (SES only)
 - `GOOGLE_MAPS_SERVER_KEY` (Places Autocomplete, Geocoding, Distance Matrix — restrict the key to those APIs)
 
 Public Firebase web config may be `NEXT_PUBLIC_*`. Do not put admin credentials in `NEXT_PUBLIC_*`.
 
 `/api/admin/local-session` only returns a bootstrap token on a local machine. Cloud Run never publishes `ADMIN_DEV_TOKEN`.
+
+## Domain mapping (`mfcuisine.se`)
+
+One Cloud Run service serves storefront, admin, and kitchen. Map custom domains, then set:
+
+| Host | App |
+| --- | --- |
+| `mfcuisine.se` / `www.mfcuisine.se` | Storefront |
+| `admin.mfcuisine.se` | `/admin` |
+| `kitchen.mfcuisine.se` | `/kitchen` |
+
+Cloud Run: add those domains to the service. DNS: CNAME or A records as the Cloud Run domain mapping instructs.
+
+Firebase Authentication → Authorized domains must include `mfcuisine.se`, `www.mfcuisine.se`, `admin.mfcuisine.se`, and `kitchen.mfcuisine.se`.
+
+Env:
+
+```
+APP_BASE_URL=https://mfcuisine.se
+PUBLIC_APP_HOST=mfcuisine.se
+ADMIN_APP_HOST=admin.mfcuisine.se
+KITCHEN_APP_HOST=kitchen.mfcuisine.se
+ADMIN_APP_BASE_URL=https://admin.mfcuisine.se
+KITCHEN_APP_BASE_URL=https://kitchen.mfcuisine.se
+```
+
+Path routes (`/admin`, `/kitchen`) still work on the Cloud Run URL.
+
+### First admin
+
+Create the first OWNER in Firebase Authentication, set custom claims `{ "role": "OWNER", "restaurantId": "uppsala-main" }`, and add a `users/{uid}` document. That owner invites everyone else from `/admin/staff`. Kitchen staff sign in on `kitchen.mfcuisine.se`. Local development still accepts `ADMIN_DEV_TOKEN` when `APP_ENV` is not production.
+
+### Amazon SES
+
+1. Verify `mfcuisine.se` (and `orders@mfcuisine.se`) in SES in `eu-north-1`.
+2. Leave sandbox or request production access.
+3. Set `EMAIL_PROVIDER=ses`, `SES_FROM_EMAIL=orders@mfcuisine.se`, and AWS keys in Secret Manager.
+4. In Firebase Authentication, disable the default “Email address verification” and “Password reset” templates so guests only receive the branded Meridian letters.
 
 ## CI
 

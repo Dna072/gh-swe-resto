@@ -1,3 +1,4 @@
+import type { StaffUser } from "@/domains/auth/models";
 import type { HomepageContent } from "@/domains/content/models";
 import type { Customer, CustomerAddress } from "@/domains/customers/models";
 import type { InventoryItem } from "@/domains/inventory/models";
@@ -6,6 +7,7 @@ import type { Membership, Plan } from "@/domains/memberships/models";
 import type { Order } from "@/domains/orders/models";
 import type { Promotion, PromotionUsage } from "@/domains/promotions/models";
 import type { PrintJob } from "@/domains/printing/models";
+import type { Review } from "@/domains/reviews/models";
 
 export interface MemoryState {
   categories: MenuCategory[];
@@ -20,6 +22,8 @@ export interface MemoryState {
   memberships: Membership[];
   plans: Plan[];
   printJobs: PrintJob[];
+  reviews: Review[];
+  staffUsers: StaffUser[];
   idempotency: Map<string, string>;
   sequences: Map<string, number>;
   webhookEvents: Set<string>;
@@ -41,6 +45,8 @@ export function createMemoryState(seed: Partial<MemoryState> = {}): MemoryState 
     memberships: [],
     plans: [],
     printJobs: [],
+    reviews: [],
+    staffUsers: [],
     idempotency: new Map(),
     sequences: new Map(),
     webhookEvents: new Set(),

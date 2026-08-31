@@ -17,6 +17,7 @@ describe("NotificationService", () => {
     await service.notify(payload);
     await service.notify(payload);
     expect(email.sent).toHaveLength(1);
-    expect(email.sent[0]?.body).toContain("Your order is in");
+    expect(email.sent[0]?.html).toContain("Meridian Fusion");
+    expect(email.sent[0]?.body).toContain("We have your order");
   });
 });

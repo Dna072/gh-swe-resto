@@ -66,11 +66,19 @@
       ]
     },
     {
-      "collectionGroup": "marketingSignups",
+      "collectionGroup": "reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "customerId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "restaurantId", "order": "ASCENDING" },
-        { "fieldPath": "consentedAt", "order": "DESCENDING" }
+        { "fieldPath": "email", "order": "ASCENDING" }
       ]
     }
   ],

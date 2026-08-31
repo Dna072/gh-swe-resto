@@ -11,6 +11,7 @@ describe("notificationEventForStatus", () => {
     expect(notificationEventForStatus("OUT_FOR_DELIVERY")).toBe("OUT_FOR_DELIVERY");
     expect(notificationEventForStatus("DELIVERED")).toBe("DELIVERED");
     expect(notificationEventForStatus("CANCELLED")).toBe("ORDER_CANCELLED");
+    expect(notificationEventForStatus("REFUNDED")).toBe("ORDER_REFUNDED");
     expect(notificationEventForStatus("CONFIRMED")).toBeUndefined();
   });
 });

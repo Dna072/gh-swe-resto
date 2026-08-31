@@ -11,6 +11,7 @@ const BY_CODE: Record<string, MessageKey> = {
   FORBIDDEN: "errors.forbidden",
   UNAUTHORIZED: "errors.forbidden",
   INTERNAL: "errors.generic",
+  CONFLICT: "account.signUpError",
   IDEMPOTENCY_CONFLICT: "checkout.placeError",
   INVALID_TRANSITION: "order.cancelError",
   PROMOTION_INVALID: "errors.promo",

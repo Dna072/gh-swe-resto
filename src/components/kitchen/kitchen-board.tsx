@@ -56,6 +56,15 @@ export function KitchenBoard() {
         }
         return;
       }
+      if (action.to === "CLAIM") {
+        const result = await adminFetch<{ order: StaffOrder }>(`/api/admin/orders/${order.id}`, {
+          method: "POST",
+          body: JSON.stringify({ action: "claim" }),
+        });
+        setOrders((current) => current.map((entry) => (entry.id === order.id ? result.order : entry)));
+        toast.success(`${order.publicOrderNumber}: you are working on this order.`);
+        return;
+      }
       const result = await adminFetch<{ order: StaffOrder }>(`/api/admin/orders/${order.id}`, {
         method: "POST",
         body: JSON.stringify({ action: "transition", to: action.to }),
@@ -152,6 +161,11 @@ export function KitchenBoard() {
                     </ul>
                     {order.specialInstructions ? (
                       <p className="mt-2 text-sm text-earth">{order.specialInstructions}</p>
+                    ) : null}
+                    {order.assignedKitchenStaffName ? (
+                      <p className="mt-2 text-sm font-medium text-earth">
+                        Working: {order.assignedKitchenStaffName}
+                      </p>
                     ) : null}
                     {order.fulfillment !== "PICKUP" ? (
                       <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">

@@ -1,3 +1,4 @@
+import type { StaffUser } from "@/domains/auth/models";
 import type { Customer, CustomerAddress } from "@/domains/customers/models";
 import type { CustomerRepository } from "@/domains/customers/repository";
 import type { InventoryItem } from "@/domains/inventory/models";
@@ -10,6 +11,9 @@ import type { Promotion, PromotionUsage } from "@/domains/promotions/models";
 import type { PromotionRepository } from "@/domains/promotions/repository";
 import type { NotificationDedupStore } from "@/domains/notifications/provider";
 import type { ProcessedWebhookStore } from "@/domains/payments/service";
+import type { Review } from "@/domains/reviews/models";
+import type { ReviewRepository } from "@/domains/reviews/repository";
+import type { StaffUserRepository } from "@/domains/staff/repository";
 import type { MemoryState } from "./state";
 
 export class InMemoryInventoryRepository implements InventoryRepository {
@@ -83,6 +87,16 @@ export class InMemoryCustomerRepository implements CustomerRepository {
   async listAddresses(customerId: string): Promise<CustomerAddress[]> {
     return this.state.addresses.filter((item) => item.customerId === customerId);
   }
+
+  async upsert(customer: Customer): Promise<Customer> {
+    const index = this.state.customers.findIndex((item) => item.id === customer.id);
+    if (index >= 0) {
+      this.state.customers[index] = customer;
+    } else {
+      this.state.customers.push(customer);
+    }
+    return customer;
+  }
 }
 
 export class InMemoryMembershipRepository implements MembershipRepository {
@@ -134,5 +148,61 @@ export class InMemoryNotificationDedup implements NotificationDedupStore {
 
   async mark(idempotencyKey: string): Promise<void> {
     this.state.notificationKeys.add(idempotencyKey);
+  }
+}
+
+export class InMemoryReviewRepository implements ReviewRepository {
+  constructor(private readonly state: MemoryState) {}
+
+  async getById(reviewId: string): Promise<Review | null> {
+    return this.state.reviews.find((item) => item.id === reviewId) ?? null;
+  }
+
+  async getByOrder(orderId: string): Promise<Review | null> {
+    return this.state.reviews.find((item) => item.orderId === orderId) ?? null;
+  }
+
+  async listByCustomer(customerId: string): Promise<Review[]> {
+    return this.state.reviews.filter((item) => item.customerId === customerId);
+  }
+
+  async create(review: Review): Promise<Review> {
+    this.state.reviews.push(review);
+    return review;
+  }
+
+  async update(review: Review): Promise<Review> {
+    const index = this.state.reviews.findIndex((item) => item.id === review.id);
+    if (index >= 0) {
+      this.state.reviews[index] = review;
+    }
+    return review;
+  }
+}
+
+export class InMemoryStaffUserRepository implements StaffUserRepository {
+  constructor(private readonly state: MemoryState) {}
+
+  async getByUid(uid: string): Promise<StaffUser | null> {
+    return this.state.staffUsers.find((item) => item.uid === uid) ?? null;
+  }
+
+  async getByEmail(email: string): Promise<StaffUser | null> {
+    const normalized = email.trim().toLowerCase();
+    return this.state.staffUsers.find((item) => item.email === normalized) ?? null;
+  }
+
+  async listByRestaurant(restaurantId: string): Promise<StaffUser[]> {
+    return this.state.staffUsers.filter((item) => item.restaurantId === restaurantId);
+  }
+
+  async save(user: StaffUser): Promise<StaffUser> {
+    const index = this.state.staffUsers.findIndex((item) => item.uid === user.uid);
+    if (index >= 0) {
+      this.state.staffUsers[index] = user;
+    } else {
+      this.state.staffUsers.push(user);
+    }
+    return user;
   }
 }

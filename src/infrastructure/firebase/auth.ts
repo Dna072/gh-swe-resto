@@ -11,5 +11,6 @@ export async function verifySessionToken(idToken: string): Promise<Session> {
     emailVerified: Boolean(decoded.email_verified),
     role: roleClaim,
     restaurantId: typeof decoded.restaurantId === "string" ? decoded.restaurantId : undefined,
+    displayName: typeof decoded.name === "string" ? decoded.name : undefined,
   };
 }

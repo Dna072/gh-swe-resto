@@ -2,11 +2,11 @@
 
 Production-grade online ordering and operations platform for Meridian Fusion Cuisine in Uppsala, Sweden. The kitchen starts with Ghanaian plates and will add more meals over time.
 
-This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
+This is not a marketing site. It is a modular monolith for menu, cart, guest checkout, customer accounts, payments, delivery, kitchen operations, and administration — hosted on Google Cloud Platform.
 
-**Current status:** Phases 7–9. Guests can track live order status, apply promotion codes, and see when the kitchen has paused ordering. Staff can pause the storefront, manage promotions, refund paid orders, and follow courier tracking links. Status emails are queued through the notification service (mock email locally).
+**Current status:** Customer accounts, branded Amazon SES mail, staff invites, kitchen assignment, and `mfcuisine.se` host mapping. Guests can still check out without an account. Status, account, and invite emails use premium HTML templates (SES when keys are set; mock locally).
 
-Meal photographs must be real kitchen photos uploaded by an admin. The storefront never ships AI-generated food. Until a photograph is uploaded, customers see a branded “Photo coming soon” treatment.
+Meal photographs must be real kitchen photos uploaded by an admin. The storefront never ships AI-generated food. Until a photograph is uploaded, customers see a branded treatment from the kitchen.
 
 ## Stack
 
@@ -21,8 +21,9 @@ Meal photographs must be real kitchen photos uploaded by an admin. The storefron
 | Async | Cloud Tasks / Pub/Sub |
 | Payments | `PaymentProvider` → Stripe adapter (sandbox until tested) |
 | Delivery | `DeliveryProvider` → Wolt Drive boundary + Foodora stub |
+| Email | Amazon SES (`EMAIL_PROVIDER=ses`) — GCP hosts the app |
 
-Do **not** introduce Neon, Supabase, AWS, Azure, Cloud SQL, or GKE in this phase.
+Do **not** introduce Neon, Supabase, Azure, Cloud SQL, or GKE in this phase. Amazon SES is the only AWS service in use (transactional email).
 
 ## Local setup
 

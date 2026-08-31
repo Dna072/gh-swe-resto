@@ -46,12 +46,12 @@ export class InMemoryOrderRepository implements OrderWriteRepository {
   }
 
   async listByCustomer(customerId: string, page: PageRequest): Promise<Page<Order>> {
-    return this.list({ restaurantId: "", customerId }, page).then((result) => ({
-      ...result,
-      items: this.state.orders
-        .filter((order) => order.customerId === customerId)
-        .slice(0, result.limit),
-    }));
+    const limit = normalizePageLimit(page.limit);
+    const items = this.state.orders
+      .filter((order) => order.customerId === customerId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
+    return { items, limit };
   }
 
   async create(order: Order): Promise<Order> {

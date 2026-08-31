@@ -102,7 +102,8 @@ service cloud.firestore {
 
     match /customers/{customerId} {
       allow read: if signedIn() && (uid() == customerId || isStaff());
-      allow create, update, delete: if false;
+      allow create, update: if signedIn() && uid() == customerId;
+      allow delete: if false;
 
       match /addresses/{addressId} {
         allow read: if signedIn() && (uid() == customerId || isStaff());
@@ -111,7 +112,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (uid() == userId || isAdmin() || isOwner());
+      allow read: if signedIn() && (uid() == userId || isAdmin() || isOwner() || isKitchen());
       allow write: if false;
     }
 
@@ -145,8 +146,16 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow read: if resource.data.status == 'APPROVED' || isStaff();
-      allow write: if false;
+      allow read: if resource.data.status == 'APPROVED'
+        || isStaff()
+        || (signedIn() && resource.data.customerId == uid());
+      allow create: if signedIn()
+        && request.resource.data.customerId == uid()
+        && request.resource.data.status == 'PENDING'
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+      allow update, delete: if false;
     }
 
     match /auditLogs/{logId} {

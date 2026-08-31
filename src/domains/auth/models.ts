@@ -7,6 +7,7 @@ export interface Actor {
   uid?: AuthUid;
   role: Role;
   email?: string;
+  displayName?: string;
 }
 
 export interface StaffUser extends Timestamped {
@@ -24,6 +25,7 @@ export interface Session {
   emailVerified: boolean;
   role: Role;
   restaurantId?: string;
+  displayName?: string;
 }
 
 export const ANONYMOUS_CUSTOMER: Actor = { role: "CUSTOMER" };

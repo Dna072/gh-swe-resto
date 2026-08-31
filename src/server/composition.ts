@@ -41,7 +41,7 @@ import { FirestoreMenuRepository } from "@/infrastructure/firestore/menu-reposit
 import { FirestoreOrderRepository } from "@/infrastructure/firestore/order-repository";
 import { readDeliverySettings, writeDeliverySettings } from "@/infrastructure/firestore/delivery-settings";
 import { readRestaurantSettings, writeRestaurantSettings } from "@/infrastructure/firestore/restaurant-settings";
-import { FirestorePrintJobRepository, FirestorePromotionRepository, FirestoreWebhookStore } from "@/infrastructure/firestore/supporting-repositories";
+import { FirestorePrintJobRepository, FirestorePromotionRepository, FirestoreWebhookStore, FirestoreCustomerRepository, FirestoreReviewRepository, FirestoreStaffUserRepository } from "@/infrastructure/firestore/supporting-repositories";
 import { FirestoreTransactionRunner } from "@/infrastructure/firestore/transaction-runner";
 import { InMemoryMenuRepository } from "@/infrastructure/memory/menu-repository";
 import { InMemoryOrderRepository } from "@/infrastructure/memory/order-repository";
@@ -52,10 +52,19 @@ import {
   shouldPersistLocalCatalog,
 } from "@/infrastructure/memory/persist";
 import { createMemoryState } from "@/infrastructure/memory/state";
-import { InMemoryPromotionRepository, InMemoryWebhookStore, InMemoryNotificationDedup } from "@/infrastructure/memory/supporting-repositories";
+import { InMemoryPromotionRepository, InMemoryWebhookStore, InMemoryNotificationDedup, InMemoryCustomerRepository, InMemoryReviewRepository, InMemoryStaffUserRepository } from "@/infrastructure/memory/supporting-repositories";
 import { MockPaymentProvider } from "@/infrastructure/payments/mock-provider";
 import { StripePaymentProvider } from "@/infrastructure/payments/stripe-provider";
-import { MockEmailNotificationProvider } from "@/infrastructure/notifications/email-provider";
+import { createEmailNotificationProvider } from "@/infrastructure/notifications/create-email-provider";
+import { MemoryAuthAdmin } from "@/infrastructure/auth/memory-auth";
+import { FirebaseAuthAdmin } from "@/infrastructure/firebase/auth-admin";
+import type { AuthAdminPort } from "@/domains/auth/ports";
+import { CustomerService } from "@/domains/customers/service";
+import type { CustomerRepository } from "@/domains/customers/repository";
+import { ReviewService } from "@/domains/reviews/service";
+import type { ReviewRepository } from "@/domains/reviews/repository";
+import { StaffService } from "@/domains/staff/service";
+import type { StaffUserRepository } from "@/domains/staff/repository";
 import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
 import { InMemoryTransactionRunner } from "@/infrastructure/memory/transaction-runner";
 import { BrowserPrintProvider } from "@/infrastructure/printing/providers";
@@ -108,6 +117,9 @@ function createDataPorts(): {
   webhookStore: ProcessedWebhookStore;
   printJobs: PrintJobRepository;
   notificationDedup: NotificationDedupStore;
+  customerRepository: CustomerRepository;
+  reviewRepository: ReviewRepository;
+  staffUserRepository: StaffUserRepository;
 } {
   if (firestoreEnabled) {
     const db = getAdminFirestore();
@@ -119,6 +131,9 @@ function createDataPorts(): {
       webhookStore: new FirestoreWebhookStore(db),
       printJobs: new FirestorePrintJobRepository(db),
       notificationDedup: new InMemoryNotificationDedup(state),
+      customerRepository: new FirestoreCustomerRepository(db),
+      reviewRepository: new FirestoreReviewRepository(db),
+      staffUserRepository: new FirestoreStaffUserRepository(db),
     };
   }
   return createMemoryPorts();
@@ -137,6 +152,9 @@ function createMemoryPorts(): ReturnType<typeof createDataPorts> {
     webhookStore: new InMemoryWebhookStore(state),
     printJobs: new InMemoryPrintJobRepository(state),
     notificationDedup: new InMemoryNotificationDedup(state),
+    customerRepository: new InMemoryCustomerRepository(state),
+    reviewRepository: new InMemoryReviewRepository(state),
+    staffUserRepository: new InMemoryStaffUserRepository(state),
   };
 }
 
@@ -319,11 +337,28 @@ export const paymentService = new PaymentService(
   paymentProvider,
   lazyProxy(() => getPorts().webhookStore),
 );
-export const notificationEmail = new MockEmailNotificationProvider();
+export const notificationEmail = createEmailNotificationProvider();
 export const notificationService = new NotificationService(
   [notificationEmail],
   lazyProxy(() => getPorts().notificationDedup),
 );
+
+const memoryAuthAdmin = new MemoryAuthAdmin();
+
+function createAuthAdmin(): AuthAdminPort {
+  if (firestoreEnabled) {
+    return new FirebaseAuthAdmin();
+  }
+  return memoryAuthAdmin;
+}
+
+export const authAdmin = lazyProxy(() => createAuthAdmin());
+export const customerRepository = lazyProxy(() => getPorts().customerRepository);
+export const reviewRepository = lazyProxy(() => getPorts().reviewRepository);
+export const staffUserRepository = lazyProxy(() => getPorts().staffUserRepository);
+export const customerService = new CustomerService(customerRepository, authAdmin, notificationService);
+export const reviewService = new ReviewService(reviewRepository);
+export const staffService = new StaffService(staffUserRepository, authAdmin, notificationService, restaurantId);
 export const promotionRepository = lazyProxy(() => getPorts().promotionRepository);
 export const printingService = new PrintingService(
   lazyProxy(() => getPorts().printJobs),

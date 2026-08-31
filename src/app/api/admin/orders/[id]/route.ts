@@ -9,7 +9,7 @@ import { notifyOrder } from "@/server/order-events";
 import { toStaffOrder } from "@/server/staff-order";
 
 const patchSchema = z.object({
-  action: z.enum(["send_to_kitchen", "transition"]).default("transition"),
+  action: z.enum(["send_to_kitchen", "transition", "claim"]).default("transition"),
   to: z.enum(ORDER_STATUSES).optional(),
 });
 
@@ -43,6 +43,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       );
       await notifyOrder(order);
       return NextResponse.json({ order: toStaffOrder(order), job });
+    }
+    if (body.action === "claim") {
+      const order = await orderService.claim(actor, id);
+      return NextResponse.json({ order: toStaffOrder(order) });
     }
     if (!body.to) {
       throw new AppError("VALIDATION", "A target status is required.");

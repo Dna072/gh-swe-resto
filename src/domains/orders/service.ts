@@ -176,6 +176,30 @@ export class OrderService {
     return this.requireOrder(orderId);
   }
 
+  async listForCustomer(actor: Actor) {
+    if (!actor.uid) {
+      throw new AppError("UNAUTHORIZED", "Sign in is required.");
+    }
+    return this.orders.listByCustomer(actor.uid, { limit: 50 });
+  }
+
+  async claim(actor: Actor, orderId: string): Promise<Order> {
+    authorizationService.requirePermission(actor, "orders:transition");
+    const order = await this.requireOrder(orderId);
+    const claimable = ["CONFIRMED", "PREPARING", "PACKING", "READY"].includes(order.orderStatus);
+    if (!claimable) {
+      throw new AppError("INVALID_TRANSITION", "This order is not on the kitchen board yet.");
+    }
+    const name = actor.displayName || actor.email || "Kitchen";
+    return this.orders.update({
+      ...order,
+      assignedKitchenStaffId: actor.uid,
+      assignedKitchenStaffName: name,
+      assignedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
   async transition(actor: Actor, orderId: string, to: OrderStatus): Promise<Order> {
     authorizationService.requirePermission(actor, "orders:transition");
     const order = await this.requireOrder(orderId);
@@ -230,13 +254,13 @@ export class OrderService {
     return null;
   }
 
-  async getDeliveryForCustomer(id: string, accessToken?: string): Promise<Order> {
+  async getDeliveryForCustomer(id: string, accessToken?: string, actor?: Actor): Promise<Order> {
     const byId = await this.orders.getById(id);
     const order = byId ?? (await this.orders.getByProviderDeliveryId(id));
     if (!order) {
       throw new AppError("NOT_FOUND", "Delivery not found.");
     }
-    return this.getForCustomer(order.id, accessToken);
+    return this.getForCustomer(order.id, accessToken, actor);
   }
 
   async refund(actor: Actor, orderId: string): Promise<Order> {

@@ -19,6 +19,7 @@
     "deploy:showcase": "bash scripts/gcp-showcase-deploy.sh"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.1121.0",
     "@google-cloud/storage": "^8.0.1",
     "@hookform/resolvers": "^5.9.1",
     "class-variance-authority": "^0.7.1",

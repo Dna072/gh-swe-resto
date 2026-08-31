@@ -40,6 +40,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/settings" className="hover:text-earth">
               Settings
             </Link>
+            <Link href="/admin/staff" className="hover:text-earth">
+              Staff
+            </Link>
             <Link href="/" className="hover:text-earth">
               Storefront
             </Link>

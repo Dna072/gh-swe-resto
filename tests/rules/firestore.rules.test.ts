@@ -56,7 +56,18 @@ async function seed() {
       email: "kofi@example.com",
       name: "Kofi",
     });
-    await setDoc(doc(db, "auditLogs", "log-1"), { action: "refund" });
+    await setDoc(doc(db, "reviews", "rev-approved"), {
+      orderId: "order-customer",
+      customerId: "customer-1",
+      rating: 5,
+      status: "APPROVED",
+    });
+    await setDoc(doc(db, "reviews", "rev-pending"), {
+      orderId: "order-guest",
+      customerId: "customer-2",
+      rating: 4,
+      status: "PENDING",
+    });
   });
 }
 
@@ -162,5 +173,32 @@ describe("Firestore security rules", () => {
 
   it("blocks marketing from reading payments", async () => {
     await assertFails(getDoc(doc(staff("mkt-1", "MARKETING"), "payments", "pay-1")));
+  });
+
+  it("lets a customer create a pending review and read their own reviews", async () => {
+    const ama = customer("customer-1");
+    await assertSucceeds(getDoc(doc(ama, "reviews", "rev-approved")));
+    await assertFails(getDoc(doc(ama, "reviews", "rev-pending")));
+    await assertSucceeds(
+      setDoc(doc(ama, "reviews", "rev-new"), {
+        orderId: "order-customer",
+        customerId: "customer-1",
+        rating: 5,
+        status: "PENDING",
+      }),
+    );
+    await assertFails(
+      setDoc(doc(ama, "reviews", "rev-forged"), {
+        orderId: "order-customer",
+        customerId: "customer-2",
+        rating: 5,
+        status: "PENDING",
+      }),
+    );
+  });
+
+  it("hides pending reviews from guests", async () => {
+    await assertSucceeds(getDoc(doc(guest(), "reviews", "rev-approved")));
+    await assertFails(getDoc(doc(guest(), "reviews", "rev-pending")));
   });
 });

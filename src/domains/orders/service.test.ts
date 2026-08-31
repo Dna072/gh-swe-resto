@@ -209,6 +209,12 @@ describe("OrderService", () => {
     expect(stored?.orderStatus).toBe("CONFIRMED");
     const preparing = await service.transition(kitchen, created.order.id, "PREPARING");
     expect(preparing.preparingAt).toBeTruthy();
+    const claimed = await service.claim(
+      { uid: "cook-2", role: "KITCHEN", email: "kofi@mfcuisine.se", displayName: "Kofi" },
+      created.order.id,
+    );
+    expect(claimed.assignedKitchenStaffId).toBe("cook-2");
+    expect(claimed.assignedKitchenStaffName).toBe("Kofi");
   });
 
   it("rejects sending an unpaid order to the kitchen", async () => {

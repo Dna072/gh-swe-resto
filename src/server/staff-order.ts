@@ -30,6 +30,8 @@ export function toStaffOrder(order: Order): StaffOrder {
     createdAt: order.createdAt,
     trackingUrl: order.trackingUrl,
     refundable: order.paymentStatus === "PAID" && canTransition(order.orderStatus, "REFUNDED"),
+    assignedKitchenStaffId: order.assignedKitchenStaffId,
+    assignedKitchenStaffName: order.assignedKitchenStaffName,
     actions: kitchenActions(order),
   };
 }

@@ -2,7 +2,7 @@
 
 Trusted Next.js Route Handlers. Provider credentials never appear in responses.
 
-Guest checkout, payment, live tracking, promotions, and restaurant pause are wired. The mock payment provider confirms locally. Stripe is used when `PAYMENT_PROVIDER=stripe` and keys are set. Delivery webhooks update order and delivery status. Status emails go through `NotificationService` (mock email unless SMTP is configured).
+Guest checkout, customer accounts, payment, live tracking, promotions, restaurant pause, staff invites, and branded transactional email are wired. The mock payment provider confirms locally. Stripe is used when `PAYMENT_PROVIDER=stripe` and keys are set. Delivery webhooks update order and delivery status. Emails go through `NotificationService` (Amazon SES when `EMAIL_PROVIDER=ses`, otherwise mock).
 
 ## Customer
 
@@ -15,14 +15,20 @@ Guest checkout, payment, live tracking, promotions, and restaurant pause are wir
 | POST | `/api/marketing/signup` | Email + required consent (in-memory) |
 | POST | `/api/analytics/track` | Storefront events |
 | POST | `/api/delivery/quote` | Zone + mock-provider quote (fee from seed zones) |
-| POST | `/api/orders` | Idempotent guest order create (`Idempotency-Key`) |
-| GET | `/api/orders/:id` | Guest order (`?token=`) |
+| POST | `/api/orders` | Idempotent order create (`Idempotency-Key`). Signed-in customers send `X-Customer-Token` so the order is attached to the account |
+| GET | `/api/orders/:id` | Order (`?token=` guest, or `X-Customer-Token`) |
 | GET | `/api/orders/lookup` | Lookup by `GH` number + token |
 | POST | `/api/orders/:id/cancel` | Customer/admin cancel |
 | POST | `/api/orders/:id/pay` | Guest payment (mock succeeds; Stripe session when configured) |
 | POST | `/api/orders/:id/reorder` | Rebuild a cart from a snapshot |
+| POST | `/api/orders/:id/review` | Signed-in customer review of a delivered order |
+| POST | `/api/account/register` | Create a customer account and send a welcome email |
+| POST | `/api/account/login` | Local/memory password login (Firebase client is used when configured) |
+| POST | `/api/account/password-reset` | Branded reset email (does not reveal whether the address exists) |
+| GET | `/api/account/me` | Current customer profile |
+| GET | `/api/account/orders` | Order history, current orders, and review state |
 | POST | `/api/payments/webhook` | Verified provider webhook (`x-mock-signature` for mock) |
-| GET | `/api/delivery/:id` | Delivery status (`?token=` — order id or provider delivery id) |
+| GET | `/api/delivery/:id` | Delivery status (`?token=` or `X-Customer-Token` — order id or provider delivery id) |
 
 ## Admin
 
@@ -32,9 +38,10 @@ All admin routes require a verified ID token and `AuthorizationService`.
 | --- | --- | --- |
 | GET | `/api/admin/orders` | Kitchen/admin order list |
 | GET | `/api/admin/orders/:id` | Staff order detail |
-| PATCH | `/api/admin/orders/:id` | `send_to_kitchen` or validated status transition |
+| PATCH | `/api/admin/orders/:id` | `send_to_kitchen`, `claim`, or validated status transition |
 | POST | `/api/admin/orders/:id/print` | Enqueue / reprint kitchen ticket |
-| POST | `/api/admin/orders/:id/refund` | Full refund of a paid order |
+| POST | `/api/admin/orders/:id/refund` | Full refund of a paid order (emails `ORDER_REFUNDED`) |
+| GET / POST | `/api/admin/staff` | List staff; invite OWNER/MANAGER/KITCHEN/… (sends SES invite) |
 | GET / PUT | `/api/admin/restaurant-settings` | Pause or resume ordering |
 | GET / PUT | `/api/admin/promotions` | List and save promotion codes |
 | GET / PUT | `/api/admin/delivery-settings` | Last-mile providers and customer delivery pricing |

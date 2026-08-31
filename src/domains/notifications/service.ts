@@ -1,6 +1,15 @@
 import { logger } from "@/lib/logging/logger";
 import type { NotificationDedupStore, NotificationProvider } from "./provider";
 import { NOTIFICATION_COPY, type NotificationEvent, type NotificationMessage } from "./models";
+import { withPremiumHtml } from "@/infrastructure/notifications/email-provider";
+
+export type NotifyInput = Omit<NotificationMessage, "subject" | "body" | "channel" | "html"> & {
+  to: string;
+  subject?: string;
+  body?: string;
+  html?: string;
+  vars?: Record<string, string>;
+};
 
 export class NotificationService {
   constructor(
@@ -8,7 +17,7 @@ export class NotificationService {
     private readonly dedup: NotificationDedupStore,
   ) {}
 
-  async notify(input: Omit<NotificationMessage, "subject" | "body" | "channel"> & { to: string }): Promise<void> {
+  async notify(input: NotifyInput): Promise<void> {
     if (await this.dedup.seen(input.idempotencyKey)) {
       return;
     }
@@ -18,12 +27,13 @@ export class NotificationService {
       logger.warn("No email notification provider configured", { event: input.event });
       return;
     }
-    await email.send({
+    const message = withPremiumHtml({
       ...input,
       channel: "email",
-      subject: copy.subject,
-      body: copy.body,
+      subject: input.subject ?? copy.subject,
+      body: input.body ?? copy.body,
     });
+    await email.send(message);
     await this.dedup.mark(input.idempotencyKey);
   }
 }
