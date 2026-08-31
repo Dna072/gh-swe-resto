@@ -103,6 +103,7 @@ export interface Order extends Timestamped {
   scheduledFor?: string;
   specialInstructions?: string;
   promotionCode?: string;
+  paymentProviderId?: string;
   idempotencyKey: string;
   schemaVersion: number;
   internalCosts?: InternalCostSnapshot;
@@ -113,6 +114,7 @@ export interface Order extends Timestamped {
   dispatchedAt?: string;
   deliveredAt?: string;
   cancelledAt?: string;
+  refundedAt?: string;
 }
 
 export interface OrderListFilters {

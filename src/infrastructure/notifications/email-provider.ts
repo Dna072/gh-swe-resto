@@ -16,7 +16,7 @@ export class SmtpEmailNotificationProvider implements NotificationProvider {
   readonly channel = "email" as const;
 
   async send(message: NotificationMessage): Promise<void> {
-    logger.info("SMTP provider is a Phase 9 concern; message not sent", {
+    logger.info("SMTP is not configured; message not sent", {
       event: message.event,
       orderId: message.orderId,
     });

@@ -25,6 +25,7 @@ export type StaffOrder = {
   scheduledFor?: string;
   createdAt: string;
   trackingUrl?: string;
+  refundable: boolean;
   actions: KitchenAction[];
 };
 

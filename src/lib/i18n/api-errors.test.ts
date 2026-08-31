@@ -9,6 +9,8 @@ describe("customerErrorMessage", () => {
     expect(customerErrorMessage("DELIVERY_UNAVAILABLE", sv)).toBe(sv("delivery.no"));
     expect(customerErrorMessage("OUT_OF_ZONE", en)).toBe(en("delivery.no"));
     expect(customerErrorMessage("SLOT_UNAVAILABLE", sv)).toBe(sv("checkout.needSlot"));
+    expect(customerErrorMessage("PROMOTION_INVALID", en)).toBe(en("errors.promo"));
+    expect(customerErrorMessage("ORDERING_PAUSED", sv)).toBe(sv("errors.paused"));
     expect(customerErrorMessage("NOT_FOUND", en)).toBe(en("errors.notFound"));
     expect(customerErrorMessage("UNKNOWN_CODE", sv, "cart.priceError")).toBe(sv("cart.priceError"));
   });

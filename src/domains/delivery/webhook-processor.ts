@@ -21,7 +21,7 @@ export class DeliveryWebhookProcessor {
     providerId: string,
     rawBody: string,
     headers: Record<string, string | undefined>,
-  ): Promise<{ duplicate: boolean; ignored: boolean; event: NormalizedDeliveryEvent }> {
+  ): Promise<{ duplicate: boolean; ignored: boolean; event: NormalizedDeliveryEvent; order?: Order }> {
     const provider = this.providers.find((entry) => entry.providerId === providerId);
     if (!provider) {
       throw new Error("Unknown delivery provider.");
@@ -59,7 +59,7 @@ export class DeliveryWebhookProcessor {
       }
     }
     await this.orders.update(next);
-    return { duplicate: false, ignored: false, event };
+    return { duplicate: false, ignored: false, event, order: next };
   }
 
   private async findOrder(event: NormalizedDeliveryEvent): Promise<Order | null> {

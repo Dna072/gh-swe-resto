@@ -16,6 +16,8 @@ import { PricingService } from "@/domains/pricing/service";
 import { PaymentService, type ProcessedWebhookStore } from "@/domains/payments/service";
 import { PromotionService } from "@/domains/promotions/service";
 import type { PromotionRepository } from "@/domains/promotions/repository";
+import { NotificationService } from "@/domains/notifications/service";
+import type { NotificationDedupStore } from "@/domains/notifications/provider";
 import type { TransactionRunner } from "@/domains/shared/transaction";
 import { LoggingAnalyticsSink } from "@/infrastructure/analytics/sinks";
 import { InMemoryAnalyticsRepository, InMemoryMarketingSignupRepository } from "@/infrastructure/analytics/memory-repository";
@@ -28,6 +30,7 @@ import { DeliveryPricingService } from "@/domains/delivery/pricing";
 import { DeliveryDispatchService } from "@/domains/delivery/dispatch";
 import { DeliveryWebhookProcessor } from "@/domains/delivery/webhook-processor";
 import { defaultDeliverySettings, type DeliverySettings } from "@/domains/delivery/models";
+import { defaultRestaurantSettings, type RestaurantSettings } from "@/domains/restaurant/settings";
 import { MockDeliveryProvider } from "@/infrastructure/delivery/mock-provider";
 import { SandboxDeliveryProvider, SANDBOX_PROFILES } from "@/infrastructure/delivery/sandbox-provider";
 import { WoltDriveProvider } from "@/infrastructure/delivery/wolt-drive-provider";
@@ -37,6 +40,7 @@ import { getAdminFirestore } from "@/infrastructure/firebase/admin";
 import { FirestoreMenuRepository } from "@/infrastructure/firestore/menu-repository";
 import { FirestoreOrderRepository } from "@/infrastructure/firestore/order-repository";
 import { readDeliverySettings, writeDeliverySettings } from "@/infrastructure/firestore/delivery-settings";
+import { readRestaurantSettings, writeRestaurantSettings } from "@/infrastructure/firestore/restaurant-settings";
 import { FirestorePrintJobRepository, FirestorePromotionRepository, FirestoreWebhookStore } from "@/infrastructure/firestore/supporting-repositories";
 import { FirestoreTransactionRunner } from "@/infrastructure/firestore/transaction-runner";
 import { InMemoryMenuRepository } from "@/infrastructure/memory/menu-repository";
@@ -48,15 +52,17 @@ import {
   shouldPersistLocalCatalog,
 } from "@/infrastructure/memory/persist";
 import { createMemoryState } from "@/infrastructure/memory/state";
-import { InMemoryPromotionRepository, InMemoryWebhookStore } from "@/infrastructure/memory/supporting-repositories";
+import { InMemoryPromotionRepository, InMemoryWebhookStore, InMemoryNotificationDedup } from "@/infrastructure/memory/supporting-repositories";
 import { MockPaymentProvider } from "@/infrastructure/payments/mock-provider";
 import { StripePaymentProvider } from "@/infrastructure/payments/stripe-provider";
+import { MockEmailNotificationProvider } from "@/infrastructure/notifications/email-provider";
 import { InMemoryPrintJobRepository } from "@/infrastructure/memory/print-job-repository";
 import { InMemoryTransactionRunner } from "@/infrastructure/memory/transaction-runner";
 import { BrowserPrintProvider } from "@/infrastructure/printing/providers";
 import {
   SEED_SOURCE,
   seedPricingCalendar,
+  seedPromotions,
   seedRestaurant,
   seededCatalog,
 } from "@/infrastructure/seed/ghana-menu";
@@ -77,6 +83,7 @@ const state = createMemoryState({
   modifierGroups: catalog.modifierGroups,
   inventory: catalog.inventory,
   homepage: defaultHomepageContent(restaurantId),
+  promotions: seedPromotions.map((promotion) => ({ ...promotion, restaurantId })),
 });
 if (!firestoreEnabled && shouldPersistLocalCatalog()) {
   const persisted = loadPersistedCatalog();
@@ -100,6 +107,7 @@ function createDataPorts(): {
   transactions: TransactionRunner;
   webhookStore: ProcessedWebhookStore;
   printJobs: PrintJobRepository;
+  notificationDedup: NotificationDedupStore;
 } {
   if (firestoreEnabled) {
     const db = getAdminFirestore();
@@ -110,6 +118,7 @@ function createDataPorts(): {
       transactions: new FirestoreTransactionRunner(db),
       webhookStore: new FirestoreWebhookStore(db),
       printJobs: new FirestorePrintJobRepository(db),
+      notificationDedup: new InMemoryNotificationDedup(state),
     };
   }
   return createMemoryPorts();
@@ -127,6 +136,7 @@ function createMemoryPorts(): ReturnType<typeof createDataPorts> {
     transactions: new InMemoryTransactionRunner(state),
     webhookStore: new InMemoryWebhookStore(state),
     printJobs: new InMemoryPrintJobRepository(state),
+    notificationDedup: new InMemoryNotificationDedup(state),
   };
 }
 
@@ -217,6 +227,48 @@ export async function saveDeliverySettings(next: DeliverySettings): Promise<Deli
   return deliverySettingsState;
 }
 
+let restaurantSettingsState: RestaurantSettings = defaultRestaurantSettings(restaurantId);
+let restaurantSettingsLoaded = false;
+
+export async function ensureRestaurantSettings(): Promise<RestaurantSettings> {
+  if (restaurantSettingsLoaded) {
+    return restaurantSettingsState;
+  }
+  if (firestoreEnabled) {
+    try {
+      const stored = await readRestaurantSettings(getAdminFirestore(), restaurantId);
+      if (stored) {
+        restaurantSettingsState = stored;
+      }
+    } catch (error) {
+      logger.info("restaurant_settings_load_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  restaurantSettingsLoaded = true;
+  return restaurantSettingsState;
+}
+
+export async function saveRestaurantSettings(next: RestaurantSettings): Promise<RestaurantSettings> {
+  restaurantSettingsState = next;
+  restaurantSettingsLoaded = true;
+  if (firestoreEnabled) {
+    try {
+      await writeRestaurantSettings(getAdminFirestore(), next);
+    } catch (error) {
+      logger.info("restaurant_settings_save_skipped", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+  return restaurantSettingsState;
+}
+
+export function isOrderingPaused(): boolean {
+  return restaurantSettingsState.orderingPaused;
+}
+
 export const objectStorage = lazyProxy(() => createObjectStorage());
 export const mediaService = new MediaService(objectStorage);
 export const menuService = new MenuService(menuRepository);
@@ -267,6 +319,12 @@ export const paymentService = new PaymentService(
   paymentProvider,
   lazyProxy(() => getPorts().webhookStore),
 );
+export const notificationEmail = new MockEmailNotificationProvider();
+export const notificationService = new NotificationService(
+  [notificationEmail],
+  lazyProxy(() => getPorts().notificationDedup),
+);
+export const promotionRepository = lazyProxy(() => getPorts().promotionRepository);
 export const printingService = new PrintingService(
   lazyProxy(() => getPorts().printJobs),
   new BrowserPrintProvider(),
@@ -340,7 +398,7 @@ export function restaurantSettings() {
     pickup: seedRestaurant.pickup,
     timeZone: seedRestaurant.timeZone,
     openingHours: seedRestaurant.openingHours,
-    orderingPaused: seedRestaurant.orderingPaused,
+    orderingPaused: restaurantSettingsState.orderingPaused,
   };
 }
 

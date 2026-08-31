@@ -57,7 +57,7 @@ export default function AdminOrdersPage() {
               </p>
             </div>
             <Button size="touch" variant="outline" asChild>
-              <Link href="/kitchen">Open</Link>
+              <Link href={`/admin/orders/${order.id}`}>Open</Link>
             </Button>
           </li>
         ))}

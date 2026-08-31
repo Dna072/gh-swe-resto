@@ -6,6 +6,7 @@ import type { DeliveryZone } from "@/domains/delivery/models";
 import { DEFAULT_OPENING_HOURS } from "@/domains/fulfillment/hours";
 import type { MenuCategory, MenuItem, ModifierGroup, PricingCalendar } from "@/domains/menu/models";
 import type { InventoryItem } from "@/domains/inventory/models";
+import type { Promotion } from "@/domains/promotions/models";
 import type { Weekday } from "@/lib/time";
 
 export const SEED_SOURCE = "demo-seed" as const;
@@ -39,6 +40,23 @@ export const seedRestaurant = {
   kitchenCapacityPer15Min: 10,
   seed: true,
 };
+
+export const seedPromotions: Promotion[] = [
+  {
+    id: "welcome",
+    restaurantId: SEED_RESTAURANT_ID,
+    code: "WELCOME10",
+    type: "PERCENTAGE",
+    percentOff: 10,
+    firstOrderOnly: false,
+    memberOnly: false,
+    redemptionCount: 0,
+    stackable: false,
+    active: true,
+    createdAt: STAMP,
+    updatedAt: STAMP,
+  },
+];
 
 export const seedPricingCalendar: PricingCalendar = {
   timeZone: seedRestaurant.timeZone,

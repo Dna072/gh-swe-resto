@@ -1,7 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { defaultHomepageContent } from "@/domains/content/defaults";
 import { SCHEMA_VERSION } from "@/domains/shared/types";
-import { seedRestaurant, seededCatalog } from "@/infrastructure/seed/ghana-menu";
+import { seedRestaurant, seedPromotions, seededCatalog } from "@/infrastructure/seed/ghana-menu";
 import { collections, restaurantPath, restaurantSub } from "./paths";
 
 export async function restaurantHasMenu(db: Firestore, restaurantId: string): Promise<boolean> {
@@ -51,6 +51,14 @@ export async function seedFirestoreCatalog(
   }
   for (const zone of catalog.deliveryZones) {
     batch.set(restaurant.collection(restaurantSub.deliveryZones).doc(zone.id), zone, { merge: true });
+    wrote += 1;
+  }
+  for (const promotion of seedPromotions) {
+    batch.set(
+      restaurant.collection(restaurantSub.promotions).doc(promotion.id),
+      { ...promotion, restaurantId },
+      { merge: true },
+    );
     wrote += 1;
   }
   batch.set(restaurant.collection(restaurantSub.content).doc("homepage"), homepage, { merge: true });

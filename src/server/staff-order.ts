@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Order } from "@/domains/orders/models";
 import { formatSek } from "@/lib/money";
+import { canTransition } from "@/domains/orders/state-machine";
 import { fulfillmentOf, kitchenActions, type StaffOrder } from "@/lib/orders/staff";
 
 export type { KitchenAction, StaffOrder } from "@/lib/orders/staff";
@@ -28,6 +29,7 @@ export function toStaffOrder(order: Order): StaffOrder {
     scheduledFor: order.scheduledFor,
     createdAt: order.createdAt,
     trackingUrl: order.trackingUrl,
+    refundable: order.paymentStatus === "PAID" && canTransition(order.orderStatus, "REFUNDED"),
     actions: kitchenActions(order),
   };
 }

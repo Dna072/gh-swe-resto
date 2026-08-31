@@ -17,6 +17,7 @@ import { HomeHero } from "@/components/storefront/home-hero";
 import { HomeHours } from "@/components/storefront/home-hours";
 import { PhotoBand } from "@/components/storefront/photo-band";
 import { DeliveryCheck } from "@/components/storefront/delivery-check";
+import { OrderingPausedBanner } from "@/components/storefront/ordering-paused-banner";
 import { TrackView } from "@/components/storefront/track-view";
 import { localizeCatalog, localizeHomepageCopy } from "@/lib/i18n/catalog";
 import { getLocale, getTranslator } from "@/lib/i18n/server";
@@ -73,6 +74,11 @@ export default async function HomePage() {
           mobileImageAlt={homepage.hero.mobileImage?.altText ?? homepage.hero.mobileImage?.alt}
           mobileImagePosition={objectPosition(homepage.hero.mobileImage)}
         />
+        {catalog.orderingPaused ? (
+          <div className="bg-background px-4 py-6">
+            <OrderingPausedBanner />
+          </div>
+        ) : null}
 
         <HomeHours />
 

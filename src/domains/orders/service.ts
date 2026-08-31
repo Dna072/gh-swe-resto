@@ -182,12 +182,74 @@ export class OrderService {
     return this.orders.update(applyOrderTransition(order, to));
   }
 
-  async markPaid(orderId: string, accessToken: string): Promise<Order> {
+  async markPaid(
+    orderId: string,
+    accessToken: string,
+    payment?: { providerPaymentId?: string },
+  ): Promise<Order> {
     const order = await this.getForCustomer(orderId, accessToken);
+    return this.settlePaid(order, payment?.providerPaymentId);
+  }
+
+  async settlePaid(order: Order, providerPaymentId?: string): Promise<Order> {
+    if (order.paymentStatus === "PAID") {
+      if (providerPaymentId && !order.paymentProviderId) {
+        return this.orders.update({
+          ...order,
+          paymentProviderId: providerPaymentId,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      return order;
+    }
     if (order.orderStatus !== "PENDING_PAYMENT") {
       throw new AppError("INVALID_TRANSITION", "This order is not waiting for payment.");
     }
-    return this.orders.update(applyOrderTransition(order, "PAID"));
+    const next = applyOrderTransition(order, "PAID");
+    if (providerPaymentId) {
+      next.paymentProviderId = providerPaymentId;
+    }
+    return this.orders.update(next);
+  }
+
+  async findByPayment(providerPaymentId: string, orderId?: string): Promise<Order | null> {
+    if (orderId) {
+      const byId = await this.orders.getById(orderId);
+      if (byId) {
+        return byId;
+      }
+    }
+    const byPayment = await this.orders.getByProviderPaymentId(providerPaymentId);
+    if (byPayment) {
+      return byPayment;
+    }
+    const mockPrefix = "mock_pay:";
+    if (providerPaymentId.startsWith(mockPrefix)) {
+      return this.orders.getById(providerPaymentId.slice(mockPrefix.length));
+    }
+    return null;
+  }
+
+  async getDeliveryForCustomer(id: string, accessToken?: string): Promise<Order> {
+    const byId = await this.orders.getById(id);
+    const order = byId ?? (await this.orders.getByProviderDeliveryId(id));
+    if (!order) {
+      throw new AppError("NOT_FOUND", "Delivery not found.");
+    }
+    return this.getForCustomer(order.id, accessToken);
+  }
+
+  async refund(actor: Actor, orderId: string): Promise<Order> {
+    authorizationService.requirePermission(actor, "orders:refund");
+    const order = await this.requireOrder(orderId);
+    if (order.orderStatus === "REFUNDED" || order.paymentStatus === "REFUNDED") {
+      return order;
+    }
+    if (order.paymentStatus !== "PAID") {
+      throw new AppError("INVALID_TRANSITION", "Only paid orders can be refunded.");
+    }
+    assertTransition(order.orderStatus, "REFUNDED");
+    return this.orders.update(applyOrderTransition(order, "REFUNDED"));
   }
 
   /**

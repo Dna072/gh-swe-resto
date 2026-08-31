@@ -235,4 +235,57 @@ describe("OrderService", () => {
       code: "INVALID_TRANSITION",
     });
   });
+
+  it("settles payment idempotently and stores the provider payment id", async () => {
+    const { service } = createHarness();
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "settle-pay",
+      guestSessionId: "guest-1",
+    });
+    const paid = await service.markPaid(created.order.id, created.accessToken, {
+      providerPaymentId: `mock_pay:${created.order.id}`,
+    });
+    expect(paid.paymentProviderId).toBe(`mock_pay:${created.order.id}`);
+    const again = await service.settlePaid(paid, `mock_pay:${created.order.id}`);
+    expect(again.orderStatus).toBe("PAID");
+  });
+
+  it("refunds a paid order for finance staff", async () => {
+    const { service } = createHarness();
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "refund-me",
+      guestSessionId: "guest-1",
+    });
+    await service.markPaid(created.order.id, created.accessToken, { providerPaymentId: "mock_pay:refund-me" });
+    const finance = { uid: "fin-1", role: "FINANCE" as const };
+    const refunded = await service.refund(finance, created.order.id);
+    expect(refunded.orderStatus).toBe("REFUNDED");
+    expect(refunded.paymentStatus).toBe("REFUNDED");
+  });
 });

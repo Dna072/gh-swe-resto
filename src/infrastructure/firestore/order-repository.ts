@@ -34,6 +34,14 @@ export class FirestoreOrderRepository implements OrderWriteRepository {
     return snap.docs[0]?.data() ?? null;
   }
 
+  async getByProviderPaymentId(providerPaymentId: string): Promise<Order | null> {
+    if (!providerPaymentId) {
+      return null;
+    }
+    const snap = await this.col().where("paymentProviderId", "==", providerPaymentId).limit(1).get();
+    return snap.docs[0]?.data() ?? null;
+  }
+
   async list(filters: OrderListFilters, page: PageRequest): Promise<Page<Order>> {
     const limit = normalizePageLimit(page.limit);
     let query = this.col()

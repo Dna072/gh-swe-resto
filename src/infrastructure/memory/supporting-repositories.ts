@@ -46,6 +46,27 @@ export class InMemoryPromotionRepository implements PromotionRepository {
       null
     );
   }
+
+  async list(restaurantId: string): Promise<Promotion[]> {
+    return this.state.promotions.filter((item) => item.restaurantId === restaurantId);
+  }
+
+  async save(promotion: Promotion): Promise<Promotion> {
+    const next: Promotion = {
+      ...promotion,
+      code: promotion.code.trim().toUpperCase(),
+      updatedAt: new Date().toISOString(),
+    };
+    const index = this.state.promotions.findIndex(
+      (item) => item.restaurantId === next.restaurantId && item.id === next.id,
+    );
+    if (index >= 0) {
+      this.state.promotions[index] = next;
+    } else {
+      this.state.promotions.push(next);
+    }
+    return next;
+  }
 }
 
 export class InMemoryCustomerRepository implements CustomerRepository {

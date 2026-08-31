@@ -6,6 +6,7 @@ import { logger } from "@/lib/logging/logger";
 const STATUS_BY_CODE: Record<string, number> = {
   VALIDATION: 400,
   PROMOTION_INVALID: 400,
+  ORDERING_PAUSED: 409,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,

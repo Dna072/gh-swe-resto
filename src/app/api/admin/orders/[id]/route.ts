@@ -5,6 +5,7 @@ import { ORDER_STATUSES } from "@/domains/orders/models";
 import { deliveryDispatch, orderService, printingService, restaurantSettings } from "@/server/composition";
 import { requireAdmin } from "@/server/admin-auth";
 import { errorResponse } from "@/server/http";
+import { notifyOrder } from "@/server/order-events";
 import { toStaffOrder } from "@/server/staff-order";
 
 const patchSchema = z.object({
@@ -40,6 +41,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         restaurantSettings().name,
         `print:${id}:confirm`,
       );
+      await notifyOrder(order);
       return NextResponse.json({ order: toStaffOrder(order), job });
     }
     if (!body.to) {
@@ -54,6 +56,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     } else if (body.to === "READY" || body.to === "COURIER_ASSIGNED") {
       order = await deliveryDispatch.dispatchIfReady(order);
     }
+    await notifyOrder(order);
     return NextResponse.json({ order: toStaffOrder(order) });
   } catch (error) {
     return errorResponse(error);

@@ -20,7 +20,7 @@ Enable daily Firestore exports to `gs://<project>-firestore-backups`. Retention:
 
 Recovery:
 
-1. Pause ordering (`restaurants/{id}` flag — Phase 8).
+1. Pause ordering (`PUT /api/admin/restaurant-settings` with `orderingPaused: true`).
 2. Restore the export to a new database or the same database if data loss is confirmed.
 3. Reconcile Stripe/Wolt using provider dashboards vs `payments` and `orders`.
 4. Resume ordering.
