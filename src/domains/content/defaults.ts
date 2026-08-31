@@ -9,19 +9,20 @@ export function defaultHomepageContent(restaurantId: string): HomepageContent {
     hero: {
       eyebrow: "Welcome to",
       title: "Meridian Fusion\nin Uppsala",
-      subtitle: "Ghanaian plates, and more to come — cooked here. Order online for delivery in Uppsala.",
+      subtitle:
+        "Ghanaian plates cooked here. Order online for delivery in Uppsala — kitchen 11.00–19.00, at least 24 hours ahead.",
       primaryCta: { label: "Order today", href: "#todays-menu" },
       secondaryCta: { label: "View the menu", href: "/menu" },
     },
     story: {
       eyebrow: "Discover",
       title: "Our story",
-      body: "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. Ghanaian plates first, with more meals to come. We open on our own site in Uppsala.",
+      body: "This is home food: tomato rice that tastes of the pot, banku with proper pepper, fufu that does not apologise. Ghanaian plates first, with more meals to come — cooked in Uppsala and delivered to your door.",
     },
     delivery: {
       eyebrow: "Delivery",
       title: "Do we reach your door?",
-      body: "Enter an Uppsala address or postcode. The server confirms whether we deliver there.",
+      body: "Enter an Uppsala address or postcode. We will tell you if we deliver there, the fee, and an estimated time.",
     },
     promotional: {
       eyebrow: "The list",

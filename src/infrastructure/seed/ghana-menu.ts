@@ -51,7 +51,7 @@ export const seedCategories: MenuCategory[] = [
     restaurantId: SEED_RESTAURANT_ID,
     name: "Today's plates",
     slug: "plates",
-    description: "Weekday plates from 129 SEK. Weekend pricing is calculated on the server.",
+    description: "Jollof, waakye, banku, fufu and kenkey — cooked in Uppsala.",
     displayOrder: 1,
     createdAt: STAMP,
     updatedAt: STAMP,
