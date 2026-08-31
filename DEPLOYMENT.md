@@ -17,7 +17,8 @@ The storefront, checkout, kitchen board, and admin run as **one Cloud Run servic
 | `npx firebase-tools login` if rules deploy fails | Maybe | Deploys `firestore.rules`, indexes, and `storage.rules` |
 | A token the team will paste on `/admin` | Optional | Defaults to `showcase-admin-token` |
 | Stripe / Wolt | **No** | Still mocked. We will wire them when you have sandbox keys |
-| Google Maps API key | Optional | Address search and Uppsala geocoding. Without it, checkout still accepts street + postcode and checks Uppsala on the server |
+| Google Maps API key | Optional | Address search. Not required for drawing delivery areas |
+| MapTiler key | Optional | `NEXT_PUBLIC_MAPTILER_KEY` (browser tiles) and/or `MAPTILER_API_KEY` (server geocoding). The delivery map works without a key via OpenFreeMap |
 
 The agent cannot create a GCP project, enable billing, or accept Firebase terms on your account. After you have a project id, run the script (or share the id and we can retry if this environment has `gcloud` auth).
 

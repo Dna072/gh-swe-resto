@@ -53,6 +53,29 @@ describe("DeliveryService", () => {
     expect(() => service.validateZone(address, [inactive])).toThrow(/do not deliver/i);
   });
 
+  it("matches a pin inside a drawn polygon even without a listed postcode", () => {
+    const drawn: DeliveryZone = {
+      ...zone,
+      postalCodes: [],
+      polygon: [
+        { lat: 59.85, lng: 17.62 },
+        { lat: 59.85, lng: 17.66 },
+        { lat: 59.87, lng: 17.66 },
+        { lat: 59.87, lng: 17.62 },
+      ],
+    };
+    const service = new DeliveryService([new MockDeliveryProvider()], {
+      preferCheapest: true,
+      preferredProviders: ["wolt_drive"],
+    });
+    expect(
+      service.validateZone({ ...address, postalCode: "00000", lat: 59.86, lng: 17.64 }, [drawn]).id,
+    ).toBe("uppsala-center");
+    expect(() =>
+      service.validateZone({ ...address, postalCode: "00000", lat: 59.33, lng: 18.06 }, [drawn]),
+    ).toThrow(/do not deliver/i);
+  });
+
   it("selects the cheapest valid quote", async () => {
     const service = new DeliveryService([new MockDeliveryProvider()], {
       preferCheapest: true,

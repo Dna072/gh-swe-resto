@@ -1,5 +1,6 @@
 import { AppError } from "@/lib/errors";
 import type { AddressSnapshot } from "@/domains/shared/types";
+import { isValidPolygon, pointInPolygon } from "@/lib/geo/polygon";
 import type { DeliveryProvider } from "./provider";
 import type {
   DeliveryQuote,
@@ -20,9 +21,17 @@ export class DeliveryService {
     options?: { allowCityWide?: boolean },
   ): DeliveryZone {
     const postal = address.postalCode.replace(/\s+/g, "");
-    const zone = zones.find(
-      (candidate) => candidate.active && candidate.postalCodes.some((code) => code.replace(/\s+/g, "") === postal),
-    );
+    const point =
+      address.lat != null && address.lng != null ? { lat: address.lat, lng: address.lng } : undefined;
+    const zone = zones.find((candidate) => {
+      if (!candidate.active) {
+        return false;
+      }
+      if (point && isValidPolygon(candidate.polygon)) {
+        return pointInPolygon(point, candidate.polygon);
+      }
+      return candidate.postalCodes.some((code) => code.replace(/\s+/g, "") === postal);
+    });
     if (zone) {
       return zone;
     }

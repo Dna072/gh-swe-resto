@@ -23,6 +23,16 @@ describe("MockGeocodingService", () => {
     expect(hits.length).toBeGreaterThan(1);
   });
 
+  it("does not snap a Stockholm postcode to Uppsala", async () => {
+    const place = await geocoder.geocodeAddress({
+      line1: "Drottninggatan 1",
+      postalCode: "11122",
+      city: "Stockholm",
+      country: "SE",
+    });
+    expect(place?.lng).toBeCloseTo(18.06, 1);
+  });
+
   it("updates coordinates on reverse geocode after a pin move", async () => {
     const moved = await geocoder.reverseGeocode(59.86, 17.65);
     expect(moved?.lat).toBe(59.86);

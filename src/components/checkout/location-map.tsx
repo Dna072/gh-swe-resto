@@ -3,8 +3,7 @@
 import { useEffect, useRef } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { cn } from "@/lib/utils";
-
-const STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL ?? "https://tiles.openfreemap.org/styles/liberty";
+import { mapStyleUrl } from "@/lib/maps/style";
 
 export function LocationMap({
   lat,
@@ -39,7 +38,7 @@ export function LocationMap({
       }
       map = new maplibregl.Map({
         container: container.current,
-        style: STYLE,
+        style: mapStyleUrl(),
         center: [lng, lat],
         zoom: 16,
         attributionControl: { compact: true },
