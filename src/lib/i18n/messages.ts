@@ -144,8 +144,6 @@ export const en = {
   "delivery.optionsTitle": "Delivery options",
   "delivery.eta": "Estimated delivery: {eta} min",
   "delivery.fee": "Delivery: {fee}",
-  "delivery.adjustMap": "Drag the pin if the location is off.",
-  "delivery.showMap": "Adjust on map",
   "delivery.hideMap": "Hide map",
   "signup.email": "Email",
   "signup.consent":
@@ -540,8 +538,6 @@ export const sv: Record<MessageKey, string> = {
   "delivery.optionsTitle": "Leveransalternativ",
   "delivery.eta": "Beräknad leverans: {eta} min",
   "delivery.fee": "Leverans: {fee}",
-  "delivery.adjustMap": "Dra nålen om platsen inte stämmer.",
-  "delivery.showMap": "Justera på kartan",
   "delivery.hideMap": "Dölj karta",
   "signup.email": "E-post",
   "signup.consent":
