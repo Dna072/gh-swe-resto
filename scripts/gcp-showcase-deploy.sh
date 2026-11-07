@@ -73,6 +73,7 @@ gcloud services enable \
   firebaserules.googleapis.com \
   identitytoolkit.googleapis.com \
   storage.googleapis.com \
+  secretmanager.googleapis.com \
   --project "${PROJECT_ID}"
 
 echo "Adding Firebase to the GCP project (safe if it is already linked)…"
@@ -154,10 +155,24 @@ fi
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:$(git rev-parse --short HEAD 2>/dev/null || echo latest)"
 echo "Building ${IMAGE}…"
 echo "If Cloud Build fails, open the log URL it prints — the terminal only shows that Docker step 0 exited 1."
+
+# Prefer an explicit web API key; otherwise use the Firebase browser key in this project.
+FIREBASE_WEB_API_KEY="${FIREBASE_WEB_API_KEY:-${NEXT_PUBLIC_FIREBASE_API_KEY:-}}"
+if [[ -z "${FIREBASE_WEB_API_KEY}" ]]; then
+  FIREBASE_KEY_NAME="$(gcloud services api-keys list --project="${PROJECT_ID}" \
+    --filter='displayName:"Browser key (auto created by Firebase)"' \
+    --format='value(name)' 2>/dev/null | head -n 1 || true)"
+  if [[ -n "${FIREBASE_KEY_NAME}" ]]; then
+    FIREBASE_WEB_API_KEY="$(gcloud services api-keys get-key-string "${FIREBASE_KEY_NAME}" \
+      --project="${PROJECT_ID}" --format='value(keyString)' 2>/dev/null || true)"
+  fi
+fi
+FIREBASE_AUTH_DOMAIN="${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-${PROJECT_ID}.firebaseapp.com}"
+
 if ! gcloud builds submit \
   --project "${PROJECT_ID}" \
   --config cloudbuild.yaml \
-  --substitutions="_IMAGE=${IMAGE}"; then
+  --substitutions="_IMAGE=${IMAGE},_NEXT_PUBLIC_FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY},_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},_NEXT_PUBLIC_FIREBASE_PROJECT_ID=${PROJECT_ID}"; then
   echo "Image build failed. The one-line Docker error is not the cause." >&2
   echo "Print the compiler output:" >&2
   echo "  gcloud builds log --project=${PROJECT_ID} \$(gcloud builds list --project=${PROJECT_ID} --limit=1 --format='value(id)')" >&2
@@ -168,7 +183,24 @@ if ! gcloud builds submit \
 fi
 
 echo "Deploying Cloud Run service ${SERVICE}…"
-RUN_ENV="NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET}"
+# Prefer Secret Manager for SES (created once; redeploys remount latest).
+SES_SECRETS_READY=0
+if gcloud secrets describe aws-access-key-id --project "${PROJECT_ID}" >/dev/null 2>&1 \
+  && gcloud secrets describe aws-secret-access-key --project "${PROJECT_ID}" >/dev/null 2>&1 \
+  && gcloud secrets describe ses-from-email --project "${PROJECT_ID}" >/dev/null 2>&1 \
+  && gcloud secrets describe ses-from-name --project "${PROJECT_ID}" >/dev/null 2>&1; then
+  SES_SECRETS_READY=1
+fi
+EMAIL_PROVIDER_VALUE="${EMAIL_PROVIDER:-mock}"
+if [[ "${SES_SECRETS_READY}" == "1" ]]; then
+  EMAIL_PROVIDER_VALUE=ses
+elif [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" && -n "${SES_FROM_EMAIL:-}" ]]; then
+  EMAIL_PROVIDER_VALUE=ses
+fi
+RUN_ENV="NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=${EMAIL_PROVIDER_VALUE},ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET},NEXT_PUBLIC_FIREBASE_PROJECT_ID=${PROJECT_ID},NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}"
+if [[ -n "${FIREBASE_WEB_API_KEY}" ]]; then
+  RUN_ENV="${RUN_ENV},FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY},NEXT_PUBLIC_FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY}"
+fi
 MAPS_KEY="${GOOGLE_MAPS_SERVER_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
 if [[ -n "${MAPS_KEY}" ]]; then
   RUN_ENV="${RUN_ENV},GOOGLE_MAPS_SERVER_KEY=${MAPS_KEY},GOOGLE_MAPS_API_KEY=${MAPS_KEY}"
@@ -185,26 +217,68 @@ fi
 if [[ -n "${NEXT_PUBLIC_MAP_STYLE_URL:-}" ]]; then
   RUN_ENV="${RUN_ENV},NEXT_PUBLIC_MAP_STYLE_URL=${NEXT_PUBLIC_MAP_STYLE_URL}"
 fi
-gcloud run deploy "${SERVICE}" \
-  --project "${PROJECT_ID}" \
-  --image "${IMAGE}" \
-  --region "${REGION}" \
-  --platform managed \
-  --cpu 1 \
-  --memory 1Gi \
-  --concurrency 80 \
-  --min-instances 0 \
-  --max-instances 2 \
-  --timeout 60 \
-  --port 8080 \
-  --allow-unauthenticated \
+if [[ "${EMAIL_PROVIDER_VALUE}" == "ses" ]]; then
+  RUN_ENV="${RUN_ENV},AWS_SES_REGION=${AWS_SES_REGION:-eu-north-1}"
+fi
+DEPLOY_ARGS=(
+  --project "${PROJECT_ID}"
+  --image "${IMAGE}"
+  --region "${REGION}"
+  --platform managed
+  --cpu 1
+  --memory 1Gi
+  --concurrency 80
+  --min-instances 0
+  --max-instances 2
+  --timeout 60
+  --port 8080
+  --allow-unauthenticated
   --set-env-vars "${RUN_ENV}"
+)
+if [[ "${SES_SECRETS_READY}" == "1" ]]; then
+  echo "Mounting SES credentials from Secret Manager…"
+  PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+  RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+  for secret_name in aws-access-key-id aws-secret-access-key ses-from-email ses-from-name; do
+    gcloud secrets add-iam-policy-binding "${secret_name}" \
+      --project "${PROJECT_ID}" \
+      --member="serviceAccount:${RUNTIME_SA}" \
+      --role="roles/secretmanager.secretAccessor" \
+      --quiet >/dev/null || true
+  done
+  DEPLOY_ARGS+=(
+    --set-secrets="AWS_ACCESS_KEY_ID=aws-access-key-id:latest,AWS_SECRET_ACCESS_KEY=aws-secret-access-key:latest,SES_FROM_EMAIL=ses-from-email:latest,SES_FROM_NAME=ses-from-name:latest"
+  )
+elif [[ "${EMAIL_PROVIDER_VALUE}" == "ses" ]]; then
+  # Fallback for one-off deploys that export keys in the shell (not preferred).
+  RUN_ENV="${RUN_ENV},SES_FROM_EMAIL=${SES_FROM_EMAIL},SES_FROM_NAME=${SES_FROM_NAME:-Meridian Fusion Cuisine},AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID},AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
+  if [[ -n "${SES_CONFIGURATION_SET:-}" ]]; then
+    RUN_ENV="${RUN_ENV},SES_CONFIGURATION_SET=${SES_CONFIGURATION_SET}"
+  fi
+  DEPLOY_ARGS=(
+    --project "${PROJECT_ID}"
+    --image "${IMAGE}"
+    --region "${REGION}"
+    --platform managed
+    --cpu 1
+    --memory 1Gi
+    --concurrency 80
+    --min-instances 0
+    --max-instances 2
+    --timeout 60
+    --port 8080
+    --allow-unauthenticated
+    --set-env-vars "${RUN_ENV}"
+  )
+fi
+gcloud run deploy "${SERVICE}" "${DEPLOY_ARGS[@]}"
 
 URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
+UPDATE_VARS="APP_BASE_URL=${URL},ADMIN_APP_BASE_URL=${URL},KITCHEN_APP_BASE_URL=${URL}"
 gcloud run services update "${SERVICE}" \
   --project "${PROJECT_ID}" \
   --region "${REGION}" \
-  --update-env-vars "APP_BASE_URL=${URL}" \
+  --update-env-vars "${UPDATE_VARS}" \
   --quiet
 
 echo "Seeding the demo menu into Firestore…"

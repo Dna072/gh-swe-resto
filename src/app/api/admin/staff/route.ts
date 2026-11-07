@@ -23,6 +23,8 @@ export async function GET(request: Request) {
         displayName: user.displayName,
         role: user.role,
         disabled: user.disabled,
+        hasSignedIn: user.hasSignedIn,
+        pendingSetup: user.pendingSetup,
       })),
     });
   } catch (error) {
@@ -35,7 +37,10 @@ export async function POST(request: Request) {
     const actor = await requireAdmin(request, "users:write");
     const body = inviteSchema.parse(await request.json());
     const result = await staffService.invite(actor, body);
-    const revealInvite = getEnv().APP_ENV !== "production";
+    const revealInvite =
+      getEnv().APP_ENV !== "production" ||
+      result.emailDelivery !== "sent" ||
+      !result.resetLinkReady;
     return NextResponse.json({
       user: {
         uid: result.user.uid,
@@ -43,6 +48,8 @@ export async function POST(request: Request) {
         displayName: result.user.displayName,
         role: result.user.role,
       },
+      emailDelivery: result.emailDelivery,
+      resetLinkReady: result.resetLinkReady,
       ...(revealInvite ? { inviteUrl: result.inviteUrl } : {}),
     });
   } catch (error) {

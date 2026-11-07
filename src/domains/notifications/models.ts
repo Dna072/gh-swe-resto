@@ -51,8 +51,8 @@ export const NOTIFICATION_COPY: Record<NotificationEvent, NotificationCopy> = {
   },
   STAFF_INVITE: {
     subject: "You are invited to Meridian Fusion Cuisine",
-    headline: "Join the kitchen team",
-    body: "An owner has invited you to the Meridian Fusion Cuisine staff tools. Set your password to start.",
+    headline: "Join the staff portal",
+    body: "An owner has invited you to the Meridian Fusion Cuisine staff tools. Set your password to start. Depending on your role, you may confirm Swish payments, manage the menu, or run the kitchen board.",
     ctaLabel: "Set your password",
   },
   ORDER_CONFIRMED: {

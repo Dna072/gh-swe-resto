@@ -1,5 +1,6 @@
-import type { Allergen, AvailabilityStatus, DietaryTag } from "@/domains/menu/models";
+import type { Allergen, AvailabilityStatus, DietaryTag, MenuPaymentMode } from "@/domains/menu/models";
 import type { Ore } from "@/lib/money";
+import type { Weekday } from "@/lib/time";
 
 export type PublicModifierOption = {
   id: string;
@@ -41,6 +42,10 @@ export type PublicMenuItem = {
   dietaryTags: DietaryTag[];
   allergens: Allergen[];
   preparationTimeMinutes: number;
+  availableDays: Weekday[];
+  weekendOnly: boolean;
+  paymentMode: MenuPaymentMode;
+  minOrderQuantity: number;
   modifierGroups: PublicModifierGroup[];
 };
 

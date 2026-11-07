@@ -104,6 +104,16 @@ export interface Order extends Timestamped {
   specialInstructions?: string;
   promotionCode?: string;
   paymentProviderId?: string;
+  /** Set when the guest must pay by Swish and wait for admin confirmation. */
+  manualPayment?: {
+    method: "MANUAL_SWISH";
+    pin: string;
+    expiresAt: string;
+    swishPayee: string;
+    swishQrUrl?: string;
+    confirmedAt?: string;
+    confirmedByStaffId?: string;
+  };
   idempotencyKey: string;
   schemaVersion: number;
   internalCosts?: InternalCostSnapshot;

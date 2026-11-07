@@ -294,4 +294,61 @@ describe("OrderService", () => {
     expect(refunded.orderStatus).toBe("REFUNDED");
     expect(refunded.paymentStatus).toBe("REFUNDED");
   });
+
+  it("rejects cart lines below the meal minimum order quantity", async () => {
+    const { service, state } = createHarness();
+    const index = state.items.findIndex((item) => item.id === "jollof");
+    state.items[index] = { ...jollof, minOrderQuantity: 3 };
+    await expect(
+      service.create({
+        restaurantId: RESTAURANT_ID,
+        lines: [
+          {
+            menuItemId: "jollof",
+            quantity: 1,
+            modifiers: [
+              { groupId: "protein", optionId: "chicken", quantity: 1 },
+              { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+            ],
+          },
+        ],
+        customer: guest,
+        deliveryAddress: address,
+        idempotencyKey: "min-qty-1",
+        guestSessionId: "guest-min",
+      }),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+  });
+
+  it("creates a manual Swish order and lets finance confirm payment", async () => {
+    const { service, state } = createHarness();
+    const index = state.items.findIndex((item) => item.id === "jollof");
+    state.items[index] = { ...jollof, paymentMode: "MANUAL_SWISH" };
+    const created = await service.create({
+      restaurantId: RESTAURANT_ID,
+      lines: [
+        {
+          menuItemId: "jollof",
+          quantity: 1,
+          modifiers: [
+            { groupId: "protein", optionId: "chicken", quantity: 1 },
+            { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+          ],
+        },
+      ],
+      customer: guest,
+      deliveryAddress: address,
+      idempotencyKey: "swish-1",
+      guestSessionId: "guest-swish",
+      swishPayee: "123 456 78 90",
+    });
+    expect(created.order.manualPayment?.method).toBe("MANUAL_SWISH");
+    expect(created.order.manualPayment?.pin).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
+    expect(created.order.paymentStatus).toBe("PENDING");
+    const finance = { uid: "fin-1", role: "FINANCE" as const };
+    const confirmed = await service.confirmManualPayment(finance, created.order.id);
+    expect(confirmed.paymentStatus).toBe("PAID");
+    expect(confirmed.orderStatus).toBe("PAID");
+    expect(confirmed.manualPayment?.confirmedByStaffId).toBe("fin-1");
+  });
 });

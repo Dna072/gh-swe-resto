@@ -7,10 +7,19 @@ import {
   saveRestaurantSettings,
 } from "@/server/composition";
 import { errorResponse } from "@/server/http";
-import { defaultRestaurantSettings } from "@/domains/restaurant/settings";
 
 const schema = z.object({
   orderingPaused: z.boolean(),
+  swishPayee: z.string().trim().max(40).optional(),
+  swishQrUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined))
+    .refine((value) => value === undefined || /^https?:\/\//i.test(value), {
+      message: "Swish QR URL must start with http:// or https://",
+    }),
 });
 
 export async function GET(request: Request) {
@@ -26,10 +35,13 @@ export async function PUT(request: Request) {
   try {
     await requireAdmin(request, "settings:write");
     const body = schema.parse(await request.json());
+    const current = await ensureRestaurantSettings();
     const saved = await saveRestaurantSettings({
-      ...defaultRestaurantSettings(restaurantIdFromEnv()),
+      ...current,
       restaurantId: restaurantIdFromEnv(),
       orderingPaused: body.orderingPaused,
+      swishPayee: body.swishPayee?.trim() || current.swishPayee,
+      swishQrUrl: body.swishQrUrl,
       updatedAt: new Date().toISOString(),
     });
     return NextResponse.json({ settings: saved });

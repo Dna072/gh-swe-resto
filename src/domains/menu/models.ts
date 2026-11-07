@@ -2,7 +2,8 @@ import type { Ore } from "@/lib/money";
 import type { Timestamped } from "@/domains/shared/types";
 import type { Weekday } from "@/lib/time";
 
-export type AvailabilityStatus = "AVAILABLE" | "LOW_STOCK" | "SOLD_OUT" | "PAUSED";
+export type AvailabilityStatus = "AVAILABLE" | "LOW_STOCK" | "SOLD_OUT" | "PAUSED" | "COMING_SOON";
+export type MenuPaymentMode = "ONLINE" | "MANUAL_SWISH";
 export type DietaryTag = "HALAL" | "VEGETARIAN" | "VEGAN" | "GLUTEN_FREE" | "SPICY";
 export type Allergen =
   | "GLUTEN"
@@ -82,12 +83,18 @@ export interface MenuItem extends Timestamped {
   availableFrom?: string;
   availableUntil?: string;
   isAvailable: boolean;
+  /** Visible on the storefront but not orderable yet. */
+  comingSoon: boolean;
+  /** ONLINE uses card/mock; MANUAL_SWISH shows Swish details and awaits admin confirmation. */
+  paymentMode: MenuPaymentMode;
   isFeatured: boolean;
   isPopular: boolean;
   inventoryTracked: boolean;
   inventorySku?: string;
   availableQuantity?: number;
   lowStockThreshold?: number;
+  /** Minimum portions a guest must add for this meal (defaults to 1). */
+  minOrderQuantity: number;
   preparationTimeMinutes: number;
   allergens: Allergen[];
   dietaryTags: DietaryTag[];
@@ -126,6 +133,9 @@ export interface PricingCalendar {
 }
 
 export function availabilityStatus(item: MenuItem, paused = false): AvailabilityStatus {
+  if (item.comingSoon === true) {
+    return "COMING_SOON";
+  }
   if (paused || !item.isAvailable) {
     return "PAUSED";
   }
@@ -140,4 +150,17 @@ export function availabilityStatus(item: MenuItem, paused = false): Availability
     return "LOW_STOCK";
   }
   return "AVAILABLE";
+}
+
+export function isWeekendOnly(item: Pick<MenuItem, "availableDays">): boolean {
+  const days = new Set(item.availableDays);
+  return days.size > 0 && [...days].every((day) => day === "saturday" || day === "sunday");
+}
+
+export function minOrderQuantityOf(item: Pick<MenuItem, "minOrderQuantity">): number {
+  const value = item.minOrderQuantity;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 1) {
+    return 1;
+  }
+  return Math.min(20, Math.floor(value));
 }

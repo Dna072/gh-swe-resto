@@ -1,6 +1,6 @@
 import "server-only";
 
-import { availabilityStatus, type MenuItem, type ModifierGroup } from "@/domains/menu/models";
+import { availabilityStatus, isWeekendOnly, type MenuItem, type ModifierGroup } from "@/domains/menu/models";
 import { formatSek } from "@/lib/money";
 import { imageAlt, imageUrl, objectPosition, primaryImage } from "@/lib/media/display";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
@@ -62,6 +62,10 @@ export function toPublicMenuItem(
     dietaryTags: item.dietaryTags,
     allergens: item.allergens,
     preparationTimeMinutes: item.preparationTimeMinutes,
+    availableDays: item.availableDays,
+    weekendOnly: isWeekendOnly(item),
+    paymentMode: item.paymentMode ?? "ONLINE",
+    minOrderQuantity: Math.max(1, Math.min(20, item.minOrderQuantity ?? 1)),
     modifierGroups: mapGroups(groups),
   };
 }

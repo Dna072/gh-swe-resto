@@ -21,6 +21,7 @@ export interface MealCardProps {
   href?: string;
   featured?: boolean;
   soldOut?: boolean;
+  comingSoon?: boolean;
   lowStockLabel?: string;
   addLabel?: string;
   onAdd?: () => void;
@@ -39,6 +40,7 @@ export function MealCard({
   href,
   featured = false,
   soldOut = false,
+  comingSoon = false,
   lowStockLabel,
   addLabel,
   onAdd,
@@ -48,6 +50,7 @@ export function MealCard({
 }: MealCardProps) {
   const t = useOptionalT();
   const reduced = useReducedMotion() ?? false;
+  const unavailable = soldOut || comingSoon;
   const actionLabel = addLabel ?? t("menu.add");
   const media = (
     <div
@@ -72,7 +75,11 @@ export function MealCard({
           {t("menu.popular")}
         </Badge>
       ) : null}
-      {soldOut ? (
+      {comingSoon ? (
+        <Badge variant="secondary" className="absolute top-4 right-4">
+          {t("menu.comingSoon")}
+        </Badge>
+      ) : soldOut ? (
         <Badge variant="secondary" className="absolute top-4 right-4">
           {t("menu.soldOut")}
         </Badge>
@@ -124,16 +131,16 @@ export function MealCard({
         <div className="mt-auto flex items-center justify-between gap-3 pt-2">
           <Price ore={priceOre} className="text-gold" />
           {onAdd ? (
-            <Button size="touch" variant="gold-outline" disabled={soldOut} onClick={onAdd}>
-              {soldOut ? t("menu.unavailable") : actionLabel}
+            <Button size="touch" variant="gold-outline" disabled={unavailable} onClick={onAdd}>
+              {unavailable ? t("menu.unavailable") : actionLabel}
             </Button>
           ) : href ? (
-            <Button size="touch" variant="gold-outline" disabled={soldOut} asChild>
-              <Link href={href}>{soldOut ? t("menu.unavailable") : actionLabel}</Link>
+            <Button size="touch" variant="gold-outline" disabled={unavailable} asChild>
+              <Link href={href}>{unavailable ? t("menu.unavailable") : actionLabel}</Link>
             </Button>
           ) : (
-            <Button size="touch" variant="gold-outline" disabled={soldOut}>
-              {soldOut ? t("menu.unavailable") : actionLabel}
+            <Button size="touch" variant="gold-outline" disabled={unavailable}>
+              {unavailable ? t("menu.unavailable") : actionLabel}
             </Button>
           )}
         </div>

@@ -71,6 +71,8 @@ export async function POST(request: Request) {
       estimatedDeliveryTime: scheduledFor,
       scheduledFor,
       orderingPaused: restaurant.orderingPaused,
+      swishPayee: restaurant.swishPayee,
+      swishQrUrl: restaurant.swishQrUrl,
       deliveryPricing: {
         provider: quote.provider,
         providerQuoteId: quote.quoteId,

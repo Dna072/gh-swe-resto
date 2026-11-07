@@ -25,6 +25,8 @@ export interface CartQuoteRequest {
   isMember?: boolean;
   isFirstOrder?: boolean;
   orderingPaused?: boolean;
+  /** When set, weekend-only meals are checked against this delivery slot. */
+  scheduledFor?: string;
   at?: Date;
 }
 
@@ -32,4 +34,5 @@ export interface CartQuote extends PriceQuote {
   restaurantId: string;
   quotedAt: string;
   expiresAt: string;
+  paymentMode?: "ONLINE" | "MANUAL_SWISH";
 }

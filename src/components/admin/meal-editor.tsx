@@ -62,12 +62,22 @@ export function MealEditor({
   );
   const [prep, setPrep] = useState(String(initial?.preparationTimeMinutes ?? 25));
   const [available, setAvailable] = useState(initial?.isAvailable ?? true);
+  const [comingSoon, setComingSoon] = useState(initial?.comingSoon ?? true);
+  const [paymentMode, setPaymentMode] = useState<"ONLINE" | "MANUAL_SWISH">(
+    initial?.paymentMode ?? "ONLINE",
+  );
+  const [weekendOnly, setWeekendOnly] = useState(
+    initial?.availableDays?.length
+      ? initial.availableDays.every((day) => day === "saturday" || day === "sunday")
+      : false,
+  );
   const [featured, setFeatured] = useState(initial?.isFeatured ?? false);
   const [popular, setPopular] = useState(initial?.isPopular ?? false);
   const [inventoryTracked, setInventoryTracked] = useState(initial?.inventoryTracked ?? false);
   const [sku, setSku] = useState(initial?.inventorySku ?? "");
   const [quantity, setQuantity] = useState(String(initial?.availableQuantity ?? 20));
   const [threshold, setThreshold] = useState(String(initial?.lowStockThreshold ?? 5));
+  const [minOrderQuantity, setMinOrderQuantity] = useState(String(initial?.minOrderQuantity ?? 1));
   const [allergens, setAllergens] = useState<Allergen[]>(initial?.allergens ?? []);
   const [dietaryTags, setDietaryTags] = useState<DietaryTag[]>(initial?.dietaryTags ?? []);
   const [modifierGroupIds, setModifierGroupIds] = useState<string[]>(initial?.modifierGroupIds ?? []);
@@ -104,12 +114,16 @@ export function MealEditor({
         weekdayPriceOre: weekdayPrice ? sekToOre(Number(weekdayPrice)) : undefined,
         weekendPriceOre: weekendPrice ? sekToOre(Number(weekendPrice)) : undefined,
         isAvailable: available,
+        comingSoon,
+        paymentMode,
+        weekendOnly,
         isFeatured: featured,
         isPopular: popular,
         inventoryTracked,
         inventorySku: sku || undefined,
         availableQuantity: inventoryTracked ? Number(quantity) : undefined,
         lowStockThreshold: inventoryTracked ? Number(threshold) : undefined,
+        minOrderQuantity: Math.max(1, Math.min(20, Number(minOrderQuantity) || 1)),
         preparationTimeMinutes: Number(prep),
         allergens,
         dietaryTags,
@@ -300,14 +314,41 @@ export function MealEditor({
             <Input id="weekend" inputMode="decimal" value={weekendPrice} onChange={(event) => setWeekendPrice(event.target.value)} />
           </Field>
         </div>
-        <Field id="prep" label="Preparation time (minutes)">
-          <Input id="prep" inputMode="numeric" value={prep} onChange={(event) => setPrep(event.target.value)} />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="prep" label="Preparation time (minutes)">
+            <Input id="prep" inputMode="numeric" value={prep} onChange={(event) => setPrep(event.target.value)} />
+          </Field>
+          <Field
+            id="min-order"
+            label="Minimum order quantity"
+            hint="Guests must add at least this many portions."
+          >
+            <Input
+              id="min-order"
+              inputMode="numeric"
+              value={minOrderQuantity}
+              onChange={(event) => setMinOrderQuantity(event.target.value)}
+            />
+          </Field>
+        </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <ToggleRow label="Available" checked={available} onChange={setAvailable} />
+          <ToggleRow label="Listed" checked={available} onChange={setAvailable} />
+          <ToggleRow label="Coming soon" checked={comingSoon} onChange={setComingSoon} />
+          <ToggleRow label="Weekends only" checked={weekendOnly} onChange={setWeekendOnly} />
           <ToggleRow label="Featured" checked={featured} onChange={setFeatured} />
           <ToggleRow label="Popular" checked={popular} onChange={setPopular} />
         </div>
+        <Field id="payment-mode" label="Payment">
+          <select
+            id="payment-mode"
+            className="h-11 w-full rounded-md border border-input bg-background px-3"
+            value={paymentMode}
+            onChange={(event) => setPaymentMode(event.target.value as "ONLINE" | "MANUAL_SWISH")}
+          >
+            <option value="ONLINE">Online card</option>
+            <option value="MANUAL_SWISH">Manual Swish (admin confirms)</option>
+          </select>
+        </Field>
         <ToggleRow label="Track inventory" checked={inventoryTracked} onChange={setInventoryTracked} />
         {inventoryTracked ? (
           <div className="grid gap-4 sm:grid-cols-3">

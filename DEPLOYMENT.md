@@ -156,8 +156,14 @@ Local development still auto-applies `dev-admin-token` when `APP_ENV` is not pro
 
 1. Verify `mfcuisine.se` (and `orders@mfcuisine.se`) in SES in `eu-north-1`.
 2. Leave sandbox or request production access.
-3. Set `EMAIL_PROVIDER=ses`, `SES_FROM_EMAIL=orders@mfcuisine.se`, and AWS keys in Secret Manager.
-4. Firebase’s built-in verification and reset templates **cannot** use the restaurant HTML theme. This app never calls the client `sendEmailVerification` / `sendPasswordResetEmail` APIs — welcome and reset letters go through SES. Leave those Firebase templates unused (or untouched) so guests only receive the branded letters.
+3. Store credentials in Secret Manager (showcase already does this):
+   - `aws-access-key-id` → `AWS_ACCESS_KEY_ID`
+   - `aws-secret-access-key` → `AWS_SECRET_ACCESS_KEY`
+   - `ses-from-email` → `SES_FROM_EMAIL`
+   - `ses-from-name` → `SES_FROM_NAME`
+4. Cloud Run mounts those secrets and sets `EMAIL_PROVIDER=ses` / `AWS_SES_REGION=eu-north-1`. `SES_CONFIGURATION_SET` is optional.
+5. `scripts/gcp-showcase-deploy.sh` remounts the secrets automatically when they exist — do not put AWS keys in git or in plaintext `--set-env-vars`.
+6. Firebase’s built-in verification and reset templates **cannot** use the restaurant HTML theme. This app never calls the client `sendEmailVerification` / `sendPasswordResetEmail` APIs — welcome and reset letters go through SES. Leave those Firebase templates unused (or untouched) so guests only receive the branded letters.
 
 ## CI
 

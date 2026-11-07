@@ -10,6 +10,7 @@ type AddLineInput = {
   slug: string;
   name: string;
   quantity: number;
+  minOrderQuantity?: number;
   modifiers: CartModifierSelection[];
   notes?: string;
 };
@@ -69,8 +70,17 @@ export function CartProvider({
       persistCart({
         restaurantId,
         lines: current.lines
-          .map((line) => (line.id === lineId ? { ...line, quantity } : line))
-          .filter((line) => line.quantity > 0),
+          .map((line) => {
+            if (line.id !== lineId) {
+              return line;
+            }
+            const minimum = Math.max(1, line.minOrderQuantity ?? 1);
+            if (quantity < minimum) {
+              return null;
+            }
+            return { ...line, quantity };
+          })
+          .filter((line): line is CartLine => line !== null),
       });
     },
     [restaurantId],

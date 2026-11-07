@@ -18,7 +18,6 @@ import { Spinner } from "@/components/brand/loading-state";
 import { AddressAutocomplete } from "@/components/checkout/address-autocomplete";
 import { DeliveryOptionsList, type PublicDeliveryChoice } from "@/components/checkout/delivery-options";
 import { DeliverySlotFields } from "@/components/checkout/delivery-slot-fields";
-import { LocationMap } from "@/components/checkout/location-map";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { useCart } from "@/components/cart/cart-provider";
 import { customerErrorMessage } from "@/lib/i18n/api-errors";
@@ -92,7 +91,6 @@ export function CheckoutForm({
   );
   const [deliveryResult, setDeliveryResult] = useState<DeliveryQuoteState | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | undefined>();
-  const [showMap, setShowMap] = useState(false);
   const [cartResult, setCartResult] = useState<CartQuoteResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [promoInput, setPromoInput] = useState("");
@@ -432,9 +430,6 @@ export function CheckoutForm({
                 form.setValue("formatted", next.formatted);
                 form.setValue("apartment", next.apartment ?? "");
                 form.setValue("line2", next.line2 ?? "");
-                if (next.lat != null && next.lng != null) {
-                  setShowMap(true);
-                }
               }}
             />
           </Field>
@@ -460,60 +455,6 @@ export function CheckoutForm({
               <Input id="city" autoComplete="address-level2" {...form.register("city")} />
             </Field>
           </div>
-          {lat != null && lng != null && showMap ? (
-            <div className="grid gap-2">
-              <LocationMap
-                key={form.watch("formatted") ?? line1}
-                lat={lat}
-                lng={lng}
-                onMove={(nextLat, nextLng) => {
-                  form.setValue("lat", nextLat);
-                  form.setValue("lng", nextLng);
-                  void fetch("/api/places/reverse", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lat: nextLat, lng: nextLng }),
-                  })
-                    .then(async (response) => {
-                      const body = (await response.json()) as {
-                        address?: {
-                          line1?: string;
-                          postalCode?: string;
-                          city?: string;
-                          formatted?: string;
-                          apartment?: string;
-                          line2?: string;
-                        } | null;
-                      };
-                      if (!body.address) {
-                        return;
-                      }
-                      form.setValue("line1", body.address.line1 ?? line1 ?? "", { shouldValidate: true });
-                      if (body.address.postalCode) {
-                        form.setValue("postalCode", body.address.postalCode, { shouldValidate: true });
-                      }
-                      if (body.address.city) {
-                        form.setValue("city", body.address.city, { shouldValidate: true });
-                      }
-                      if (body.address.formatted) {
-                        form.setValue("formatted", body.address.formatted);
-                      }
-                    })
-                    .catch(() => undefined);
-                }}
-              />
-              <p className="text-sm text-muted-foreground">{t("delivery.adjustMap")}</p>
-            </div>
-          ) : null}
-          {lat != null && lng != null && !showMap ? (
-            <button
-              type="button"
-              className="text-left text-sm text-earth underline-offset-4 hover:underline"
-              onClick={() => setShowMap(true)}
-            >
-              {t("delivery.showMap")}
-            </button>
-          ) : null}
           {deliveryOptions.length > 0 ? (
             <DeliveryOptionsList
               options={deliveryOptions}

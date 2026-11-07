@@ -38,12 +38,25 @@ export function toPublicOrder(order: Order): PublicOrder {
     estimatedDeliveryTime: order.estimatedDeliveryTime,
     scheduledFor: order.scheduledFor,
     createdAt: order.createdAt,
-    paymentDeferred: false,
-    payable: order.orderStatus === "PENDING_PAYMENT" && order.paymentStatus !== "PAID",
+    paymentDeferred: Boolean(order.manualPayment),
+    payable:
+      order.orderStatus === "PENDING_PAYMENT" &&
+      order.paymentStatus !== "PAID" &&
+      !order.manualPayment,
     cancellable: order.orderStatus === "PENDING_PAYMENT",
     reviewEligible: order.orderStatus === "DELIVERED",
     trackingUrl: order.trackingUrl,
     deliveryProviderName: order.deliveryProvider,
+    manualPayment: order.manualPayment
+      ? {
+          method: order.manualPayment.method,
+          pin: order.manualPayment.pin,
+          expiresAt: order.manualPayment.expiresAt,
+          swishPayee: order.manualPayment.swishPayee,
+          swishQrUrl: order.manualPayment.swishQrUrl,
+          awaitingConfirmation: order.paymentStatus !== "PAID",
+        }
+      : undefined,
     tracking: terminal
       ? []
       : steps.map((step, index) => ({

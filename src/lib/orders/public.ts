@@ -27,5 +27,13 @@ export type PublicOrder = {
   reviewEligible: boolean;
   trackingUrl?: string;
   deliveryProviderName?: string;
+  manualPayment?: {
+    method: "MANUAL_SWISH";
+    pin: string;
+    expiresAt: string;
+    swishPayee: string;
+    swishQrUrl?: string;
+    awaitingConfirmation: boolean;
+  };
   tracking: Array<{ status: string; label: string; done: boolean; current: boolean }>;
 };

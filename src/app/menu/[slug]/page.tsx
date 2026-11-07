@@ -8,7 +8,7 @@ import { getLocale, getTranslator } from "@/lib/i18n/server";
 import { AppError } from "@/lib/errors";
 import { getEnv } from "@/lib/env";
 import { oreToSek } from "@/lib/money";
-import { soldOut } from "@/lib/menu/display";
+import { notOrderable } from "@/lib/menu/display";
 import { loadPublicItem } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +62,7 @@ export default async function MealPage({ params }: PageProps) {
   const t = await getTranslator();
   const locale = await getLocale();
   const localized = localizePublicItem(item, locale, t);
-  const unavailable = soldOut(localized);
+  const unavailable = notOrderable(localized);
   const canonical = pageUrl(localized.slug);
   const jsonLd = {
     "@context": "https://schema.org",

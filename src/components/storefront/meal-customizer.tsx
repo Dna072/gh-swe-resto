@@ -14,7 +14,7 @@ import { localizePublicItem } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartModifierSelection } from "@/lib/cart/types";
 import { SpiceLevelBadge } from "@/components/brand/spice-level-badge";
-import { soldOut } from "@/lib/menu/display";
+import { notOrderable } from "@/lib/menu/display";
 import { spiceLevelOf } from "@/lib/menu/spice-level";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
 import { addOre, formatSek, multiplyOre } from "@/lib/money";
@@ -55,8 +55,9 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
   const localized = useMemo(() => localizePublicItem(item, locale, t), [item, locale, t]);
   const router = useRouter();
   const cart = useCart();
-  const unavailable = soldOut(localized);
-  const [quantity, setQuantity] = useState(1);
+  const unavailable = notOrderable(localized);
+  const minimum = Math.max(1, localized.minOrderQuantity ?? 1);
+  const [quantity, setQuantity] = useState(minimum);
   const [selected, setSelected] = useState(() => defaultSelections(localized.modifierGroups));
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState("");
@@ -106,11 +107,16 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
         return;
       }
     }
+    if (quantity < minimum) {
+      toast.error(t("menu.minOrder", { count: minimum }));
+      return;
+    }
     cart.addLine({
       menuItemId: localized.id,
       slug: localized.slug,
       name: localized.name,
       quantity,
+      minOrderQuantity: minimum,
       modifiers,
       notes: notes.trim() || undefined,
     });
@@ -226,7 +232,19 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
       </div>
 
       <div className="sticky bottom-16 z-30 flex items-center justify-between gap-3 bg-ink/95 p-3 text-primary-foreground shadow-[0_18px_40px_-24px_rgba(0,0,0,0.7)] backdrop-blur-md md:bottom-4">
-        <QuantityStepper value={quantity} onChange={setQuantity} disabled={unavailable} />
+        <div className="flex flex-col gap-1">
+          <QuantityStepper
+            value={quantity}
+            min={minimum}
+            onChange={setQuantity}
+            disabled={unavailable}
+          />
+          {minimum > 1 ? (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-earth/90">
+              {t("menu.minOrder", { count: minimum })}
+            </p>
+          ) : null}
+        </div>
         <Button size="touch" variant="gold" disabled={unavailable} onClick={addToCart}>
           {unavailable ? t("menu.unavailable") : (
             <span className="flex items-center gap-2">

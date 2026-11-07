@@ -7,7 +7,7 @@ import { MealCustomizer } from "@/components/storefront/meal-customizer";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { localizePublicItem } from "@/lib/i18n/catalog";
 import type { MessageKey } from "@/lib/i18n/messages";
-import { soldOut } from "@/lib/menu/display";
+import { comingSoon, soldOut } from "@/lib/menu/display";
 import type { PublicMenuItem } from "@/lib/menu/public";
 
 function dietaryKey(tag: string): MessageKey | null {
@@ -27,6 +27,7 @@ function allergenKey(tag: string): MessageKey | null {
 export function MealView({ item }: { item: PublicMenuItem }) {
   const { locale, t } = useLocale();
   const localized = localizePublicItem(item, locale, t);
+  const soon = comingSoon(localized);
   const unavailable = soldOut(localized);
   const stock =
     localized.availability === "LOW_STOCK" && localized.remainingPortions !== null
@@ -54,8 +55,16 @@ export function MealView({ item }: { item: PublicMenuItem }) {
           <p className="text-lg leading-relaxed text-muted-foreground">{localized.description}</p>
           <div className="flex flex-wrap items-center gap-2">
             <Price ore={localized.displayPriceOre} size="lg" className="text-gold" />
-            {unavailable ? <Badge variant="secondary">{t("menu.soldOut")}</Badge> : null}
+            {soon ? <Badge variant="secondary">{t("menu.comingSoon")}</Badge> : null}
+            {!soon && unavailable ? <Badge variant="secondary">{t("menu.soldOut")}</Badge> : null}
             {stock ? <Badge variant="earth">{stock}</Badge> : null}
+            {localized.weekendOnly ? <Badge variant="earth">{t("menu.weekendOnly")}</Badge> : null}
+            {localized.minOrderQuantity > 1 ? (
+              <Badge variant="outline">{t("menu.minOrder", { count: localized.minOrderQuantity })}</Badge>
+            ) : null}
+            {localized.paymentMode === "MANUAL_SWISH" ? (
+              <Badge variant="outline">{t("menu.swishPay")}</Badge>
+            ) : null}
             {localized.dietaryTags.map((tag) => (
               <Badge key={tag} variant={tag === "HALAL" ? "forest" : "outline"}>
                 {dietaryKey(tag) ? t(dietaryKey(tag)!) : tag.replaceAll("_", " ").toLowerCase()}

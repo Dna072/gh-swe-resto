@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/brand/field";
 import { ActionResultDialog } from "@/components/admin/action-result-dialog";
 import { useActionFeedback } from "@/components/admin/use-action-feedback";
 import { adminFetch } from "@/lib/admin/client";
@@ -30,14 +32,18 @@ export default function AdminSettingsPage() {
     try {
       const saved = await adminFetch<{ settings: RestaurantSettings }>("/api/admin/restaurant-settings", {
         method: "PUT",
-        body: JSON.stringify({ orderingPaused: settings.orderingPaused }),
+        body: JSON.stringify({
+          orderingPaused: settings.orderingPaused,
+          swishPayee: settings.swishPayee ?? "",
+          swishQrUrl: settings.swishQrUrl ?? "",
+        }),
       });
       setSettings(saved.settings);
       succeed(
-        settings.orderingPaused ? "Ordering paused" : "Ordering open",
+        "Settings saved",
         settings.orderingPaused
-          ? "Guests can browse the menu but cannot place new orders."
-          : "Guests can place delivery orders again.",
+          ? "Ordering is paused. Swish payee details were updated."
+          : "Ordering is open. Swish payee details were updated.",
       );
     } catch (cause) {
       fail("Not saved", cause instanceof Error ? cause.message : "Could not save restaurant settings.");
@@ -59,8 +65,8 @@ export default function AdminSettingsPage() {
         <p className="text-xs uppercase tracking-[0.2em] text-earth">Admin</p>
         <h1 className="mt-2 font-heading text-4xl">Restaurant settings</h1>
         <p className="mt-3 text-muted-foreground">
-          Pause ordering when the kitchen cannot take new plates. Existing paid tickets stay on the
-          board.
+          Pause ordering when the kitchen cannot take new plates, and set the Swish number shown for
+          manual-payment meals.
         </p>
       </div>
       <section className="grid gap-3 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
@@ -80,6 +86,30 @@ export default function AdminSettingsPage() {
           />
           Pause ordering
         </label>
+      </section>
+      <section className="grid gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
+        <h2 className="font-heading text-2xl">Manual Swish payments</h2>
+        <p className="text-sm text-muted-foreground">
+          Meals marked for manual payment show this Swish number and optional QR on the order page.
+          Guests add a four-character reference from their order. Owners, managers, and finance staff
+          confirm received payments within 24 hours.
+        </p>
+        <Field id="swish-payee" label="Swish number">
+          <Input
+            id="swish-payee"
+            value={settings.swishPayee ?? ""}
+            onChange={(event) => setSettings({ ...settings, swishPayee: event.target.value })}
+            placeholder="123 456 78 90"
+          />
+        </Field>
+        <Field id="swish-qr" label="Swish QR image URL (optional)">
+          <Input
+            id="swish-qr"
+            value={settings.swishQrUrl ?? ""}
+            onChange={(event) => setSettings({ ...settings, swishQrUrl: event.target.value })}
+            placeholder="https://…"
+          />
+        </Field>
         <Button size="touch" disabled={busy} onClick={() => void save()}>
           {busy ? "Saving…" : "Save settings"}
         </Button>

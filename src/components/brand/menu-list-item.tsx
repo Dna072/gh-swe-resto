@@ -14,6 +14,9 @@ export function MenuListItem({
   priceOre,
   href,
   soldOut,
+  comingSoon,
+  weekendOnly,
+  swishPay,
   className,
 }: {
   itemId?: string;
@@ -22,6 +25,9 @@ export function MenuListItem({
   priceOre: Ore;
   href?: string;
   soldOut?: boolean;
+  comingSoon?: boolean;
+  weekendOnly?: boolean;
+  swishPay?: boolean;
   className?: string;
 }) {
   const t = useT();
@@ -30,6 +36,12 @@ export function MenuListItem({
   const displayDescription = itemId
     ? localizeMenuDescription(itemId, description, locale)
     : description;
+  const muted = Boolean(soldOut || comingSoon);
+  const statusLabel = comingSoon
+    ? t("menu.comingSoon")
+    : soldOut
+      ? t("menu.soldOut")
+      : null;
   const title = (
     <h3 className="font-heading text-xl leading-tight sm:text-2xl">
       {href ? (
@@ -43,14 +55,20 @@ export function MenuListItem({
   );
 
   return (
-    <article className={cn("group py-5", soldOut && "opacity-60", className)}>
+    <article className={cn("group py-5", muted && "opacity-60", className)}>
       <div className="flex items-baseline gap-3">
         {title}
         <span className="mb-1.5 hidden min-w-8 flex-1 border-b border-dotted border-foreground/25 sm:block" />
         <Price ore={priceOre} className="shrink-0 text-gold" />
       </div>
       <p className="mt-2 max-w-xl text-sm italic leading-relaxed text-muted-foreground">{displayDescription}</p>
-      {soldOut ? <p className="mt-1 text-xs uppercase tracking-[0.18em] text-earth">{t("menu.soldOut")}</p> : null}
+      {statusLabel || weekendOnly || swishPay ? (
+        <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs uppercase tracking-[0.18em] text-earth">
+          {statusLabel ? <span>{statusLabel}</span> : null}
+          {weekendOnly ? <span>{t("menu.weekendOnly")}</span> : null}
+          {swishPay ? <span>{t("menu.swishPay")}</span> : null}
+        </p>
+      ) : null}
     </article>
   );
 }

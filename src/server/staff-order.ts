@@ -30,6 +30,12 @@ export function toStaffOrder(order: Order): StaffOrder {
     createdAt: order.createdAt,
     trackingUrl: order.trackingUrl,
     refundable: order.paymentStatus === "PAID" && canTransition(order.orderStatus, "REFUNDED"),
+    confirmablePayment:
+      order.paymentStatus !== "PAID" &&
+      order.orderStatus === "PENDING_PAYMENT" &&
+      order.manualPayment?.method === "MANUAL_SWISH",
+    manualPaymentPin: order.manualPayment?.pin,
+    swishPayee: order.manualPayment?.swishPayee,
     assignedKitchenStaffId: order.assignedKitchenStaffId,
     assignedKitchenStaffName: order.assignedKitchenStaffName,
     actions: kitchenActions(order),

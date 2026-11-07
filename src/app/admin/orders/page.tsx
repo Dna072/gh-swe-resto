@@ -53,11 +53,14 @@ export default function AdminOrdersPage() {
               <p className="font-heading text-xl">{order.customerName}</p>
               <p className="text-sm text-muted-foreground">
                 {order.totalLabel} · {order.orderStatus.replaceAll("_", " ").toLowerCase()}
+                {order.confirmablePayment ? " · awaiting Swish" : ""}
                 {order.scheduledFor ? ` · ${formatSlot(order.scheduledFor, "sv")}` : ""}
               </p>
             </div>
-            <Button size="touch" variant="outline" asChild>
-              <Link href={`/admin/orders/${order.id}`}>Open</Link>
+            <Button size="touch" variant={order.confirmablePayment ? "default" : "outline"} asChild>
+              <Link href={`/admin/orders/${order.id}`}>
+                {order.confirmablePayment ? "Confirm payment" : "Open"}
+              </Link>
             </Button>
           </li>
         ))}

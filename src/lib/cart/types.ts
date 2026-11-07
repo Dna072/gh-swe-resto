@@ -10,6 +10,8 @@ export type CartLine = {
   slug: string;
   name: string;
   quantity: number;
+  /** Snapshot of the meal minimum when the line was added. */
+  minOrderQuantity?: number;
   modifiers: CartModifierSelection[];
   notes?: string;
 };
