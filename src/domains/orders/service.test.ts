@@ -295,6 +295,31 @@ describe("OrderService", () => {
     expect(refunded.paymentStatus).toBe("REFUNDED");
   });
 
+  it("rejects cart lines below the meal minimum order quantity", async () => {
+    const { service, state } = createHarness();
+    const index = state.items.findIndex((item) => item.id === "jollof");
+    state.items[index] = { ...jollof, minOrderQuantity: 3 };
+    await expect(
+      service.create({
+        restaurantId: RESTAURANT_ID,
+        lines: [
+          {
+            menuItemId: "jollof",
+            quantity: 1,
+            modifiers: [
+              { groupId: "protein", optionId: "chicken", quantity: 1 },
+              { groupId: "heat", optionId: "mild-shito", quantity: 1 },
+            ],
+          },
+        ],
+        customer: guest,
+        deliveryAddress: address,
+        idempotencyKey: "min-qty-1",
+        guestSessionId: "guest-min",
+      }),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+  });
+
   it("creates a manual Swish order and lets finance confirm payment", async () => {
     const { service, state } = createHarness();
     const index = state.items.findIndex((item) => item.id === "jollof");

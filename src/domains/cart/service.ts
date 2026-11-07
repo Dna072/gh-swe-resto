@@ -1,5 +1,5 @@
 import { AppError } from "@/lib/errors";
-import { availabilityStatus, type MenuItem } from "@/domains/menu/models";
+import { availabilityStatus, minOrderQuantityOf, type MenuItem } from "@/domains/menu/models";
 import type { MenuRepository } from "@/domains/menu/repository";
 import { PricingService } from "@/domains/pricing/service";
 import type { PricingCalendar } from "@/domains/menu/models";
@@ -42,6 +42,13 @@ export class CartService {
         throw new AppError("INSUFFICIENT_INVENTORY", `${item.name} is not available right now.`);
       }
       assertAvailableOnDay(item, at, this.calendar.timeZone);
+      const minimum = minOrderQuantityOf(item);
+      if (line.quantity < minimum) {
+        throw new AppError(
+          "VALIDATION",
+          `${item.name} requires at least ${minimum} portions.`,
+        );
+      }
       paymentModes.add(item.paymentMode ?? "ONLINE");
       const groups = await this.menu.listModifierGroups(request.restaurantId, item.modifierGroupIds);
       const modifiers = this.pricing.priceModifiers(groups, line.modifiers);

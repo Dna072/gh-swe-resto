@@ -48,6 +48,7 @@ function sampleItem(id: string, name: string): MenuItem {
     isAvailable: true,
     comingSoon: false,
     paymentMode: "ONLINE",
+    minOrderQuantity: 1,
     isFeatured: false,
     isPopular: false,
     inventoryTracked: false,

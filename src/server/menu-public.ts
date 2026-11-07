@@ -65,6 +65,7 @@ export function toPublicMenuItem(
     availableDays: item.availableDays,
     weekendOnly: isWeekendOnly(item),
     paymentMode: item.paymentMode ?? "ONLINE",
+    minOrderQuantity: Math.max(1, Math.min(20, item.minOrderQuantity ?? 1)),
     modifierGroups: mapGroups(groups),
   };
 }

@@ -59,6 +59,9 @@ export function MealView({ item }: { item: PublicMenuItem }) {
             {!soon && unavailable ? <Badge variant="secondary">{t("menu.soldOut")}</Badge> : null}
             {stock ? <Badge variant="earth">{stock}</Badge> : null}
             {localized.weekendOnly ? <Badge variant="earth">{t("menu.weekendOnly")}</Badge> : null}
+            {localized.minOrderQuantity > 1 ? (
+              <Badge variant="outline">{t("menu.minOrder", { count: localized.minOrderQuantity })}</Badge>
+            ) : null}
             {localized.paymentMode === "MANUAL_SWISH" ? (
               <Badge variant="outline">{t("menu.swishPay")}</Badge>
             ) : null}

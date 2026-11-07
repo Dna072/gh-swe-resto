@@ -22,6 +22,7 @@ export const jollof: MenuItem = {
   isAvailable: true,
   comingSoon: false,
   paymentMode: "ONLINE",
+  minOrderQuantity: 1,
   isFeatured: true,
   isPopular: true,
   inventoryTracked: true,

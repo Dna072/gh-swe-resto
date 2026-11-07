@@ -34,6 +34,7 @@ describe("Phase 2 seeded catalog", () => {
     expect(jollof?.imageUrl).toBeNull();
     expect(jollof?.weekendOnly).toBe(true);
     expect(jollof?.paymentMode).toBe("MANUAL_SWISH");
+    expect(jollof?.minOrderQuantity).toBe(2);
     const kenkey = catalog.items.find((item) => item.slug === "kenkey-fish");
     expect(kenkey?.availability).toBe("COMING_SOON");
     expect(seedMenuItems.every((item) => item.comingSoon)).toBe(true);
@@ -93,7 +94,7 @@ describe("Phase 2 seeded catalog", () => {
       lines: [
         {
           menuItemId: "jollof",
-          quantity: 1,
+          quantity: 2,
           modifiers: [
             { groupId: "protein", optionId: "chicken", quantity: 1 },
             { groupId: "heat", optionId: "hot-shito", quantity: 1 },
@@ -102,7 +103,26 @@ describe("Phase 2 seeded catalog", () => {
       ],
     });
     expect(quote.paymentMode).toBe("MANUAL_SWISH");
-    expect(quote.subtotalOre).toBe(14900);
+    expect(quote.subtotalOre).toBe(29800);
+  });
+
+  it("rejects quotes below the meal minimum order quantity", async () => {
+    await expect(
+      cartService.quote({
+        restaurantId: "uppsala-main",
+        at: new Date("2026-08-29T12:00:00.000Z"),
+        lines: [
+          {
+            menuItemId: "jollof",
+            quantity: 1,
+            modifiers: [
+              { groupId: "protein", optionId: "chicken", quantity: 1 },
+              { groupId: "heat", optionId: "hot-shito", quantity: 1 },
+            ],
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
   });
 
   it("applies the seeded WELCOME10 promotion on a cart quote", async () => {

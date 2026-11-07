@@ -77,6 +77,7 @@ export function MealEditor({
   const [sku, setSku] = useState(initial?.inventorySku ?? "");
   const [quantity, setQuantity] = useState(String(initial?.availableQuantity ?? 20));
   const [threshold, setThreshold] = useState(String(initial?.lowStockThreshold ?? 5));
+  const [minOrderQuantity, setMinOrderQuantity] = useState(String(initial?.minOrderQuantity ?? 1));
   const [allergens, setAllergens] = useState<Allergen[]>(initial?.allergens ?? []);
   const [dietaryTags, setDietaryTags] = useState<DietaryTag[]>(initial?.dietaryTags ?? []);
   const [modifierGroupIds, setModifierGroupIds] = useState<string[]>(initial?.modifierGroupIds ?? []);
@@ -122,6 +123,7 @@ export function MealEditor({
         inventorySku: sku || undefined,
         availableQuantity: inventoryTracked ? Number(quantity) : undefined,
         lowStockThreshold: inventoryTracked ? Number(threshold) : undefined,
+        minOrderQuantity: Math.max(1, Math.min(20, Number(minOrderQuantity) || 1)),
         preparationTimeMinutes: Number(prep),
         allergens,
         dietaryTags,
@@ -312,9 +314,23 @@ export function MealEditor({
             <Input id="weekend" inputMode="decimal" value={weekendPrice} onChange={(event) => setWeekendPrice(event.target.value)} />
           </Field>
         </div>
-        <Field id="prep" label="Preparation time (minutes)">
-          <Input id="prep" inputMode="numeric" value={prep} onChange={(event) => setPrep(event.target.value)} />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="prep" label="Preparation time (minutes)">
+            <Input id="prep" inputMode="numeric" value={prep} onChange={(event) => setPrep(event.target.value)} />
+          </Field>
+          <Field
+            id="min-order"
+            label="Minimum order quantity"
+            hint="Guests must add at least this many portions."
+          >
+            <Input
+              id="min-order"
+              inputMode="numeric"
+              value={minOrderQuantity}
+              onChange={(event) => setMinOrderQuantity(event.target.value)}
+            />
+          </Field>
+        </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <ToggleRow label="Listed" checked={available} onChange={setAvailable} />
           <ToggleRow label="Coming soon" checked={comingSoon} onChange={setComingSoon} />

@@ -105,8 +105,9 @@ function plate(
     | "isAvailable"
     | "comingSoon"
     | "paymentMode"
+    | "minOrderQuantity"
   > &
-    Partial<Pick<MenuItem, "availableDays" | "comingSoon" | "paymentMode">>,
+    Partial<Pick<MenuItem, "availableDays" | "comingSoon" | "paymentMode" | "minOrderQuantity">>,
 ): MenuItem {
   return {
     restaurantId: SEED_RESTAURANT_ID,
@@ -115,6 +116,7 @@ function plate(
     isAvailable: true,
     comingSoon: true,
     paymentMode: "ONLINE",
+    minOrderQuantity: 1,
     createdAt: STAMP,
     updatedAt: STAMP,
     ...partial,
@@ -136,6 +138,7 @@ export const seedMenuItems: MenuItem[] = [
     weekendPriceOre: 14900,
     availableDays: ["saturday", "sunday"],
     paymentMode: "MANUAL_SWISH",
+    minOrderQuantity: 2,
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,
@@ -165,6 +168,7 @@ export const seedMenuItems: MenuItem[] = [
     weekdayPriceOre: 12900,
     weekendPriceOre: 14900,
     paymentMode: "MANUAL_SWISH",
+    minOrderQuantity: 2,
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,
@@ -220,6 +224,7 @@ export const seedMenuItems: MenuItem[] = [
     weekdayPriceOre: 14900,
     weekendPriceOre: 16900,
     availableDays: ["saturday", "sunday"],
+    minOrderQuantity: 3,
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,

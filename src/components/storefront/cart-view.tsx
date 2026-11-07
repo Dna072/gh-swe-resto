@@ -141,6 +141,7 @@ export function CartView() {
               <div className="mt-4 flex items-center justify-between gap-3">
                 <QuantityStepper
                   value={line.quantity}
+                  min={Math.max(1, line.minOrderQuantity ?? 1)}
                   onChange={(next) => cart.updateQuantity(line.id, next)}
                 />
                 <Button variant="ghost" onClick={() => cart.removeLine(line.id)}>

@@ -93,6 +93,8 @@ export interface MenuItem extends Timestamped {
   inventorySku?: string;
   availableQuantity?: number;
   lowStockThreshold?: number;
+  /** Minimum portions a guest must add for this meal (defaults to 1). */
+  minOrderQuantity: number;
   preparationTimeMinutes: number;
   allergens: Allergen[];
   dietaryTags: DietaryTag[];
@@ -153,4 +155,12 @@ export function availabilityStatus(item: MenuItem, paused = false): Availability
 export function isWeekendOnly(item: Pick<MenuItem, "availableDays">): boolean {
   const days = new Set(item.availableDays);
   return days.size > 0 && [...days].every((day) => day === "saturday" || day === "sunday");
+}
+
+export function minOrderQuantityOf(item: Pick<MenuItem, "minOrderQuantity">): number {
+  const value = item.minOrderQuantity;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 1) {
+    return 1;
+  }
+  return Math.min(20, Math.floor(value));
 }

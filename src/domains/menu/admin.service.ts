@@ -41,6 +41,7 @@ export interface MenuItemDraft {
   inventorySku?: string;
   availableQuantity?: number;
   lowStockThreshold?: number;
+  minOrderQuantity?: number;
   preparationTimeMinutes: number;
   allergens?: Allergen[];
   dietaryTags?: DietaryTag[];
@@ -98,6 +99,10 @@ export class MenuAdminService {
       inventorySku: draft.inventorySku ?? existing?.inventorySku,
       availableQuantity: draft.availableQuantity ?? existing?.availableQuantity,
       lowStockThreshold: draft.lowStockThreshold ?? existing?.lowStockThreshold,
+      minOrderQuantity: Math.max(
+        1,
+        Math.min(20, draft.minOrderQuantity ?? existing?.minOrderQuantity ?? 1),
+      ),
       preparationTimeMinutes: draft.preparationTimeMinutes,
       allergens: draft.allergens ?? existing?.allergens ?? [],
       dietaryTags: draft.dietaryTags ?? existing?.dietaryTags ?? [],

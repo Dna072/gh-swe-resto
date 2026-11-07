@@ -31,6 +31,7 @@ export const menuDraftSchema = z.object({
   inventorySku: z.string().optional(),
   availableQuantity: z.number().int().nonnegative().optional(),
   lowStockThreshold: z.number().int().nonnegative().optional(),
+  minOrderQuantity: z.number().int().min(1).max(20).optional(),
   preparationTimeMinutes: z.number().int().min(1).max(180),
   allergens: z.array(z.string()).optional(),
   dietaryTags: z.array(z.string()).optional(),

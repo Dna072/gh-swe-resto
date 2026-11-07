@@ -45,6 +45,7 @@ export type PublicMenuItem = {
   availableDays: Weekday[];
   weekendOnly: boolean;
   paymentMode: MenuPaymentMode;
+  minOrderQuantity: number;
   modifierGroups: PublicModifierGroup[];
 };
 
