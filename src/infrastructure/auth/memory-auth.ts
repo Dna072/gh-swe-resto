@@ -7,6 +7,7 @@ const SESSION_PREFIX = "memory-session:";
 type MemoryUser = AuthUserRecord & {
   passwordHash?: string;
   claims: AuthCustomClaims;
+  lastSignInAt?: string | null;
 };
 
 export class MemoryAuthAdmin implements AuthAdminPort {
@@ -36,8 +37,29 @@ export class MemoryAuthAdmin implements AuthAdminPort {
     if (!uid) {
       return null;
     }
+    return this.getUserByUid(uid);
+  }
+
+  async getUserByUid(uid: string): Promise<AuthUserRecord | null> {
     const user = this.users.get(uid);
-    return user ? { uid: user.uid, email: user.email, displayName: user.displayName, disabled: user.disabled } : null;
+    if (!user) {
+      return null;
+    }
+    return {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      disabled: user.disabled,
+      lastSignInAt: user.lastSignInAt ?? null,
+    };
+  }
+
+  /** Test helper: mark a memory user as having signed in. */
+  markSignedIn(uid: string, at = new Date().toISOString()): void {
+    const user = this.users.get(uid);
+    if (user) {
+      user.lastSignInAt = at;
+    }
   }
 
   async setCustomUserClaims(uid: string, claims: AuthCustomClaims): Promise<void> {

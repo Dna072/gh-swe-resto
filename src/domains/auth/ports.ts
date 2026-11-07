@@ -5,6 +5,8 @@ export type AuthUserRecord = {
   email: string;
   displayName?: string;
   disabled?: boolean;
+  /** ISO timestamp of last successful sign-in; null/undefined if never signed in. */
+  lastSignInAt?: string | null;
 };
 
 export type AuthCustomClaims = {
@@ -19,6 +21,7 @@ export interface AuthAdminPort {
     displayName?: string;
   }): Promise<AuthUserRecord>;
   getUserByEmail(email: string): Promise<AuthUserRecord | null>;
+  getUserByUid(uid: string): Promise<AuthUserRecord | null>;
   setCustomUserClaims(uid: string, claims: AuthCustomClaims): Promise<void>;
   generatePasswordResetLink(email: string, continueUrl: string): Promise<string>;
   generateEmailVerificationLink(email: string, continueUrl: string): Promise<string>;

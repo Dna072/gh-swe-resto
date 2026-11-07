@@ -14,6 +14,8 @@ type StaffRow = {
   displayName: string;
   role: StaffRole;
   disabled: boolean;
+  hasSignedIn?: boolean;
+  pendingSetup?: boolean;
 };
 
 type InviteResponse = {
@@ -36,6 +38,10 @@ function roleLabel(role: StaffRole): string {
   return ROLE_LABELS[role];
 }
 
+async function copyText(value: string): Promise<void> {
+  await navigator.clipboard.writeText(value);
+}
+
 export function StaffInvitePanel() {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [email, setEmail] = useState("");
@@ -43,7 +49,9 @@ export function StaffInvitePanel() {
   const [role, setRole] = useState<StaffRole>("KITCHEN");
   const [error, setError] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteForEmail, setInviteForEmail] = useState<string | null>(null);
   const [emailDelivery, setEmailDelivery] = useState<InviteResponse["emailDelivery"]>();
+  const [busyUid, setBusyUid] = useState<string | null>(null);
 
   function load() {
     adminFetch<{ staff: StaffRow[] }>("/api/admin/staff")
@@ -60,15 +68,37 @@ export function StaffInvitePanel() {
     load();
   }, []);
 
+  async function fetchSetupLink(uid: string, forEmail: string) {
+    setBusyUid(uid);
+    setError(null);
+    try {
+      const result = await adminFetch<{ email: string; inviteUrl: string }>(
+        `/api/admin/staff/${uid}/setup-link`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      setInviteUrl(result.inviteUrl);
+      setInviteForEmail(result.email || forEmail);
+      setEmailDelivery("mock");
+      await copyText(result.inviteUrl);
+      toast.success(`Setup link for ${result.email} copied.`);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Could not create a setup link.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBusyUid(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-earth">Team</p>
         <h1 className="mt-2 font-heading text-4xl">Staff invitations</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Invite kitchen and admin colleagues. They get a set-password link by email when Amazon SES
-          is configured; otherwise copy the link below and send it yourself. Invite OWNER, MANAGER,
-          or FINANCE so they can confirm Swish payments.
+          Invite kitchen and admin colleagues. While outbound email is unavailable, use Copy setup
+          link on anyone who has not signed in yet and share it with them. Invite OWNER, MANAGER, or
+          FINANCE so they can confirm Swish payments.
         </p>
       </div>
       <form
@@ -76,20 +106,31 @@ export function StaffInvitePanel() {
         onSubmit={(event) => {
           event.preventDefault();
           setInviteUrl(null);
+          setInviteForEmail(null);
           setEmailDelivery(undefined);
           void adminFetch<InviteResponse>("/api/admin/staff", {
             method: "POST",
             body: JSON.stringify({ email, displayName, role }),
           })
-            .then((result) => {
+            .then(async (result) => {
               setInviteUrl(result.inviteUrl ?? null);
+              setInviteForEmail(result.user.email);
               setEmailDelivery(result.emailDelivery);
+              if (result.inviteUrl) {
+                try {
+                  await copyText(result.inviteUrl);
+                } catch {
+                  // Clipboard may be blocked; the link is still shown below.
+                }
+              }
               if (result.emailDelivery === "sent") {
                 toast.success(`Invite email sent to ${result.user.email}.`);
               } else if (result.emailDelivery === "mock") {
-                toast.success(`Account created for ${result.user.email}. Copy the setup link below.`);
+                toast.success(`Account created for ${result.user.email}. Setup link ready below.`);
               } else {
-                toast.message(`Account created for ${result.user.email}. Email did not send — use the setup link.`);
+                toast.message(
+                  `Account created for ${result.user.email}. Email did not send — use the setup link.`,
+                );
               }
               setEmail("");
               setDisplayName("");
@@ -133,11 +174,12 @@ export function StaffInvitePanel() {
         {inviteUrl ? (
           <div className="space-y-2 rounded-xl bg-background p-4 text-sm ring-1 ring-foreground/10">
             <p className="font-medium text-foreground">
+              {inviteForEmail ? `Setup link for ${inviteForEmail}` : "Setup link"}
               {emailDelivery === "sent"
-                ? "Email sent. Setup link (for your records):"
+                ? " (email also sent):"
                 : emailDelivery === "mock"
-                  ? "Outbound email is still on mock — share this setup link:"
-                  : "Email failed — share this setup link:"}
+                  ? " — share this while email is offline:"
+                  : " — email failed, share this:"}
             </p>
             <p className="break-all text-muted-foreground">{inviteUrl}</p>
             <Button
@@ -145,7 +187,7 @@ export function StaffInvitePanel() {
               size="touch"
               variant="outline"
               onClick={() => {
-                void navigator.clipboard.writeText(inviteUrl).then(
+                void copyText(inviteUrl).then(
                   () => toast.success("Setup link copied."),
                   () => toast.error("Could not copy the link."),
                 );
@@ -163,12 +205,31 @@ export function StaffInvitePanel() {
       ) : null}
       <ul className="grid gap-3">
         {staff.map((user) => (
-          <li key={user.uid} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+          <li
+            key={user.uid}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10"
+          >
             <div>
               <p className="font-heading text-xl">{user.displayName}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
+              {user.pendingSetup ? (
+                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-earth">Awaiting first sign-in</p>
+              ) : null}
             </div>
-            <p className="text-xs uppercase tracking-[0.14em] text-earth">{roleLabel(user.role)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs uppercase tracking-[0.14em] text-earth">{roleLabel(user.role)}</p>
+              {user.pendingSetup ? (
+                <Button
+                  type="button"
+                  size="touch"
+                  variant="outline"
+                  disabled={busyUid === user.uid}
+                  onClick={() => void fetchSetupLink(user.uid, user.email)}
+                >
+                  {busyUid === user.uid ? "Creating link…" : "Copy setup link"}
+                </Button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>

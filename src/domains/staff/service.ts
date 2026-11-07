@@ -17,6 +17,11 @@ export type StaffInviteResult = {
   resetLinkReady: boolean;
 };
 
+export type StaffListItem = StaffUser & {
+  hasSignedIn: boolean;
+  pendingSetup: boolean;
+};
+
 export class StaffService {
   constructor(
     private readonly staff: StaffUserRepository,
@@ -25,9 +30,55 @@ export class StaffService {
     private readonly restaurantId: string,
   ) {}
 
-  async list(actor: Actor): Promise<StaffUser[]> {
+  async list(actor: Actor): Promise<StaffListItem[]> {
     authorizationService.requirePermission(actor, "users:read");
-    return this.staff.listByRestaurant(this.restaurantId);
+    const users = await this.staff.listByRestaurant(this.restaurantId);
+    return Promise.all(
+      users.map(async (user) => {
+        const authUser = await this.auth.getUserByUid(user.uid);
+        const hasSignedIn = Boolean(authUser?.lastSignInAt);
+        return {
+          ...user,
+          hasSignedIn,
+          pendingSetup: !user.disabled && !hasSignedIn,
+        };
+      }),
+    );
+  }
+
+  async createSetupLink(actor: Actor, uid: string): Promise<{ inviteUrl: string; email: string }> {
+    authorizationService.requirePermission(actor, "users:write");
+    const user = await this.staff.getByUid(uid);
+    if (!user || user.restaurantId !== this.restaurantId) {
+      throw new AppError("NOT_FOUND", "That staff member was not found.");
+    }
+    if (user.disabled) {
+      throw new AppError("VALIDATION", "That staff account is disabled.");
+    }
+    const authUser = await this.auth.getUserByUid(uid);
+    if (!authUser) {
+      throw new AppError("NOT_FOUND", "That staff account is missing from authentication.");
+    }
+    if (authUser.lastSignInAt) {
+      throw new AppError(
+        "VALIDATION",
+        "This person has already signed in. Ask them to use password reset from the sign-in page if needed.",
+      );
+    }
+    const continueUrl = staffContinueUrl(user.role);
+    try {
+      const inviteUrl = await this.auth.generatePasswordResetLink(user.email, continueUrl);
+      return { inviteUrl, email: user.email };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      logger.warn("staff_setup_link_failed", {
+        uid,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+      throw new AppError("INTERNAL", "Could not create a setup link for this person.");
+    }
   }
 
   async invite(

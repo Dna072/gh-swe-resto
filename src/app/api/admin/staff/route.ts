@@ -23,6 +23,8 @@ export async function GET(request: Request) {
         displayName: user.displayName,
         role: user.role,
         disabled: user.disabled,
+        hasSignedIn: user.hasSignedIn,
+        pendingSetup: user.pendingSetup,
       })),
     });
   } catch (error) {

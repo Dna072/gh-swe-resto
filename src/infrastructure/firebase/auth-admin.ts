@@ -1,8 +1,20 @@
+import type { UserRecord } from "firebase-admin/auth";
 import { getAdminAuth } from "@/infrastructure/firebase/admin";
 import type { AuthAdminPort, AuthCustomClaims, AuthUserRecord } from "@/domains/auth/ports";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logging/logger";
 import { ensureFirebaseActionApiKey, isFirebaseAuthConfigError } from "./auth-links";
+
+function toAuthUserRecord(user: UserRecord, emailFallback?: string): AuthUserRecord {
+  const lastSignIn = user.metadata.lastSignInTime?.trim();
+  return {
+    uid: user.uid,
+    email: user.email ?? emailFallback ?? "",
+    displayName: user.displayName,
+    disabled: user.disabled,
+    lastSignInAt: lastSignIn ? new Date(lastSignIn).toISOString() : null,
+  };
+}
 
 function rethrowAuth(error: unknown, fallback: string): never {
   if (isFirebaseAuthConfigError(error)) {
@@ -36,7 +48,20 @@ export class FirebaseAuthAdmin implements AuthAdminPort {
   async getUserByEmail(email: string): Promise<AuthUserRecord | null> {
     try {
       const user = await getAdminAuth().getUserByEmail(email);
-      return { uid: user.uid, email: user.email ?? email, displayName: user.displayName, disabled: user.disabled };
+      return toAuthUserRecord(user, email);
+    } catch (error) {
+      const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
+      if (code.includes("user-not-found")) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async getUserByUid(uid: string): Promise<AuthUserRecord | null> {
+    try {
+      const user = await getAdminAuth().getUser(uid);
+      return toAuthUserRecord(user);
     } catch (error) {
       const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
       if (code.includes("user-not-found")) {
