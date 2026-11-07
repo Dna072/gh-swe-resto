@@ -16,6 +16,13 @@ type StaffRow = {
   disabled: boolean;
 };
 
+type InviteResponse = {
+  user: StaffRow;
+  inviteUrl?: string;
+  emailDelivery?: "sent" | "mock" | "failed";
+  resetLinkReady?: boolean;
+};
+
 const ROLE_LABELS: Record<StaffRole, string> = {
   OWNER: "Owner — full admin, invites, Swish confirm",
   MANAGER: "Manager — menu, orders, Swish confirm",
@@ -36,6 +43,7 @@ export function StaffInvitePanel() {
   const [role, setRole] = useState<StaffRole>("KITCHEN");
   const [error, setError] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [emailDelivery, setEmailDelivery] = useState<InviteResponse["emailDelivery"]>();
 
   function load() {
     adminFetch<{ staff: StaffRow[] }>("/api/admin/staff")
@@ -58,9 +66,9 @@ export function StaffInvitePanel() {
         <p className="text-xs uppercase tracking-[0.2em] text-earth">Team</p>
         <h1 className="mt-2 font-heading text-4xl">Staff invitations</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Invite kitchen and admin colleagues. They receive a branded email to set a password, then
-          sign in on admin.mfcuisine.se or kitchen.mfcuisine.se. Invite OWNER, MANAGER, or FINANCE
-          roles so they can confirm manual Swish payments and manage restaurant settings.
+          Invite kitchen and admin colleagues. They get a set-password link by email when Amazon SES
+          is configured; otherwise copy the link below and send it yourself. Invite OWNER, MANAGER,
+          or FINANCE so they can confirm Swish payments.
         </p>
       </div>
       <form
@@ -68,13 +76,21 @@ export function StaffInvitePanel() {
         onSubmit={(event) => {
           event.preventDefault();
           setInviteUrl(null);
-          void adminFetch<{ user: StaffRow; inviteUrl?: string }>("/api/admin/staff", {
+          setEmailDelivery(undefined);
+          void adminFetch<InviteResponse>("/api/admin/staff", {
             method: "POST",
             body: JSON.stringify({ email, displayName, role }),
           })
             .then((result) => {
-              toast.success(`Invite sent to ${result.user.email}.`);
               setInviteUrl(result.inviteUrl ?? null);
+              setEmailDelivery(result.emailDelivery);
+              if (result.emailDelivery === "sent") {
+                toast.success(`Invite email sent to ${result.user.email}.`);
+              } else if (result.emailDelivery === "mock") {
+                toast.success(`Account created for ${result.user.email}. Copy the setup link below.`);
+              } else {
+                toast.message(`Account created for ${result.user.email}. Email did not send — use the setup link.`);
+              }
               setEmail("");
               setDisplayName("");
               load();
@@ -115,9 +131,29 @@ export function StaffInvitePanel() {
           Send invite
         </Button>
         {inviteUrl ? (
-          <p className="break-all text-sm text-muted-foreground">
-            Local setup link: {inviteUrl}
-          </p>
+          <div className="space-y-2 rounded-xl bg-background p-4 text-sm ring-1 ring-foreground/10">
+            <p className="font-medium text-foreground">
+              {emailDelivery === "sent"
+                ? "Email sent. Setup link (for your records):"
+                : emailDelivery === "mock"
+                  ? "Outbound email is still on mock — share this setup link:"
+                  : "Email failed — share this setup link:"}
+            </p>
+            <p className="break-all text-muted-foreground">{inviteUrl}</p>
+            <Button
+              type="button"
+              size="touch"
+              variant="outline"
+              onClick={() => {
+                void navigator.clipboard.writeText(inviteUrl).then(
+                  () => toast.success("Setup link copied."),
+                  () => toast.error("Could not copy the link."),
+                );
+              }}
+            >
+              Copy setup link
+            </Button>
+          </div>
         ) : null}
       </form>
       {error ? (

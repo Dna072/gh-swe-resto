@@ -5,7 +5,11 @@ const envSchema = z.object({
   APP_ENV: z.enum(["development", "test", "staging", "production"]).default("development"),
   APP_BASE_URL: z.string().optional(),
   DEFAULT_RESTAURANT_ID: z.string().default("uppsala-main"),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  /** Server-side web API key used to complete Auth action links. */
+  FIREBASE_WEB_API_KEY: z.string().optional(),
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),

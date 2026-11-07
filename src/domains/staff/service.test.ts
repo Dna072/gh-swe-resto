@@ -22,6 +22,8 @@ describe("StaffService", () => {
     );
     expect(result.user.role).toBe("KITCHEN");
     expect(result.inviteUrl).toContain("kitchen");
+    expect(result.emailDelivery).toBe("mock");
+    expect(result.resetLinkReady).toBe(true);
     expect(email.sent[0]?.event).toBe("STAFF_INVITE");
   });
 });

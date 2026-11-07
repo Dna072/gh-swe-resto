@@ -20,5 +20,10 @@
       "enabled": false
     },
     "singleProjectMode": true
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
   }
 }

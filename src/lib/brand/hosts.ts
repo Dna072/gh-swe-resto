@@ -64,6 +64,11 @@ export function adminOrigin(): string {
   if (env.ADMIN_APP_BASE_URL) {
     return env.ADMIN_APP_BASE_URL.replace(/\/$/, "");
   }
+  // Single Cloud Run service: staff continue URLs must stay on APP_BASE_URL
+  // until custom admin DNS is pointed at the same revision.
+  if (env.APP_BASE_URL && env.APP_ENV !== "production") {
+    return env.APP_BASE_URL.replace(/\/$/, "");
+  }
   return originForHost(adminAppHost());
 }
 
@@ -71,6 +76,9 @@ export function kitchenOrigin(): string {
   const env = getEnv();
   if (env.KITCHEN_APP_BASE_URL) {
     return env.KITCHEN_APP_BASE_URL.replace(/\/$/, "");
+  }
+  if (env.APP_BASE_URL && env.APP_ENV !== "production") {
+    return env.APP_BASE_URL.replace(/\/$/, "");
   }
   return originForHost(kitchenAppHost());
 }

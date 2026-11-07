@@ -31,22 +31,28 @@ export class SesEmailNotificationProvider implements NotificationProvider {
 
   async send(raw: NotificationMessage): Promise<void> {
     const message = withPremiumHtml(raw);
-    await this.client.send(
-      new SendEmailCommand({
-        FromEmailAddress: this.from,
-        Destination: { ToAddresses: [message.to] },
-        ConfigurationSetName: this.configurationSet,
-        Content: {
-          Simple: {
-            Subject: { Data: message.subject ?? "Meridian Fusion Cuisine", Charset: "UTF-8" },
-            Body: {
-              Html: { Data: message.html ?? message.body, Charset: "UTF-8" },
-              Text: { Data: message.body, Charset: "UTF-8" },
+    try {
+      await this.client.send(
+        new SendEmailCommand({
+          FromEmailAddress: this.from,
+          Destination: { ToAddresses: [message.to] },
+          ...(this.configurationSet ? { ConfigurationSetName: this.configurationSet } : {}),
+          Content: {
+            Simple: {
+              Subject: { Data: message.subject ?? "Meridian Fusion Cuisine", Charset: "UTF-8" },
+              Body: {
+                Html: { Data: message.html ?? message.body, Charset: "UTF-8" },
+                Text: { Data: message.body, Charset: "UTF-8" },
+              },
             },
           },
-        },
-      }),
-    );
-    logger.info("ses_email_sent", { event: message.event, orderId: message.orderId });
+        }),
+      );
+      logger.info("ses_email_sent", { event: message.event, orderId: message.orderId });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "unknown";
+      logger.error("ses_email_failed", { event: message.event, message: detail });
+      throw error;
+    }
   }
 }

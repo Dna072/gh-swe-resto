@@ -154,10 +154,24 @@ fi
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:$(git rev-parse --short HEAD 2>/dev/null || echo latest)"
 echo "Building ${IMAGE}…"
 echo "If Cloud Build fails, open the log URL it prints — the terminal only shows that Docker step 0 exited 1."
+
+# Prefer an explicit web API key; otherwise use the Firebase browser key in this project.
+FIREBASE_WEB_API_KEY="${FIREBASE_WEB_API_KEY:-${NEXT_PUBLIC_FIREBASE_API_KEY:-}}"
+if [[ -z "${FIREBASE_WEB_API_KEY}" ]]; then
+  FIREBASE_KEY_NAME="$(gcloud services api-keys list --project="${PROJECT_ID}" \
+    --filter='displayName:"Browser key (auto created by Firebase)"' \
+    --format='value(name)' 2>/dev/null | head -n 1 || true)"
+  if [[ -n "${FIREBASE_KEY_NAME}" ]]; then
+    FIREBASE_WEB_API_KEY="$(gcloud services api-keys get-key-string "${FIREBASE_KEY_NAME}" \
+      --project="${PROJECT_ID}" --format='value(keyString)' 2>/dev/null || true)"
+  fi
+fi
+FIREBASE_AUTH_DOMAIN="${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-${PROJECT_ID}.firebaseapp.com}"
+
 if ! gcloud builds submit \
   --project "${PROJECT_ID}" \
   --config cloudbuild.yaml \
-  --substitutions="_IMAGE=${IMAGE}"; then
+  --substitutions="_IMAGE=${IMAGE},_NEXT_PUBLIC_FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY},_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},_NEXT_PUBLIC_FIREBASE_PROJECT_ID=${PROJECT_ID}"; then
   echo "Image build failed. The one-line Docker error is not the cause." >&2
   echo "Print the compiler output:" >&2
   echo "  gcloud builds log --project=${PROJECT_ID} \$(gcloud builds list --project=${PROJECT_ID} --limit=1 --format='value(id)')" >&2
@@ -168,7 +182,14 @@ if ! gcloud builds submit \
 fi
 
 echo "Deploying Cloud Run service ${SERVICE}…"
-RUN_ENV="NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=mock,ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET}"
+EMAIL_PROVIDER_VALUE="${EMAIL_PROVIDER:-mock}"
+if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" && -n "${SES_FROM_EMAIL:-}" ]]; then
+  EMAIL_PROVIDER_VALUE=ses
+fi
+RUN_ENV="NODE_ENV=production,APP_ENV=staging,DATA_STORE=firestore,PAYMENT_PROVIDER=mock,DELIVERY_PROVIDER=mock,EMAIL_PROVIDER=${EMAIL_PROVIDER_VALUE},ADMIN_DEV_TOKEN=${ADMIN_TOKEN},DEFAULT_RESTAURANT_ID=uppsala-main,FIREBASE_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_ASSETS_BUCKET=${BUCKET},NEXT_PUBLIC_FIREBASE_PROJECT_ID=${PROJECT_ID},NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}"
+if [[ -n "${FIREBASE_WEB_API_KEY}" ]]; then
+  RUN_ENV="${RUN_ENV},FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY},NEXT_PUBLIC_FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY}"
+fi
 MAPS_KEY="${GOOGLE_MAPS_SERVER_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
 if [[ -n "${MAPS_KEY}" ]]; then
   RUN_ENV="${RUN_ENV},GOOGLE_MAPS_SERVER_KEY=${MAPS_KEY},GOOGLE_MAPS_API_KEY=${MAPS_KEY}"
@@ -184,6 +205,12 @@ if [[ -n "${NEXT_PUBLIC_MAPTILER_KEY:-}" ]]; then
 fi
 if [[ -n "${NEXT_PUBLIC_MAP_STYLE_URL:-}" ]]; then
   RUN_ENV="${RUN_ENV},NEXT_PUBLIC_MAP_STYLE_URL=${NEXT_PUBLIC_MAP_STYLE_URL}"
+fi
+if [[ "${EMAIL_PROVIDER_VALUE}" == "ses" ]]; then
+  RUN_ENV="${RUN_ENV},AWS_SES_REGION=${AWS_SES_REGION:-eu-north-1},SES_FROM_EMAIL=${SES_FROM_EMAIL},SES_FROM_NAME=${SES_FROM_NAME:-Meridian Fusion Cuisine},AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID},AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
+  if [[ -n "${SES_CONFIGURATION_SET:-}" ]]; then
+    RUN_ENV="${RUN_ENV},SES_CONFIGURATION_SET=${SES_CONFIGURATION_SET}"
+  fi
 fi
 gcloud run deploy "${SERVICE}" \
   --project "${PROJECT_ID}" \
@@ -201,10 +228,11 @@ gcloud run deploy "${SERVICE}" \
   --set-env-vars "${RUN_ENV}"
 
 URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
+UPDATE_VARS="APP_BASE_URL=${URL},ADMIN_APP_BASE_URL=${URL},KITCHEN_APP_BASE_URL=${URL}"
 gcloud run services update "${SERVICE}" \
   --project "${PROJECT_ID}" \
   --region "${REGION}" \
-  --update-env-vars "APP_BASE_URL=${URL}" \
+  --update-env-vars "${UPDATE_VARS}" \
   --quiet
 
 echo "Seeding the demo menu into Firestore…"

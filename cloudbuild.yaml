@@ -1,12 +1,26 @@
 # Used by `gcloud builds submit` and the GitHub deploy workflow.
 substitutions:
   _IMAGE: europe-north1-docker.pkg.dev/PROJECT/apps/ghana-restaurant-showcase:latest
+  _NEXT_PUBLIC_FIREBASE_API_KEY: ""
+  _NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ""
+  _NEXT_PUBLIC_FIREBASE_PROJECT_ID: ""
 
 timeout: 1800s
 
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ["build", "--progress=plain", "-t", "${_IMAGE}", "."]
+    args:
+      - "build"
+      - "--progress=plain"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}"
+      - "-t"
+      - "${_IMAGE}"
+      - "."
     timeout: 1500s
   - name: gcr.io/cloud-builders/docker
     args: ["push", "${_IMAGE}"]
