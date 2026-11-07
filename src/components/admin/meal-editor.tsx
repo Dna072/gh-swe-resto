@@ -62,6 +62,15 @@ export function MealEditor({
   );
   const [prep, setPrep] = useState(String(initial?.preparationTimeMinutes ?? 25));
   const [available, setAvailable] = useState(initial?.isAvailable ?? true);
+  const [comingSoon, setComingSoon] = useState(initial?.comingSoon ?? true);
+  const [paymentMode, setPaymentMode] = useState<"ONLINE" | "MANUAL_SWISH">(
+    initial?.paymentMode ?? "ONLINE",
+  );
+  const [weekendOnly, setWeekendOnly] = useState(
+    initial?.availableDays?.length
+      ? initial.availableDays.every((day) => day === "saturday" || day === "sunday")
+      : false,
+  );
   const [featured, setFeatured] = useState(initial?.isFeatured ?? false);
   const [popular, setPopular] = useState(initial?.isPopular ?? false);
   const [inventoryTracked, setInventoryTracked] = useState(initial?.inventoryTracked ?? false);
@@ -104,6 +113,9 @@ export function MealEditor({
         weekdayPriceOre: weekdayPrice ? sekToOre(Number(weekdayPrice)) : undefined,
         weekendPriceOre: weekendPrice ? sekToOre(Number(weekendPrice)) : undefined,
         isAvailable: available,
+        comingSoon,
+        paymentMode,
+        weekendOnly,
         isFeatured: featured,
         isPopular: popular,
         inventoryTracked,
@@ -304,10 +316,23 @@ export function MealEditor({
           <Input id="prep" inputMode="numeric" value={prep} onChange={(event) => setPrep(event.target.value)} />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
-          <ToggleRow label="Available" checked={available} onChange={setAvailable} />
+          <ToggleRow label="Listed" checked={available} onChange={setAvailable} />
+          <ToggleRow label="Coming soon" checked={comingSoon} onChange={setComingSoon} />
+          <ToggleRow label="Weekends only" checked={weekendOnly} onChange={setWeekendOnly} />
           <ToggleRow label="Featured" checked={featured} onChange={setFeatured} />
           <ToggleRow label="Popular" checked={popular} onChange={setPopular} />
         </div>
+        <Field id="payment-mode" label="Payment">
+          <select
+            id="payment-mode"
+            className="h-11 w-full rounded-md border border-input bg-background px-3"
+            value={paymentMode}
+            onChange={(event) => setPaymentMode(event.target.value as "ONLINE" | "MANUAL_SWISH")}
+          >
+            <option value="ONLINE">Online card</option>
+            <option value="MANUAL_SWISH">Manual Swish (admin confirms)</option>
+          </select>
+        </Field>
         <ToggleRow label="Track inventory" checked={inventoryTracked} onChange={setInventoryTracked} />
         {inventoryTracked ? (
           <div className="grid gap-4 sm:grid-cols-3">

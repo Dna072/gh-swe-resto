@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+const weekdaySchema = z.enum([
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+]);
+
 export const menuDraftSchema = z.object({
   id: z.string().optional(),
   slug: z.string().min(1).max(80),
@@ -11,6 +21,10 @@ export const menuDraftSchema = z.object({
   weekdayPriceOre: z.number().int().nonnegative().optional(),
   weekendPriceOre: z.number().int().nonnegative().optional(),
   isAvailable: z.boolean().optional(),
+  comingSoon: z.boolean().optional(),
+  paymentMode: z.enum(["ONLINE", "MANUAL_SWISH"]).optional(),
+  availableDays: z.array(weekdaySchema).min(1).optional(),
+  weekendOnly: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   isPopular: z.boolean().optional(),
   inventoryTracked: z.boolean().optional(),

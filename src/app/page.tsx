@@ -23,7 +23,7 @@ import { localizeCatalog, localizeHomepageCopy } from "@/lib/i18n/catalog";
 import { getLocale, getTranslator } from "@/lib/i18n/server";
 import { imageUrl, objectPosition } from "@/lib/media/display";
 import { restaurantDisplay } from "@/lib/restaurant/display";
-import { soldOut } from "@/lib/menu/display";
+import { comingSoon, soldOut } from "@/lib/menu/display";
 import { loadHomepage, loadPublicCatalog } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
@@ -135,6 +135,9 @@ export default async function HomePage() {
                     priceOre={item.displayPriceOre}
                     href={`/menu/${item.slug}`}
                     soldOut={soldOut(item)}
+                    comingSoon={comingSoon(item)}
+                    weekendOnly={item.weekendOnly}
+                    swishPay={item.paymentMode === "MANUAL_SWISH"}
                   />
                 </Reveal>
               ))}

@@ -1,10 +1,11 @@
 import { AppError } from "@/lib/errors";
-import { availabilityStatus } from "@/domains/menu/models";
+import { availabilityStatus, type MenuItem } from "@/domains/menu/models";
 import type { MenuRepository } from "@/domains/menu/repository";
 import { PricingService } from "@/domains/pricing/service";
 import type { PricingCalendar } from "@/domains/menu/models";
 import { PromotionService } from "@/domains/promotions/service";
 import type { PromotionRepository } from "@/domains/promotions/repository";
+import { weekdayInTimeZone } from "@/lib/time";
 import type { CartQuote, CartQuoteRequest } from "./models";
 
 const QUOTE_TTL_MS = 15 * 60 * 1000;
@@ -25,17 +26,23 @@ export class CartService {
     if (request.orderingPaused) {
       throw new AppError("ORDERING_PAUSED", "The kitchen is not taking orders right now.");
     }
-    const at = request.at ?? new Date();
+    const at = request.at ?? (request.scheduledFor ? new Date(request.scheduledFor) : new Date());
     const pricedLines = [];
+    const paymentModes = new Set<MenuItem["paymentMode"]>();
     for (const line of request.lines) {
       const item = await this.menu.getItem(request.restaurantId, line.menuItemId);
       if (!item || item.archivedAt) {
         throw new AppError("NOT_FOUND", "A meal in your cart is no longer available.");
       }
       const status = availabilityStatus(item);
+      if (status === "COMING_SOON") {
+        throw new AppError("INSUFFICIENT_INVENTORY", `${item.name} is coming soon and cannot be ordered yet.`);
+      }
       if (status === "SOLD_OUT" || status === "PAUSED") {
         throw new AppError("INSUFFICIENT_INVENTORY", `${item.name} is not available right now.`);
       }
+      assertAvailableOnDay(item, at, this.calendar.timeZone);
+      paymentModes.add(item.paymentMode ?? "ONLINE");
       const groups = await this.menu.listModifierGroups(request.restaurantId, item.modifierGroupIds);
       const modifiers = this.pricing.priceModifiers(groups, line.modifiers);
       pricedLines.push(
@@ -85,12 +92,34 @@ export class CartService {
       discountOre: discount.discountOre,
       freeDelivery: discount.freeDelivery,
     });
+    if (paymentModes.has("MANUAL_SWISH") && paymentModes.has("ONLINE")) {
+      throw new AppError(
+        "VALIDATION",
+        "Swish meals and card meals cannot be mixed in one order. Order them separately.",
+      );
+    }
     return {
       ...quote,
       promotionCode: discount.code,
       restaurantId: request.restaurantId,
       quotedAt: at.toISOString(),
       expiresAt: new Date(at.getTime() + QUOTE_TTL_MS).toISOString(),
+      paymentMode: paymentModes.has("MANUAL_SWISH") ? "MANUAL_SWISH" : "ONLINE",
     };
+  }
+}
+
+function assertAvailableOnDay(item: MenuItem, at: Date, timeZone: string): void {
+  if (item.availableDays.length === 0) {
+    return;
+  }
+  const day = weekdayInTimeZone(at, timeZone);
+  if (!item.availableDays.includes(day)) {
+    throw new AppError(
+      "VALIDATION",
+      item.availableDays.every((entry) => entry === "saturday" || entry === "sunday")
+        ? `${item.name} is only available for weekend delivery.`
+        : `${item.name} is not available on that day.`,
+    );
   }
 }

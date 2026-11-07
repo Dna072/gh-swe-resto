@@ -1,12 +1,20 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { quoteDelivery, quoteDeliveryOptions, resolveAdvanceDeliverySlot } from "@/server/checkout";
-import { orderService, recallGuestToken, rememberGuestToken, restaurantSettings, saveDeliverySettings } from "@/server/composition";
+import {
+  menuRepository,
+  orderService,
+  recallGuestToken,
+  rememberGuestToken,
+  restaurantSettings,
+  saveDeliverySettings,
+} from "@/server/composition";
 import { defaultDeliverySettings } from "@/domains/delivery/models";
 import { toPublicOrder } from "@/server/public-order";
 import { createOrderSchema } from "@/lib/validation/checkout";
+import { unlockMenuItems } from "../../tests/unit/unlock-menu";
 
-const jollofLine = {
-  menuItemId: "jollof",
+const redRedLine = {
+  menuItemId: "red-red",
   quantity: 1,
   modifiers: [
     { groupId: "protein", optionId: "chicken", quantity: 1 },
@@ -22,6 +30,9 @@ const uppsalaAddress = {
 };
 
 describe("Phase 3 checkout", () => {
+  beforeAll(async () => {
+    await unlockMenuItems(menuRepository, "uppsala-main", ["red-red"]);
+  });
   afterEach(async () => {
     await saveDeliverySettings(defaultDeliverySettings("uppsala-main"));
   });
@@ -43,7 +54,7 @@ describe("Phase 3 checkout", () => {
     expect(quote.customerDeliveryFeeOre).toBe(7900);
     const created = await orderService.create({
       restaurantId: "uppsala-main",
-      lines: [jollofLine],
+      lines: [redRedLine],
       customer: {
         name: "Ama Mensah",
         email: "ama@example.com",
@@ -58,6 +69,7 @@ describe("Phase 3 checkout", () => {
       deliveryProvider: quote.provider,
       deliveryQuoteId: quote.quoteId,
       estimatedDeliveryTime: quote.quotedAt,
+      at: new Date("2026-08-31T12:00:00.000Z"),
       deliveryPricing: {
         provider: quote.provider,
         providerQuoteId: quote.quoteId,
@@ -75,7 +87,7 @@ describe("Phase 3 checkout", () => {
     expect(created.order.deliveryFeeOre).toBe(7900);
     expect(created.order.deliveryPricing?.providerDeliveryCostOre).toBe(7900);
     expect(created.order.deliveryPricing?.customerDeliveryFeeOre).toBe(7900);
-    expect(created.order.totalOre).toBe(12900 + 7900);
+    expect(created.order.totalOre).toBe(11900 + 7900);
     expect(created.order.publicOrderNumber).toMatch(/^GH\d+$/);
     const publicOrder = toPublicOrder(created.order);
     expect(publicOrder).not.toHaveProperty("accessTokenHash");
@@ -135,7 +147,7 @@ describe("Phase 3 checkout", () => {
   it("rejects a client-supplied delivery fee on the create-order payload", () => {
     const parsed = createOrderSchema.safeParse({
       restaurantId: "uppsala-main",
-      lines: [jollofLine],
+      lines: [redRedLine],
       customer: { name: "Ama", email: "ama@example.com", phone: "+46700000000" },
       deliveryAddress: uppsalaAddress,
       deliveryFeeOre: 1,
@@ -156,7 +168,7 @@ describe("Phase 3 checkout", () => {
     const pickup = restaurantSettings().pickup;
     const created = await orderService.create({
       restaurantId: "uppsala-main",
-      lines: [jollofLine],
+      lines: [redRedLine],
       customer: {
         name: "Jonas Lind",
         email: "jonas@example.com",
@@ -168,10 +180,11 @@ describe("Phase 3 checkout", () => {
       guestSessionId: "guest-pickup",
       idempotencyKey: "phase3-pickup-1",
       fulfillment: "PICKUP",
+      at: new Date("2026-08-31T12:00:00.000Z"),
     });
     expect(created.order.deliveryStatus).toBe("NOT_REQUESTED");
     expect(created.order.deliveryFeeOre).toBe(0);
-    expect(created.order.totalOre).toBe(12900);
+    expect(created.order.totalOre).toBe(11900);
     expect(toPublicOrder(created.order).fulfillment).toBe("PICKUP");
   });
 });

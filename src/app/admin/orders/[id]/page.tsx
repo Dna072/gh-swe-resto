@@ -42,6 +42,31 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     }
   }
 
+  async function confirmPayment() {
+    if (!order) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await adminFetch<{ order: StaffOrder }>(
+        `/api/admin/orders/${order.id}/confirm-payment`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      setOrder(result.order);
+      succeed(
+        "Swish payment confirmed",
+        `${order.publicOrderNumber} is marked paid. The guest is notified by email.`,
+      );
+    } catch (cause) {
+      fail(
+        "Could not confirm payment",
+        cause instanceof Error ? cause.message : "Could not confirm this Swish payment.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (error) {
     return <main className="mx-auto max-w-3xl px-4 py-10 text-destructive">{error}</main>;
   }
@@ -76,6 +101,18 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
           <dt>Delivery</dt>
           <dd>{order.deliveryStatus.replaceAll("_", " ").toLowerCase()}</dd>
         </div>
+        {order.manualPaymentPin ? (
+          <div className="flex justify-between gap-3">
+            <dt>Swish reference</dt>
+            <dd className="font-mono tracking-[0.2em]">{order.manualPaymentPin}</dd>
+          </div>
+        ) : null}
+        {order.swishPayee ? (
+          <div className="flex justify-between gap-3">
+            <dt>Swish payee</dt>
+            <dd>{order.swishPayee}</dd>
+          </div>
+        ) : null}
         <div className="flex justify-between gap-3 font-medium">
           <dt>Total</dt>
           <dd>
@@ -91,6 +128,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3">
+        {order.confirmablePayment ? (
+          <Button size="touch" disabled={busy} onClick={() => void confirmPayment()}>
+            Confirm Swish payment
+          </Button>
+        ) : null}
         {order.refundable ? (
           <Button size="touch" disabled={busy} onClick={() => void refund()}>
             Refund

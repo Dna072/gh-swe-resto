@@ -26,6 +26,9 @@ export type StaffOrder = {
   createdAt: string;
   trackingUrl?: string;
   refundable: boolean;
+  confirmablePayment: boolean;
+  manualPaymentPin?: string;
+  swishPayee?: string;
   assignedKitchenStaffId?: string;
   assignedKitchenStaffName?: string;
   actions: KitchenAction[];

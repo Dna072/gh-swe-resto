@@ -61,6 +61,8 @@ export default function AdminMenuListPage() {
               <div className="flex items-center gap-2">
                 {item.archivedAt ? <Badge variant="secondary">Archived</Badge> : null}
                 {!item.isAvailable ? <Badge variant="outline">Hidden</Badge> : null}
+                {item.comingSoon ? <Badge variant="outline">Coming soon</Badge> : null}
+                {item.paymentMode === "MANUAL_SWISH" ? <Badge variant="earth">Swish</Badge> : null}
                 <Button size="touch" variant="outline" asChild>
                   <Link href={`/admin/menu/${item.id}`}>Edit</Link>
                 </Button>

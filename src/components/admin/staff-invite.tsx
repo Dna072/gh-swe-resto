@@ -16,6 +16,19 @@ type StaffRow = {
   disabled: boolean;
 };
 
+const ROLE_LABELS: Record<StaffRole, string> = {
+  OWNER: "Owner — full admin, invites, Swish confirm",
+  MANAGER: "Manager — menu, orders, Swish confirm",
+  KITCHEN: "Kitchen — board and tickets",
+  DISPATCHER: "Dispatcher — deliveries",
+  FINANCE: "Finance — refunds and Swish confirm",
+  MARKETING: "Marketing — promotions and reviews",
+};
+
+function roleLabel(role: StaffRole): string {
+  return ROLE_LABELS[role];
+}
+
 export function StaffInvitePanel() {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [email, setEmail] = useState("");
@@ -46,7 +59,8 @@ export function StaffInvitePanel() {
         <h1 className="mt-2 font-heading text-4xl">Staff invitations</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Invite kitchen and admin colleagues. They receive a branded email to set a password, then
-          sign in on admin.mfcuisine.se or kitchen.mfcuisine.se.
+          sign in on admin.mfcuisine.se or kitchen.mfcuisine.se. Invite OWNER, MANAGER, or FINANCE
+          roles so they can confirm manual Swish payments and manage restaurant settings.
         </p>
       </div>
       <form
@@ -87,11 +101,16 @@ export function StaffInvitePanel() {
           >
             {STAFF_ROLES.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {roleLabel(value)}
               </option>
             ))}
           </select>
         </Field>
+        {role === "FINANCE" || role === "OWNER" || role === "MANAGER" ? (
+          <p className="text-sm text-muted-foreground">
+            This role can confirm Swish payments on unpaid manual-payment orders and notify the guest.
+          </p>
+        ) : null}
         <Button type="submit" size="touch">
           Send invite
         </Button>
@@ -113,7 +132,7 @@ export function StaffInvitePanel() {
               <p className="font-heading text-xl">{user.displayName}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
-            <p className="text-xs uppercase tracking-[0.14em] text-earth">{user.role}</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-earth">{roleLabel(user.role)}</p>
           </li>
         ))}
       </ul>

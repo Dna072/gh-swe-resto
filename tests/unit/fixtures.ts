@@ -20,6 +20,8 @@ export const jollof: MenuItem = {
   currency: "SEK",
   availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
   isAvailable: true,
+  comingSoon: false,
+  paymentMode: "ONLINE",
   isFeatured: true,
   isPopular: true,
   inventoryTracked: true,

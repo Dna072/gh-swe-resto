@@ -3,9 +3,22 @@ import { nowIso } from "@/lib/time";
 import { newId } from "@/lib/ids";
 import type { HomepageContent } from "@/domains/content/models";
 import { defaultHomepageContent } from "@/domains/content/defaults";
-import type { Allergen, DietaryTag, MenuItem } from "./models";
+import type { Weekday } from "@/lib/time";
+import type { Allergen, DietaryTag, MenuItem, MenuPaymentMode } from "./models";
 import type { MenuWriteRepository } from "./write-repository";
 import { MediaService } from "@/domains/media/service";
+
+const ALL_DAYS: Weekday[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const WEEKEND_DAYS: Weekday[] = ["saturday", "sunday"];
 
 export interface MenuItemDraft {
   id?: string;
@@ -18,6 +31,10 @@ export interface MenuItemDraft {
   weekdayPriceOre?: number;
   weekendPriceOre?: number;
   isAvailable?: boolean;
+  comingSoon?: boolean;
+  paymentMode?: MenuPaymentMode;
+  availableDays?: Weekday[];
+  weekendOnly?: boolean;
   isFeatured?: boolean;
   isPopular?: boolean;
   inventoryTracked?: boolean;
@@ -66,16 +83,15 @@ export class MenuAdminService {
       weekdayPriceOre: draft.weekdayPriceOre,
       weekendPriceOre: draft.weekendPriceOre,
       currency: "SEK",
-      availableDays: existing?.availableDays ?? [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-      ],
+      availableDays:
+        draft.weekendOnly === true
+          ? WEEKEND_DAYS
+          : draft.weekendOnly === false
+            ? ALL_DAYS
+            : (draft.availableDays ?? existing?.availableDays ?? ALL_DAYS),
       isAvailable: draft.isAvailable ?? existing?.isAvailable ?? true,
+      comingSoon: draft.comingSoon ?? existing?.comingSoon ?? true,
+      paymentMode: draft.paymentMode ?? existing?.paymentMode ?? "ONLINE",
       isFeatured: draft.isFeatured ?? existing?.isFeatured ?? false,
       isPopular: draft.isPopular ?? existing?.isPopular ?? false,
       inventoryTracked: draft.inventoryTracked ?? existing?.inventoryTracked ?? false,

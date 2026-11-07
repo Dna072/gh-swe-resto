@@ -95,13 +95,26 @@ export const seedCategories: MenuCategory[] = [
 ];
 
 function plate(
-  partial: Omit<MenuItem, "restaurantId" | "currency" | "availableDays" | "createdAt" | "updatedAt" | "isAvailable">,
+  partial: Omit<
+    MenuItem,
+    | "restaurantId"
+    | "currency"
+    | "availableDays"
+    | "createdAt"
+    | "updatedAt"
+    | "isAvailable"
+    | "comingSoon"
+    | "paymentMode"
+  > &
+    Partial<Pick<MenuItem, "availableDays" | "comingSoon" | "paymentMode">>,
 ): MenuItem {
   return {
     restaurantId: SEED_RESTAURANT_ID,
     currency: "SEK",
     availableDays: ALL_DAYS,
     isAvailable: true,
+    comingSoon: true,
+    paymentMode: "ONLINE",
     createdAt: STAMP,
     updatedAt: STAMP,
     ...partial,
@@ -121,6 +134,8 @@ export const seedMenuItems: MenuItem[] = [
     basePriceOre: 12900,
     weekdayPriceOre: 12900,
     weekendPriceOre: 14900,
+    availableDays: ["saturday", "sunday"],
+    paymentMode: "MANUAL_SWISH",
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,
@@ -149,6 +164,7 @@ export const seedMenuItems: MenuItem[] = [
     basePriceOre: 12900,
     weekdayPriceOre: 12900,
     weekendPriceOre: 14900,
+    paymentMode: "MANUAL_SWISH",
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,
@@ -203,6 +219,7 @@ export const seedMenuItems: MenuItem[] = [
     basePriceOre: 14900,
     weekdayPriceOre: 14900,
     weekendPriceOre: 16900,
+    availableDays: ["saturday", "sunday"],
     isFeatured: true,
     isPopular: true,
     inventoryTracked: true,

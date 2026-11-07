@@ -9,6 +9,10 @@ describe("RBAC", () => {
     expect(hasPermission("CUSTOMER", "orders:refund")).toBe(false);
     expect(hasPermission("KITCHEN", "orders:refund")).toBe(false);
     expect(hasPermission("FINANCE", "orders:refund")).toBe(true);
+    expect(hasPermission("FINANCE", "payments:confirm")).toBe(true);
+    expect(hasPermission("MANAGER", "payments:confirm")).toBe(true);
+    expect(hasPermission("OWNER", "payments:confirm")).toBe(true);
+    expect(hasPermission("KITCHEN", "payments:confirm")).toBe(false);
     expect(hasPermission("OWNER", "users:write")).toBe(true);
     expect(hasPermission("MANAGER", "users:write")).toBe(true);
     expect(hasPermission("KITCHEN", "users:write")).toBe(false);

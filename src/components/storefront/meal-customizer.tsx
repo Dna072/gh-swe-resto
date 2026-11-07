@@ -14,7 +14,7 @@ import { localizePublicItem } from "@/lib/i18n/catalog";
 import { track } from "@/lib/analytics/client";
 import type { CartModifierSelection } from "@/lib/cart/types";
 import { SpiceLevelBadge } from "@/components/brand/spice-level-badge";
-import { soldOut } from "@/lib/menu/display";
+import { notOrderable } from "@/lib/menu/display";
 import { spiceLevelOf } from "@/lib/menu/spice-level";
 import type { PublicMenuItem, PublicModifierGroup } from "@/lib/menu/public";
 import { addOre, formatSek, multiplyOre } from "@/lib/money";
@@ -55,7 +55,7 @@ export function MealCustomizer({ item }: { item: PublicMenuItem }) {
   const localized = useMemo(() => localizePublicItem(item, locale, t), [item, locale, t]);
   const router = useRouter();
   const cart = useCart();
-  const unavailable = soldOut(localized);
+  const unavailable = notOrderable(localized);
   const [quantity, setQuantity] = useState(1);
   const [selected, setSelected] = useState(() => defaultSelections(localized.modifierGroups));
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});

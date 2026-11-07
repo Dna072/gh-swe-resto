@@ -204,6 +204,36 @@ export function OrderConfirmation({
           </div>
         ) : null}
       </dl>
+      {order.manualPayment ? (
+        <section className="space-y-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
+          <h2 className="font-heading text-2xl">{t("order.swish.title")}</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {t("order.swish.body", {
+              price: formatSek(order.totalOre),
+              payee: order.manualPayment.swishPayee,
+            })}
+          </p>
+          {order.manualPayment.swishQrUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- external Swish QR URL from restaurant settings
+            <img
+              src={order.manualPayment.swishQrUrl}
+              alt={t("order.swish.qrAlt")}
+              className="mx-auto h-48 w-48 rounded-xl bg-white object-contain p-2"
+            />
+          ) : null}
+          <div className="rounded-xl bg-background px-4 py-5 text-center ring-1 ring-foreground/10">
+            <p className="text-xs uppercase tracking-[0.18em] text-earth">{t("order.swish.pinLabel")}</p>
+            <p className="mt-2 font-mono text-4xl tracking-[0.35em] text-foreground">
+              {order.manualPayment.pin}
+            </p>
+          </div>
+          {order.manualPayment.awaitingConfirmation ? (
+            <p className="text-sm text-muted-foreground">{t("order.swish.awaiting")}</p>
+          ) : (
+            <p className="text-sm text-forest">{t("order.paid")}</p>
+          )}
+        </section>
+      ) : null}
       {order.tracking.length > 0 ? (
         <ol className="grid gap-2">
           {order.tracking.map((step) => (

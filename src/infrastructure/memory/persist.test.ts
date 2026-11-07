@@ -46,6 +46,8 @@ function sampleItem(id: string, name: string): MenuItem {
     currency: "SEK",
     availableDays: ["monday"],
     isAvailable: true,
+    comingSoon: false,
+    paymentMode: "ONLINE",
     isFeatured: false,
     isPopular: false,
     inventoryTracked: false,

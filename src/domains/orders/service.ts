@@ -10,6 +10,7 @@ import { authorizationService } from "@/domains/auth/authorization-service";
 import type { Actor } from "@/domains/auth/models";
 import type { AddressSnapshot, CustomerSnapshot } from "@/domains/shared/types";
 import type { MenuRepository } from "@/domains/menu/repository";
+import { generateSwishPin } from "@/lib/payments/swish-pin";
 import { applyOrderTransition, assertTransition, ORDER_TRANSITIONS } from "./state-machine";
 import type { Order, OrderStatus } from "./models";
 import type { OrderWriteRepository } from "./repository";
@@ -27,6 +28,8 @@ export interface CreateOrderRequest extends CartQuoteRequest {
   scheduledFor?: string;
   deliveryQuoteId?: string;
   deliveryPricing?: import("@/domains/delivery/models").DeliveryPricingSnapshot;
+  swishPayee?: string;
+  swishQrUrl?: string;
 }
 
 export type ReorderLine = {
@@ -98,9 +101,14 @@ export class OrderService {
         }
       }
 
-      const now = new Date().toISOString();
+      const now = new Date();
+      const nowIso = now.toISOString();
       const accessToken = newAccessToken();
       const sequence = await tx.nextOrderSequence(request.restaurantId);
+      const manualSwish = quote.paymentMode === "MANUAL_SWISH";
+      if (manualSwish && !request.swishPayee?.trim()) {
+        throw new AppError("VALIDATION", "Swish payment is not configured yet. Please contact the restaurant.");
+      }
       const order: Order = {
         id: newId(),
         restaurantId: request.restaurantId,
@@ -137,10 +145,20 @@ export class OrderService {
         scheduledFor: request.scheduledFor,
         specialInstructions: request.specialInstructions,
         promotionCode: quote.promotionCode,
+        paymentProviderId: manualSwish ? "swish" : undefined,
+        manualPayment: manualSwish
+          ? {
+              method: "MANUAL_SWISH",
+              pin: generateSwishPin(),
+              expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+              swishPayee: request.swishPayee!.trim(),
+              swishQrUrl: request.swishQrUrl?.trim() || undefined,
+            }
+          : undefined,
         idempotencyKey: request.idempotencyKey,
         schemaVersion: SCHEMA_VERSION,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: nowIso,
+        updatedAt: nowIso,
       };
       tx.createOrder(order);
       tx.saveIdempotency(request.idempotencyKey, order.id);
@@ -213,6 +231,27 @@ export class OrderService {
   ): Promise<Order> {
     const order = await this.getForCustomer(orderId, accessToken);
     return this.settlePaid(order, payment?.providerPaymentId);
+  }
+
+  async confirmManualPayment(actor: Actor, orderId: string): Promise<Order> {
+    authorizationService.requirePermission(actor, "payments:confirm");
+    const order = await this.requireOrder(orderId);
+    if (!order.manualPayment || order.manualPayment.method !== "MANUAL_SWISH") {
+      throw new AppError("VALIDATION", "This order is not waiting for a Swish confirmation.");
+    }
+    if (order.paymentStatus === "PAID") {
+      return order;
+    }
+    const paid = await this.settlePaid(order, `swish:${order.manualPayment.pin}`);
+    return this.orders.update({
+      ...paid,
+      manualPayment: {
+        ...order.manualPayment,
+        confirmedAt: new Date().toISOString(),
+        confirmedByStaffId: actor.uid,
+      },
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   async settlePaid(order: Order, providerPaymentId?: string): Promise<Order> {

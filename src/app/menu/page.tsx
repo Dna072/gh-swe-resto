@@ -8,7 +8,7 @@ import { TrackView } from "@/components/storefront/track-view";
 import { OrderingPausedBanner } from "@/components/storefront/ordering-paused-banner";
 import { localizeCatalog } from "@/lib/i18n/catalog";
 import { getLocale, getTranslator } from "@/lib/i18n/server";
-import { soldOut } from "@/lib/menu/display";
+import { comingSoon, soldOut } from "@/lib/menu/display";
 import { loadPublicCatalog } from "@/server/catalog";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +68,9 @@ export default async function MenuPage() {
                         priceOre={item.displayPriceOre}
                         href={`/menu/${item.slug}`}
                         soldOut={soldOut(item)}
+                        comingSoon={comingSoon(item)}
+                        weekendOnly={item.weekendOnly}
+                        swishPay={item.paymentMode === "MANUAL_SWISH"}
                       />
                     </Reveal>
                   ))}

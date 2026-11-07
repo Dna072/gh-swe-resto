@@ -16,6 +16,23 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ code: "UNAUTHORIZED", message: "Guest access token is required." }, { status: 401 });
     }
     const order = await orderService.getForCustomer(id, token);
+    if (order.manualPayment?.method === "MANUAL_SWISH") {
+      return NextResponse.json({
+        order: toPublicOrder(order),
+        payment: {
+          provider: "swish",
+          providerPaymentId: `swish:${order.manualPayment.pin}`,
+          status: "requires_payment",
+          manual: {
+            method: "MANUAL_SWISH",
+            pin: order.manualPayment.pin,
+            expiresAt: order.manualPayment.expiresAt,
+            swishPayee: order.manualPayment.swishPayee,
+            swishQrUrl: order.manualPayment.swishQrUrl,
+          },
+        },
+      });
+    }
     const session = await paymentService.createPayment({
       orderId: order.id,
       amountOre: order.totalOre,
